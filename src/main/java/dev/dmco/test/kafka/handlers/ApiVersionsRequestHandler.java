@@ -13,7 +13,7 @@ import static java.util.Collections.singletonList;
 public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequest, ApiVersionsResponse> {
 
     @Override
-    public List<Class<? extends ApiVersionsRequest>> supportedRequestTypes() {
+    public List<Class<? extends ApiVersionsRequest>> handledRequestTypes() {
         return singletonList(ApiVersionsRequest.class);
     }
 

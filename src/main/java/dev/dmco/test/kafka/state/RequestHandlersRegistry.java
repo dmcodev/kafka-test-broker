@@ -7,6 +7,7 @@ import dev.dmco.test.kafka.handlers.RequestHandler;
 import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.ResponseMessage;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,11 @@ public class RequestHandlersRegistry {
         register(new ApiVersionsRequestHandler());
     }
 
+    public Collection<RequestHandler<?, ?>> getHandlers() {
+        return handlers.values();
+    }
+
+    @SuppressWarnings("unchecked")
     public RequestHandler<RequestMessage, ResponseMessage> selectHandler(RequestMessage request) {
         Class<? extends RequestMessage> requestType = request.getClass();
         while (RequestMessage.class.isAssignableFrom(requestType)) {
@@ -33,6 +39,6 @@ public class RequestHandlersRegistry {
     }
 
     private void register(RequestHandler<?, ?> handler) {
-        handler.supportedRequestTypes().forEach(key -> handlers.put(key, handler));
+        handler.handledRequestTypes().forEach(key -> handlers.put(key, handler));
     }
 }

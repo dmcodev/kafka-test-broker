@@ -27,6 +27,7 @@ public class IOEventLoop implements AutoCloseable {
     private final BrokerState brokerState;
 
     private final AtomicBoolean stopped = new AtomicBoolean();
+    private final IODecoder decoder;
 
     @SneakyThrows
     public IOEventLoop(
@@ -34,6 +35,7 @@ public class IOEventLoop implements AutoCloseable {
         BrokerState brokerState
     ) {
         this.brokerState = brokerState;
+        decoder = new IODecoder(brokerState);
         try {
             selector = Selector.open();
             serverChannel = ServerSocketChannel.open();
@@ -71,6 +73,9 @@ public class IOEventLoop implements AutoCloseable {
                             if (selectionKey.isReadable()) {
                                 readFromClient(selectionKey);
                             }
+                            if (selectionKey.isWritable()) {
+                                writeToClient(selectionKey);
+                            }
                         } catch (Exception error) {
                             System.err.println("Connection error");
                             error.printStackTrace();
@@ -83,7 +88,6 @@ public class IOEventLoop implements AutoCloseable {
         }
     }
 
-
     @SneakyThrows
     private void connectClient() {
         SocketChannel clientChannel = serverChannel.accept();
@@ -92,12 +96,11 @@ public class IOEventLoop implements AutoCloseable {
         clientChannel.register(selector, SelectionKey.OP_READ, ioSession);
     }
 
-    @SneakyThrows
     private void readFromClient(SelectionKey selectionKey) {
         IOSession ioSession = (IOSession) selectionKey.attachment();
         ioSession.readRequests()
             .stream()
-            .map(IODecoder::decode)
+            .map(decoder::decode)
             .forEach(request -> handleRequest(request, ioSession, selectionKey));
     }
 
@@ -107,8 +110,24 @@ public class IOEventLoop implements AutoCloseable {
             .handle(request, brokerState);
         ResponseBuffer responseBuffer = IOEncoder.encode(response, request.header());
         if (!ioSession.writeResponse(responseBuffer)) {
-            selectionKey.interestOps(selectionKey.interestOps() & SelectionKey.OP_WRITE);
+            enableWriteNotifications(selectionKey);
         }
+    }
+
+    private void writeToClient(SelectionKey selectionKey) {
+        disableWriteNotifications(selectionKey);
+        IOSession ioSession = (IOSession) selectionKey.attachment();
+        if (!ioSession.writeResponses()) {
+            enableWriteNotifications(selectionKey);
+        }
+    }
+
+    private static void enableWriteNotifications(SelectionKey selectionKey) {
+        selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
+    }
+
+    private static void disableWriteNotifications(SelectionKey selectionKey) {
+        selectionKey.interestOps(selectionKey.interestOps() & (~SelectionKey.OP_WRITE));
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface RequestHandler<IN extends RequestMessage, OUT extends ResponseMessage> {
 
-    List<Class<? extends IN>> supportedRequestTypes();
+    List<Class<? extends IN>> handledRequestTypes();
 
     OUT handle(IN request, BrokerState state);
 }
