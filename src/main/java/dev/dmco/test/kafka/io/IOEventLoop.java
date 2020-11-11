@@ -1,9 +1,12 @@
-package dev.dmco.test.kafka;
+package dev.dmco.test.kafka.io;
 
+import dev.dmco.test.kafka.TestKafkaBrokerConfig;
+import dev.dmco.test.kafka.messages.RequestMessage;
+import dev.dmco.test.kafka.messages.ResponseMessage;
+import dev.dmco.test.kafka.state.BrokerState;
 import lombok.SneakyThrows;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -14,16 +17,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class IOEventLoop implements AutoCloseable {
+public class IOEventLoop implements AutoCloseable {
+
+    private static final int SELECT_TIMEOUT = 1000;
 
     private final Selector selector;
     private final ServerSocketChannel serverChannel;
     private final ExecutorService executorService;
+    private final BrokerState brokerState;
 
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     @SneakyThrows
-    IOEventLoop(TestKafkaBrokerConfig config) {
+    public IOEventLoop(
+        TestKafkaBrokerConfig config,
+        BrokerState brokerState
+    ) {
+        this.brokerState = brokerState;
         try {
             selector = Selector.open();
             serverChannel = ServerSocketChannel.open();
@@ -42,10 +52,10 @@ class IOEventLoop implements AutoCloseable {
         while (!stopped.get()) {
             int numberOfSelectedKeys;
             try {
-                numberOfSelectedKeys = selector.select();
-            } catch (Exception ex) {
+                numberOfSelectedKeys = selector.select(SELECT_TIMEOUT);
+            } catch (Exception error) {
                 System.err.println("Selector error");
-                ex.printStackTrace();
+                error.printStackTrace();
                 close();
                 break;
             }
@@ -61,9 +71,9 @@ class IOEventLoop implements AutoCloseable {
                             if (selectionKey.isReadable()) {
                                 readFromClient(selectionKey);
                             }
-                        } catch (Exception ex) {
+                        } catch (Exception error) {
                             System.err.println("Connection error");
-                            ex.printStackTrace();
+                            error.printStackTrace();
                             closeSelectionKey(selectionKey);
                         }
                     }
@@ -78,17 +88,27 @@ class IOEventLoop implements AutoCloseable {
     private void connectClient() {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
-        clientChannel.register(selector, SelectionKey.OP_READ);
+        IOSession ioSession = new IOSession(clientChannel);
+        clientChannel.register(selector, SelectionKey.OP_READ, ioSession);
     }
 
     @SneakyThrows
     private void readFromClient(SelectionKey selectionKey) {
-        SocketChannel clientChannel = (SocketChannel) selectionKey.channel();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-        clientChannel.read(byteBuffer);
+        IOSession ioSession = (IOSession) selectionKey.attachment();
+        ioSession.readRequests()
+            .stream()
+            .map(IODecoder::decode)
+            .forEach(request -> handleRequest(request, ioSession, selectionKey));
+    }
 
-        // TODO: read request
-        System.out.println("...");
+    private void handleRequest(RequestMessage request, IOSession ioSession, SelectionKey selectionKey) {
+        ResponseMessage response = brokerState.handlersRegistry()
+            .selectHandler(request)
+            .handle(request, brokerState);
+        ResponseBuffer responseBuffer = IOEncoder.encode(response, request.header());
+        if (!ioSession.writeResponse(responseBuffer)) {
+            selectionKey.interestOps(selectionKey.interestOps() & SelectionKey.OP_WRITE);
+        }
     }
 
     @Override
@@ -102,6 +122,7 @@ class IOEventLoop implements AutoCloseable {
     private void closeSelector() {
         if (selector != null) {
             try {
+                selector.wakeup();
                 selector.keys()
                     .forEach(this::closeSelectionKey);
                 selector.close();

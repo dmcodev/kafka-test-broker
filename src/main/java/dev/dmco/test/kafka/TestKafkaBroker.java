@@ -1,5 +1,7 @@
 package dev.dmco.test.kafka;
 
+import dev.dmco.test.kafka.io.IOEventLoop;
+import dev.dmco.test.kafka.state.BrokerState;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -12,7 +14,8 @@ public class TestKafkaBroker implements AutoCloseable {
     }
 
     public TestKafkaBroker(TestKafkaBrokerConfig config) {
-        eventLoop = new IOEventLoop(config);
+        BrokerState state = new BrokerState();
+        eventLoop = new IOEventLoop(config, state);
     }
 
     @Override
