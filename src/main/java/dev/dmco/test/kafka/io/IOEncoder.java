@@ -1,41 +1,45 @@
 package dev.dmco.test.kafka.io;
 
-import dev.dmco.test.kafka.error.BrokerException;
-import dev.dmco.test.kafka.error.ErrorCode;
-import dev.dmco.test.kafka.messages.ApiKeys;
-import dev.dmco.test.kafka.messages.ApiVersionsResponse;
-import dev.dmco.test.kafka.messages.RequestHeader;
 import dev.dmco.test.kafka.messages.ResponseMessage;
+import dev.dmco.test.kafka.messages.request.RequestHeader;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IOEncoder {
 
-    public static ResponseBuffer encode(ResponseMessage response, RequestHeader header) {
-        ResponseBuffer.ResponseBufferBuilder builder = ResponseBuffer.builder()
-            .header(encodeHeader(header));
-        ByteBuffer body;
-        switch (header.apiKey()) {
-            case ApiKeys.API_VERSIONS_KEY:
-                body = encodeApiVersionsResponse((ApiVersionsResponse) response);
-                break;
-            default:
-                throw new BrokerException("API key not supported: " + header.apiKey(), ErrorCode.INVALID_REQUEST);
-        }
-        return builder.body(body)
+    private final Map<Class<?>, TypeMetadata> typeMetadata = new HashMap<>();
+
+    public ResponseBuffer encode(ResponseMessage response, RequestHeader header) {
+        return ResponseBuffer.builder()
+            .header(encodeHeader(header))
+            .body(encodeBody(response, header.apiVersion()))
             .build();
     }
 
-    private static ByteBuffer encodeApiVersionsResponse(ApiVersionsResponse response) {
-        ByteBuffer buffer = ByteBuffer.allocate(6 + 6 * response.apiKeys().size());
-        buffer.putShort((short) response.errorCode());
-        buffer.putInt(response.apiKeys().size());
-        response.apiKeys().forEach(apiKey -> {
-            buffer.putShort((short) apiKey.apiKey());
-            buffer.putShort((short) apiKey.minVersion());
-            buffer.putShort((short) apiKey.maxVersion());
-        });
+    public int calculateSize(Object instance, int apiVersion) {
+        return getMetadata(instance.getClass())
+            .fieldsForApiVersion(apiVersion).stream()
+            .mapToInt(field -> field.calculateSize(instance, apiVersion, this))
+            .sum();
+    }
+
+    public void encode(Object instance, int apiVersion, ByteBuffer buffer) {
+        getMetadata(instance.getClass())
+            .fieldsForApiVersion(apiVersion)
+            .forEach(field -> field.encode(instance, apiVersion, buffer, this));
+    }
+
+    private ByteBuffer encodeBody(ResponseMessage response, short apiVersion) {
+        int size = calculateSize(response, apiVersion);
+        ByteBuffer buffer = ByteBuffer.allocate(size);
+        encode(response, apiVersion, buffer);
         return buffer;
+    }
+
+    private TypeMetadata getMetadata(Class<?> type) {
+        return typeMetadata.computeIfAbsent(type, TypeMetadata::new);
     }
 
     private static ByteBuffer encodeHeader(RequestHeader header) {

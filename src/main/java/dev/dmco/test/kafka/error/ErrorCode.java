@@ -10,7 +10,9 @@ import lombok.experimental.Accessors;
 public enum ErrorCode {
 
     UNKNOWN_SERVER_ERROR(-1),
-    INVALID_REQUEST(42);
+    UNSUPPORTED_VERSION(35),
+    INVALID_REQUEST(42),
+    UNSUPPORTED_FOR_MESSAGE_FORMAT(43);
 
-    private final int errorCode;
+    private final int value;
 }

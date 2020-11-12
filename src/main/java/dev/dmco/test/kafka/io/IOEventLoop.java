@@ -27,6 +27,7 @@ public class IOEventLoop implements AutoCloseable {
     private final BrokerState brokerState;
 
     private final AtomicBoolean stopped = new AtomicBoolean();
+    private final IOEncoder encoder = new IOEncoder();
     private final IODecoder decoder;
 
     @SneakyThrows
@@ -108,7 +109,7 @@ public class IOEventLoop implements AutoCloseable {
         ResponseMessage response = brokerState.handlersRegistry()
             .selectHandler(request)
             .handle(request, brokerState);
-        ResponseBuffer responseBuffer = IOEncoder.encode(response, request.header());
+        ResponseBuffer responseBuffer = encoder.encode(response, request.header());
         if (!ioSession.writeResponse(responseBuffer)) {
             enableWriteNotifications(selectionKey);
         }

@@ -17,7 +17,7 @@ class IOSession {
     private static final int MESSAGE_SIZE_BYTES = 4;
 
     private final ByteBuffer sizeBuffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
-    private final Deque<ByteBuffer> sendQueue = new LinkedList<>();
+    private final Deque<ByteBuffer> writeQueue = new LinkedList<>();
 
     private final SocketChannel channel;
 
@@ -52,12 +52,12 @@ class IOSession {
     @SneakyThrows
     public boolean writeResponses() {
         ByteBuffer buffer;
-        while ((buffer = sendQueue.peekFirst()) != null) {
+        while ((buffer = writeQueue.peekFirst()) != null) {
             if (channel.write(buffer) == 0) {
                 return false;
             }
             if (!buffer.hasRemaining()) {
-                sendQueue.removeFirst();
+                writeQueue.removeFirst();
             }
         }
         return true;
@@ -79,9 +79,9 @@ class IOSession {
     private void enqueueResponse(ResponseBuffer response) {
         response.header().rewind();
         response.body().rewind();
-        sendQueue.addLast(encodeMessageSize(response));
-        sendQueue.addLast(response.header());
-        sendQueue.addLast(response.body());
+        writeQueue.addLast(encodeMessageSize(response));
+        writeQueue.addLast(response.header());
+        writeQueue.addLast(response.body());
     }
 
     private ByteBuffer encodeMessageSize(ResponseBuffer response) {

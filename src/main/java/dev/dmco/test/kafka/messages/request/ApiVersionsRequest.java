@@ -1,5 +1,7 @@
-package dev.dmco.test.kafka.messages;
+package dev.dmco.test.kafka.messages.request;
 
+import dev.dmco.test.kafka.messages.KafkaRequest;
+import dev.dmco.test.kafka.messages.RequestMessage;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
