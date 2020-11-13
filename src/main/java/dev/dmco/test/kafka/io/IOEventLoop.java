@@ -1,9 +1,7 @@
 package dev.dmco.test.kafka.io;
 
-import dev.dmco.test.kafka.TestKafkaBrokerConfig;
 import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.ResponseMessage;
-import dev.dmco.test.kafka.state.BrokerState;
 import lombok.SneakyThrows;
 
 import java.net.InetSocketAddress;
@@ -18,6 +16,7 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 public class IOEventLoop implements AutoCloseable {
 
@@ -26,25 +25,25 @@ public class IOEventLoop implements AutoCloseable {
     private final Selector selector;
     private final ServerSocketChannel serverChannel;
     private final ExecutorService executorService;
-    private final BrokerState brokerState;
+
+    private final Function<RequestMessage, ResponseMessage> requestHandler;
 
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final IOEncoder encoder = new IOEncoder();
-    private final IODecoder decoder;
+    private final IODecoder decoder = new IODecoder();
 
     @SneakyThrows
     public IOEventLoop(
-        TestKafkaBrokerConfig config,
-        BrokerState brokerState
+        InetSocketAddress bindAddress,
+        Function<RequestMessage, ResponseMessage> requestHandler
     ) {
-        this.brokerState = brokerState;
-        decoder = new IODecoder(brokerState);
+        this.requestHandler = requestHandler;
         try {
             selector = Selector.open();
             serverChannel = ServerSocketChannel.open();
             serverChannel.configureBlocking(false);
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-            serverChannel.bind(new InetSocketAddress(config.host(), config.port()));
+            serverChannel.bind(bindAddress);
             executorService = Executors.newSingleThreadExecutor();
             executorService.execute(this::eventLoop);
         } catch (Exception error) {
@@ -71,13 +70,13 @@ public class IOEventLoop implements AutoCloseable {
                     if (selectionKey.isValid()) {
                         try {
                             if (selectionKey.isAcceptable()) {
-                                connectClient();
+                                onClientConnectionInitializing();
                             }
                             if (selectionKey.isReadable()) {
-                                readFromClient(selectionKey);
+                                onClientConnectionReadable(selectionKey);
                             }
                             if (selectionKey.isWritable()) {
-                                writeToClient(selectionKey);
+                                onClientConnectionWritable(selectionKey);
                             }
                         } catch (Exception error) {
                             System.err.println("Connection error");
@@ -92,14 +91,14 @@ public class IOEventLoop implements AutoCloseable {
     }
 
     @SneakyThrows
-    private void connectClient() {
+    private void onClientConnectionInitializing() {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
         IOSession ioSession = new IOSession(clientChannel);
         clientChannel.register(selector, SelectionKey.OP_READ, ioSession);
     }
 
-    private void readFromClient(SelectionKey selectionKey) {
+    private void onClientConnectionReadable(SelectionKey selectionKey) {
         IOSession ioSession = (IOSession) selectionKey.attachment();
         ioSession.readRequests()
             .stream()
@@ -107,30 +106,23 @@ public class IOEventLoop implements AutoCloseable {
             .forEach(request -> handleRequest(request, ioSession, selectionKey));
     }
 
-    private void handleRequest(RequestMessage request, IOSession ioSession, SelectionKey selectionKey) {
-        ResponseMessage response = brokerState.handlersRegistry()
-            .selectHandler(request)
-            .handle(request, brokerState);
-        Collection<ByteBuffer> responseBuffers = encoder.encode(response, request.header());
-        if (!ioSession.writeResponse(responseBuffers)) {
-            enableWriteNotifications(selectionKey);
-        }
+    private void onClientConnectionWritable(SelectionKey selectionKey) {
+        selectionKey.interestOps(selectionKey.interestOps() & (~SelectionKey.OP_WRITE));
+        writeResponses(selectionKey);
     }
 
-    private void writeToClient(SelectionKey selectionKey) {
-        disableWriteNotifications(selectionKey);
+    private void handleRequest(RequestMessage request, IOSession ioSession, SelectionKey selectionKey) {
+        ResponseMessage response = requestHandler.apply(request);
+        Collection<ByteBuffer> responseBuffers = encoder.encode(response, request.header());
+        ioSession.enqueueResponse(responseBuffers);
+        writeResponses(selectionKey);
+    }
+
+    private void writeResponses(SelectionKey selectionKey) {
         IOSession ioSession = (IOSession) selectionKey.attachment();
         if (!ioSession.writeResponses()) {
-            enableWriteNotifications(selectionKey);
+            selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
         }
-    }
-
-    private static void enableWriteNotifications(SelectionKey selectionKey) {
-        selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
-    }
-
-    private static void disableWriteNotifications(SelectionKey selectionKey) {
-        selectionKey.interestOps(selectionKey.interestOps() & (~SelectionKey.OP_WRITE));
     }
 
     @Override

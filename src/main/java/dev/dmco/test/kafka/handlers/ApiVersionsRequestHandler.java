@@ -24,7 +24,7 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
         return ApiVersionsResponse.builder()
             .errorCode((short) 0)
             .apiKeys(
-                state.handlersRegistry().getHandlers().stream()
+                RequestHandler.loadAll().stream()
                     .map(RequestHandler::handledRequestTypes)
                     .flatMap(Collection::stream)
                     .filter(type -> type.isAnnotationPresent(Request.class))

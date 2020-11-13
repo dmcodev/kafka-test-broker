@@ -2,13 +2,10 @@ package dev.dmco.test.kafka.state;
 
 import dev.dmco.test.kafka.error.BrokerException;
 import dev.dmco.test.kafka.error.ErrorCode;
-import dev.dmco.test.kafka.handlers.ApiVersionsRequestHandler;
-import dev.dmco.test.kafka.handlers.ProduceRequestHandler;
 import dev.dmco.test.kafka.handlers.RequestHandler;
 import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.ResponseMessage;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,12 +14,7 @@ public class RequestHandlersRegistry {
     private final Map<Class<?>, RequestHandler<?, ?>> handlers = new HashMap<>();
 
     public RequestHandlersRegistry() {
-        register(new ApiVersionsRequestHandler());
-        register(new ProduceRequestHandler());
-    }
-
-    public Collection<RequestHandler<?, ?>> getHandlers() {
-        return handlers.values();
+        RequestHandler.loadAll().forEach(this::register);
     }
 
     @SuppressWarnings("unchecked")

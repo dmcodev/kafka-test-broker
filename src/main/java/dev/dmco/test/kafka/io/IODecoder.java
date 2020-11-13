@@ -2,11 +2,11 @@ package dev.dmco.test.kafka.io;
 
 import dev.dmco.test.kafka.error.BrokerException;
 import dev.dmco.test.kafka.error.ErrorCode;
+import dev.dmco.test.kafka.handlers.RequestHandler;
 import dev.dmco.test.kafka.io.struct.FieldHandle;
 import dev.dmco.test.kafka.io.struct.StructHandle;
 import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.state.BrokerState;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Constructor;
@@ -25,9 +25,9 @@ public class IODecoder {
     private final Map<Integer, Class<?>> requestTypeByApiKey;
     private final Map<Class<?>, StructHandle> typeMetadata = new HashMap<>();
 
-    public IODecoder(BrokerState brokerState) {
-        requestTypeByApiKey = brokerState.getSupportedRequestTypes()
-            .stream()
+    public IODecoder() {
+        requestTypeByApiKey = RequestHandler.loadAll().stream()
+            .flatMap(handler -> handler.handledRequestTypes().stream())
             .collect(Collectors.toMap(type -> type.getAnnotation(Request.class).apiKey(), Function.identity()));
     }
 

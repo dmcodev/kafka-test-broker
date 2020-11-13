@@ -45,9 +45,10 @@ class IOSession {
         return requests;
     }
 
-    public boolean writeResponse(Collection<ByteBuffer> responseBuffers) {
-        enqueueResponse(responseBuffers);
-        return writeResponses();
+    public void enqueueResponse(Collection<ByteBuffer> responseBuffers) {
+        responseBuffers.forEach(ByteBuffer::rewind);
+        writeQueue.addLast(encodeResponseSize(responseBuffers));
+        responseBuffers.forEach(writeQueue::addLast);
     }
 
     @SneakyThrows
@@ -75,12 +76,6 @@ class IOSession {
         }
         targetBuffer.rewind();
         return true;
-    }
-
-    private void enqueueResponse(Collection<ByteBuffer> responseBuffers) {
-        responseBuffers.forEach(ByteBuffer::rewind);
-        writeQueue.addLast(encodeResponseSize(responseBuffers));
-        responseBuffers.forEach(writeQueue::addLast);
     }
 
     private ByteBuffer encodeResponseSize(Collection<ByteBuffer> responseBuffers) {
