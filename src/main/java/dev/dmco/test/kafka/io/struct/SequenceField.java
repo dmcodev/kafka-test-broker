@@ -33,8 +33,8 @@ abstract class SequenceField extends FieldHandle {
 
     @Override
     public int encodedSize(Object struct, int apiVersion, IOEncoder encoder) {
-        Collection<?> fieldValue = (Collection<?>) valueFrom(struct);
-        int elementsSize = fieldValue.stream()
+        Collection<?> sequence = sequenceValue(struct);
+        int elementsSize = sequence.stream()
             .mapToInt(element -> encodedElementSize(element, apiVersion, encoder))
             .sum();
         return FieldType.INT32_SIZE + elementsSize;
@@ -42,11 +42,15 @@ abstract class SequenceField extends FieldHandle {
 
     @Override
     public void encode(Object struct, int apiVersion, ByteBuffer buffer, IOEncoder encoder) {
-        Collection<?> fieldValue = Optional.ofNullable(valueFrom(struct))
+        Collection<?> sequence = sequenceValue(struct);
+        buffer.putInt(sequence.size());
+        sequence.forEach(element -> encodeElement(element, apiVersion, buffer, encoder));
+    }
+
+    private Collection<?> sequenceValue(Object struct) {
+        return Optional.ofNullable(valueFrom(struct))
             .map(Collection.class::cast)
             .orElseGet(Collections::emptyList);
-        buffer.putInt(fieldValue.size());
-        fieldValue.forEach(element -> encodeElement(element, apiVersion, buffer, encoder));
     }
 
     protected abstract Object decodeElement(ByteBuffer buffer, int apiVersion, IODecoder decoder);

@@ -7,6 +7,39 @@ import java.util.Set;
 
 public enum FieldType {
 
+    BOOLEAN {
+        @Override
+        public Set<Class<?>> compatibleJavaTypes() {
+            return Collections.singleton(Boolean.class);
+        }
+
+        @Override
+        public Object decode(ByteBuffer buffer) {
+            return buffer.get() != 0;
+        }
+
+        @Override
+        public int encodedSize(Object value) {
+            return 1;
+        }
+
+        @Override
+        public int encodedNullSize() {
+            return 1;
+        }
+
+        @Override
+        public void encode(Object value, ByteBuffer buffer) {
+            Boolean bool = (Boolean) value;
+            buffer.put((byte) (bool ? 1 : 0));
+        }
+
+        @Override
+        public void encodeNull(ByteBuffer buffer) {
+            buffer.put((byte) 0);
+        }
+    },
+
     INT8 {
         @Override
         public Set<Class<?>> compatibleJavaTypes() {
@@ -103,6 +136,49 @@ public enum FieldType {
         }
     },
 
+    STRING {
+        @Override
+        public Set<Class<?>> compatibleJavaTypes() {
+            return Collections.singleton(String.class);
+        }
+
+        @Override
+        public Object decode(ByteBuffer buffer) {
+            int length = buffer.getShort();
+            if (length < 0) {
+                throw new IllegalStateException(STRING.name() + " length must not be a negative number");
+            }
+            byte[] chars = new byte[length];
+            buffer.get(chars);
+            return new String(chars, StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public int encodedSize(Object value) {
+            String string = (String) value;
+            int length = string.getBytes(StandardCharsets.UTF_8).length;
+            return INT16_SIZE + length;
+        }
+
+        @Override
+        public int encodedNullSize() {
+            throw new IllegalStateException(STRING.name() + " value must not be null");
+        }
+
+        @Override
+        public void encode(Object value, ByteBuffer buffer) {
+            String string = (String) value;
+            byte[] chars = string.getBytes(StandardCharsets.UTF_8);
+            buffer.putShort((short) chars.length);
+            buffer.put(chars);
+        }
+
+        @Override
+        public void encodeNull(ByteBuffer buffer) {
+            throw new IllegalStateException(STRING.name() + " value must not be null");
+        }
+    },
+
     NULLABLE_STRING {
         @Override
         public Set<Class<?>> compatibleJavaTypes() {
@@ -122,9 +198,7 @@ public enum FieldType {
 
         @Override
         public int encodedSize(Object value) {
-            String string = (String) value;
-            int length = string.getBytes(StandardCharsets.UTF_8).length;
-            return INT16_SIZE + length;
+            return STRING.encodedSize(value);
         }
 
         @Override
@@ -134,10 +208,7 @@ public enum FieldType {
 
         @Override
         public void encode(Object value, ByteBuffer buffer) {
-            String string = (String) value;
-            byte[] chars = string.getBytes(StandardCharsets.UTF_8);
-            buffer.putShort((short) chars.length);
-            buffer.put(chars);
+            STRING.encode(value, buffer);
         }
 
         @Override

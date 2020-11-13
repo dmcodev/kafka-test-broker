@@ -43,15 +43,17 @@ public class IODecoder {
     public Object decode(ByteBuffer buffer, int apiVersion, Class<?> targetType) {
         StructHandle metadata = getMetadata(targetType);
         Constructor<?> constructor = metadata.constructor();
-        Collection<FieldHandle> fields = metadata.fieldsForApiVersion(apiVersion);
-        List<Object> constructorArguments = new ArrayList<>();
+        List<Object> constructorArguments = new ArrayList<>(constructor.getParameterCount());
+        Collection<FieldHandle> fields = metadata.fields();
         for (FieldHandle field : fields) {
-            Object fieldValue = field.decode(buffer, apiVersion, this);
-            constructorArguments.add(fieldValue);
-        }
-        for (int i = constructorArguments.size(); i < constructor.getParameterCount(); i++) {
-            Class<?> parameterType = constructor.getParameterTypes()[i];
-            constructorArguments.add(createNullValue(parameterType));
+            int effectiveVersion = field.effectiveVersion(apiVersion);
+            if (field.presentInVersion(effectiveVersion)) {
+                Object fieldValue = field.decode(buffer, effectiveVersion, this);
+                constructorArguments.add(fieldValue);
+            } else {
+                Class<?> fieldType = field.reflectionField().getType();
+                constructorArguments.add(createNullValue(fieldType));
+            }
         }
         return constructor.newInstance(constructorArguments.toArray());
     }

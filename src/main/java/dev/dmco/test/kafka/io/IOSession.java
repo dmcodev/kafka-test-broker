@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,10 +44,10 @@ class IOSession {
         return requests;
     }
 
-    public void enqueueResponse(Collection<ByteBuffer> responseBuffers) {
-        responseBuffers.forEach(ByteBuffer::rewind);
-        writeQueue.addLast(encodeResponseSize(responseBuffers));
-        responseBuffers.forEach(writeQueue::addLast);
+    public void enqueueResponse(ByteBuffer responseBuffer) {
+        responseBuffer.rewind();
+        writeQueue.addLast(encodeResponseSize(responseBuffer));
+        writeQueue.addLast(responseBuffer);
     }
 
     @SneakyThrows
@@ -78,12 +77,9 @@ class IOSession {
         return true;
     }
 
-    private ByteBuffer encodeResponseSize(Collection<ByteBuffer> responseBuffers) {
-        int messageSize = responseBuffers.stream()
-            .mapToInt(ByteBuffer::remaining)
-            .sum();
+    private ByteBuffer encodeResponseSize(ByteBuffer responseBuffer) {
         ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
-        buffer.putInt(messageSize);
+        buffer.putInt(responseBuffer.remaining());
         buffer.rewind();
         return buffer;
     }

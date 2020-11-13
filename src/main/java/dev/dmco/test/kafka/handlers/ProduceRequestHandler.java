@@ -1,7 +1,8 @@
 package dev.dmco.test.kafka.handlers;
 
-import dev.dmco.test.kafka.messages.ProduceResponse;
 import dev.dmco.test.kafka.messages.request.ProduceRequest;
+import dev.dmco.test.kafka.messages.response.ProduceResponse;
+import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.state.BrokerState;
 
 import java.util.List;
@@ -17,6 +18,12 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
 
     @Override
     public ProduceResponse handle(ProduceRequest request, BrokerState state) {
-        return ProduceResponse.builder().build();
+        return ProduceResponse.builder()
+            .header(
+                ResponseHeader.builder()
+                    .correlationId(request.header().correlationId())
+                    .build()
+            )
+            .build();
     }
 }

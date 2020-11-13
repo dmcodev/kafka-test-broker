@@ -4,6 +4,7 @@ import dev.dmco.test.kafka.messages.meta.Request;
 import dev.dmco.test.kafka.messages.request.ApiVersionsRequest;
 import dev.dmco.test.kafka.messages.response.ApiVersionsResponse;
 import dev.dmco.test.kafka.messages.response.ApiVersionsResponse.ApiKey;
+import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.state.BrokerState;
 
 import java.util.Collection;
@@ -22,6 +23,11 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
     @Override
     public ApiVersionsResponse handle(ApiVersionsRequest request, BrokerState state) {
         return ApiVersionsResponse.builder()
+            .header(
+                ResponseHeader.builder()
+                    .correlationId(request.header().correlationId())
+                    .build()
+            )
             .errorCode((short) 0)
             .apiKeys(
                 RequestHandler.loadAll().stream()
