@@ -1,6 +1,5 @@
 package dev.dmco.test.kafka.messages.request;
 
-import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.meta.Request;
 import dev.dmco.test.kafka.messages.meta.Struct;
 import dev.dmco.test.kafka.messages.meta.VersionOverride;

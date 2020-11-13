@@ -1,7 +1,10 @@
 package dev.dmco.test.kafka.io.struct;
 
+import dev.dmco.test.kafka.messages.common.Records;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 
@@ -250,6 +253,77 @@ public enum FieldType {
         @Override
         public void encodeNull(ByteBuffer buffer) {
             buffer.put((byte) 0);
+        }
+    },
+
+    NULLABLE_BYTES {
+        @Override
+        public Set<Class<?>> compatibleJavaTypes() {
+            return Collections.singleton(byte[].class);
+        }
+
+        @Override
+        public byte[] decode(ByteBuffer buffer) {
+            int length = buffer.getInt();
+            if (length != -1) {
+                byte[] bytes = new byte[length];
+                buffer.get(bytes);
+                return bytes;
+            }
+            return null;
+        }
+
+        @Override
+        public int encodedSize(Object value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int encodedNullSize() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void encode(Object value, ByteBuffer buffer) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void encodeNull(ByteBuffer buffer) {
+            throw new UnsupportedOperationException();
+        }
+    },
+
+    RECORDS {
+        @Override
+        public Set<Class<?>> compatibleJavaTypes() {
+            return Collections.singleton(Records.class);
+        }
+
+        @Override
+        public Object decode(ByteBuffer buffer) {
+            byte[] bytes = (byte[]) NULLABLE_BYTES.decode(buffer);
+            return new Records(new ArrayList<>());
+        }
+
+        @Override
+        public int encodedSize(Object value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int encodedNullSize() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void encode(Object value, ByteBuffer buffer) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void encodeNull(ByteBuffer buffer) {
+            throw new UnsupportedOperationException();
         }
     };
 

@@ -25,10 +25,9 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
             )
             .broker(
                 MetadataResponse.Broker.builder()
-                    .nodeId(7872)
-                    .host("localhost")
-                    .port(9092)
-                    .rack("rack")
+                    .nodeId(state.nodeId())
+                    .host(state.config().host())
+                    .port(state.config().port())
                     .build()
             )
             .topic(
@@ -40,7 +39,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
                         MetadataResponse.Partition.builder()
                             .errorCode((short) 0)
                             .partitionIndex(0)
-                            .leaderId(7872)
+                            .leaderId(state.nodeId())
                             .build()
                     )
                     .build()

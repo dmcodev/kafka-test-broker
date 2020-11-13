@@ -5,8 +5,8 @@ import dev.dmco.test.kafka.error.ErrorCode;
 import dev.dmco.test.kafka.handlers.RequestHandler;
 import dev.dmco.test.kafka.io.struct.FieldHandle;
 import dev.dmco.test.kafka.io.struct.StructHandle;
-import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.meta.Request;
+import dev.dmco.test.kafka.messages.request.RequestMessage;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Constructor;

@@ -2,8 +2,8 @@ package dev.dmco.test.kafka.io;
 
 import dev.dmco.test.kafka.io.struct.FieldHandle;
 import dev.dmco.test.kafka.io.struct.StructHandle;
-import dev.dmco.test.kafka.messages.ResponseMessage;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
+import dev.dmco.test.kafka.messages.response.ResponseMessage;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;

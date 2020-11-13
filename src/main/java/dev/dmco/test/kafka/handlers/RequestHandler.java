@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.handlers;
 
-import dev.dmco.test.kafka.messages.RequestMessage;
-import dev.dmco.test.kafka.messages.ResponseMessage;
+import dev.dmco.test.kafka.messages.request.RequestMessage;
+import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.state.BrokerState;
 
 import java.util.Collection;

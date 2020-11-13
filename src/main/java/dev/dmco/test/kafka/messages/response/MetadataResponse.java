@@ -1,7 +1,6 @@
 package dev.dmco.test.kafka.messages.response;
 
 import dev.dmco.test.kafka.io.struct.FieldType;
-import dev.dmco.test.kafka.messages.ResponseMessage;
 import dev.dmco.test.kafka.messages.meta.Field;
 import dev.dmco.test.kafka.messages.meta.FieldSequence;
 import dev.dmco.test.kafka.messages.meta.SinceVersion;
