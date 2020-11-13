@@ -1,15 +1,15 @@
 package dev.dmco.test.kafka.messages.response;
 
+import dev.dmco.test.kafka.io.struct.FieldType;
 import dev.dmco.test.kafka.messages.ResponseMessage;
-import dev.dmco.test.kafka.messages.data.TaggedFields;
-import dev.dmco.test.kafka.messages.meta.Sequence;
-import dev.dmco.test.kafka.messages.meta.SinceApiVersion;
+import dev.dmco.test.kafka.messages.meta.Field;
+import dev.dmco.test.kafka.messages.meta.SinceVersion;
+import dev.dmco.test.kafka.messages.meta.StructSequence;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
-import java.util.Collections;
 import java.util.List;
 
 @Value
@@ -18,26 +18,33 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ApiVersionsResponse implements ResponseMessage {
 
-    short errorCode;
+    @Field(FieldType.INT16)
+    Short errorCode;
 
-    @Sequence(ApiKey.class)
-    @Builder.Default
-    List<ApiKey> apiKeys = Collections.emptyList();
+    @StructSequence(ApiKey.class)
+    List<ApiKey> apiKeys;
 
-    @SinceApiVersion(2)
-    int throttleTimeMs;
+    @SinceVersion(2)
+    @Field(FieldType.INT32)
+    Integer throttleTimeMs;
 
-    @SinceApiVersion(3)
-    @Builder.Default
-    TaggedFields taggedFields = new TaggedFields();
+    @SinceVersion(3)
+    @Field(FieldType.TAGS_BUFFER)
+    byte[] tagsBuffer;
 
     @Value
     @Builder
     @AllArgsConstructor
     @Accessors(fluent = true)
     public static class ApiKey {
-        short apiKey;
-        short minVersion;
-        short maxVersion;
+
+        @Field(FieldType.INT16)
+        Short apiKey;
+
+        @Field(FieldType.INT16)
+        Short minVersion;
+
+        @Field(FieldType.INT16)
+        Short maxVersion;
     }
 }

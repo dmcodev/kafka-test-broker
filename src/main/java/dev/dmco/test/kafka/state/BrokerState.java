@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.state;
 
 import dev.dmco.test.kafka.handlers.RequestHandler;
-import dev.dmco.test.kafka.messages.KafkaRequest;
+import dev.dmco.test.kafka.messages.meta.Request;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -18,7 +18,7 @@ public class BrokerState {
         return handlersRegistry.getHandlers().stream()
             .map(RequestHandler::handledRequestTypes)
             .flatMap(Collection::stream)
-            .filter(type -> type.isAnnotationPresent(KafkaRequest.class))
+            .filter(type -> type.isAnnotationPresent(Request.class))
             .collect(Collectors.toList());
     }
 }

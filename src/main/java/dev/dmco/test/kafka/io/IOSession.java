@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,8 +45,8 @@ class IOSession {
         return requests;
     }
 
-    public boolean writeResponse(ResponseBuffer response) {
-        enqueueResponse(response);
+    public boolean writeResponse(Collection<ByteBuffer> responseBuffers) {
+        enqueueResponse(responseBuffers);
         return writeResponses();
     }
 
@@ -76,16 +77,16 @@ class IOSession {
         return true;
     }
 
-    private void enqueueResponse(ResponseBuffer response) {
-        response.header().rewind();
-        response.body().rewind();
-        writeQueue.addLast(encodeMessageSize(response));
-        writeQueue.addLast(response.header());
-        writeQueue.addLast(response.body());
+    private void enqueueResponse(Collection<ByteBuffer> responseBuffers) {
+        responseBuffers.forEach(ByteBuffer::rewind);
+        writeQueue.addLast(encodeResponseSize(responseBuffers));
+        responseBuffers.forEach(writeQueue::addLast);
     }
 
-    private ByteBuffer encodeMessageSize(ResponseBuffer response) {
-        int messageSize = response.header().remaining() + response.body().remaining();
+    private ByteBuffer encodeResponseSize(Collection<ByteBuffer> responseBuffers) {
+        int messageSize = responseBuffers.stream()
+            .mapToInt(ByteBuffer::remaining)
+            .sum();
         ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
         buffer.putInt(messageSize);
         buffer.rewind();

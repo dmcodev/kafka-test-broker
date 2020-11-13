@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.handlers;
 
-import dev.dmco.test.kafka.messages.KafkaRequest;
+import dev.dmco.test.kafka.messages.meta.Request;
 import dev.dmco.test.kafka.messages.request.ApiVersionsRequest;
 import dev.dmco.test.kafka.messages.response.ApiVersionsResponse;
 import dev.dmco.test.kafka.messages.response.ApiVersionsResponse.ApiKey;
@@ -27,8 +27,8 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
                 state.handlersRegistry().getHandlers().stream()
                     .map(RequestHandler::handledRequestTypes)
                     .flatMap(Collection::stream)
-                    .filter(type -> type.isAnnotationPresent(KafkaRequest.class))
-                    .map(type -> type.getAnnotation(KafkaRequest.class))
+                    .filter(type -> type.isAnnotationPresent(Request.class))
+                    .map(type -> type.getAnnotation(Request.class))
                     .map(metadata ->
                         ApiKey.builder()
                             .apiKey((short) metadata.apiKey())

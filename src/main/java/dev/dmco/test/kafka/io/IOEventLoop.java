@@ -7,11 +7,13 @@ import dev.dmco.test.kafka.state.BrokerState;
 import lombok.SneakyThrows;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -109,8 +111,8 @@ public class IOEventLoop implements AutoCloseable {
         ResponseMessage response = brokerState.handlersRegistry()
             .selectHandler(request)
             .handle(request, brokerState);
-        ResponseBuffer responseBuffer = encoder.encode(response, request.header());
-        if (!ioSession.writeResponse(responseBuffer)) {
+        Collection<ByteBuffer> responseBuffers = encoder.encode(response, request.header());
+        if (!ioSession.writeResponse(responseBuffers)) {
             enableWriteNotifications(selectionKey);
         }
     }

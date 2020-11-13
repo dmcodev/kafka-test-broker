@@ -1,11 +1,11 @@
 package dev.dmco.test.kafka.messages.request;
 
-import dev.dmco.test.kafka.messages.KafkaRequest;
+import dev.dmco.test.kafka.io.struct.FieldType;
 import dev.dmco.test.kafka.messages.RequestMessage;
 import dev.dmco.test.kafka.messages.data.TopicData;
-import dev.dmco.test.kafka.messages.meta.Primitive;
-import dev.dmco.test.kafka.messages.meta.PrimitiveType;
-import dev.dmco.test.kafka.messages.meta.Sequence;
+import dev.dmco.test.kafka.messages.meta.Field;
+import dev.dmco.test.kafka.messages.meta.Request;
+import dev.dmco.test.kafka.messages.meta.StructSequence;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -13,17 +13,17 @@ import java.util.List;
 
 @Value
 @Accessors(fluent = true)
-@KafkaRequest(apiKey = 0)
+@Request(apiKey = 0)
 public class ProduceRequest implements RequestMessage {
 
     RequestHeader header;
 
-    @Primitive(PrimitiveType.INT16)
+    @Field(FieldType.INT16)
     Integer acknowledgments;
 
-    @Primitive(PrimitiveType.INT32)
+    @Field(FieldType.INT32)
     Integer timeout;
 
-    @Sequence(TopicData.class)
+    @StructSequence(TopicData.class)
     List<TopicData> topicData;
 }
