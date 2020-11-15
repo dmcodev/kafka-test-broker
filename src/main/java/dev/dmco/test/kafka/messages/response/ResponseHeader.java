@@ -5,9 +5,11 @@ import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.With;
 
 @lombok.Value
 @Builder
+@With
 @AllArgsConstructor
 public class ResponseHeader {
 

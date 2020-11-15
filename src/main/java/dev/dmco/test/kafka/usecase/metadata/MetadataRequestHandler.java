@@ -1,7 +1,6 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
 import dev.dmco.test.kafka.messages.RequestHandler;
-import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.state.BrokerState;
 
 import java.util.Collections;
@@ -17,11 +16,6 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
     @Override
     public MetadataResponse handle(MetadataRequest request, BrokerState state) {
         return MetadataResponse.builder()
-            .header(
-                ResponseHeader.builder()
-                    .correlationId(request.header().correlationId())
-                    .build()
-            )
             .broker(
                 MetadataResponse.Broker.builder()
                     .nodeId(state.nodeId())

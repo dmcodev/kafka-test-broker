@@ -9,6 +9,7 @@ import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Singular;
+import lombok.With;
 import lombok.experimental.Accessors;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 @HeaderVersion(value = 1, sinceApiVersion = 9)
 @lombok.Value
 @Builder
+@With
 @AllArgsConstructor
 @Accessors(fluent = true)
 public class MetadataResponse implements ResponseMessage {
