@@ -7,35 +7,21 @@ import dev.dmco.test.kafka.io.codec.struct.fields.ValueSequenceField;
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.io.codec.value.ValueTypeCodec;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
-import dev.dmco.test.kafka.messages.meta.ApiVersionOverrides;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-@Accessors(fluent = true)
 public abstract class StructEntry implements ValueTypeCodec {
 
-    private final Map<Integer, Integer> apiVersionOverridesCache = new HashMap<>();
-    private final List<ApiVersionOverride> apiVersionOverrides;
     private final Class<?> javaType;
     private final int minApiVersion;
     private final int maxApiVersion;
-
-    @Getter private final Function<Object, Object> getter;
+    private final Function<Object, Object> getter;
 
     public StructEntry(Field field) {
         field.setAccessible(true);
@@ -43,15 +29,14 @@ public abstract class StructEntry implements ValueTypeCodec {
         getter = createGetter(field);
         minApiVersion = determineMinVersion(field);
         maxApiVersion = determineMaxVersion(field);
-        apiVersionOverrides = collectVersionOverrides(field);
-    }
-
-    public int overrideApiVersion(int apiVersion) {
-        return apiVersionOverridesCache.computeIfAbsent(apiVersion, this::calculateOverriddenVersion);
     }
 
     public boolean presentInApiVersion(int apiVersion) {
         return apiVersion >= minApiVersion && apiVersion <= maxApiVersion;
+    }
+
+    public Object valueFrom(Object struct) {
+        return getter.apply(struct);
     }
 
     public Object emptyValue() {
@@ -83,17 +68,6 @@ public abstract class StructEntry implements ValueTypeCodec {
         return struct -> valueFrom(field, struct);
     }
 
-    private List<ApiVersionOverride> collectVersionOverrides(Field field) {
-        return Optional.ofNullable(field.getAnnotation(ApiVersionOverride.class))
-            .map(Collections::singletonList)
-            .orElseGet(() ->
-                Optional.ofNullable(field.getAnnotation(ApiVersionOverrides.class))
-                    .map(ApiVersionOverrides::value)
-                    .map(mappings -> Arrays.asList(mappings))
-                    .orElseGet(Collections::emptyList)
-            );
-    }
-
     private int determineMinVersion(Field field) {
         return Optional.ofNullable(field.getAnnotation(ApiVersion.class))
             .map(ApiVersion::min)
@@ -104,15 +78,6 @@ public abstract class StructEntry implements ValueTypeCodec {
         return Optional.ofNullable(field.getAnnotation(ApiVersion.class))
             .map(ApiVersion::max)
             .orElse(Integer.MAX_VALUE);
-    }
-
-    private int calculateOverriddenVersion(int version) {
-        return apiVersionOverrides.stream()
-            .sorted(Comparator.comparingInt(ApiVersionOverride::sinceVersion).reversed())
-            .filter(mapping -> mapping.sinceVersion() <= version)
-            .map(ApiVersionOverride::value)
-            .findFirst()
-            .orElse(version);
     }
 
     public static StructEntry from(Field field) {

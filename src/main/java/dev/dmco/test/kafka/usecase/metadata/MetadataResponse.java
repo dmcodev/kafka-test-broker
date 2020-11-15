@@ -2,7 +2,7 @@ package dev.dmco.test.kafka.usecase.metadata;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
+import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
@@ -15,14 +15,15 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
+@HeaderVersion(value = 0, sinceApiVersion = 0)
+@HeaderVersion(value = 1, sinceApiVersion = 9)
 @lombok.Value
 @Builder
 @AllArgsConstructor
 @Accessors(fluent = true)
 public class MetadataResponse implements ResponseMessage {
 
-    @ApiVersionOverride(value = 0, sinceVersion = 0)
-    @ApiVersionOverride(value = 1, sinceVersion = 9)
+    @Value(ValueType.RESPOSNE_HEADER)
     ResponseHeader header;
 
     @StructSequence(Broker.class)

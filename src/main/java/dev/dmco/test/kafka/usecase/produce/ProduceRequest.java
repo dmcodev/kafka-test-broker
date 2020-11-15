@@ -2,7 +2,7 @@ package dev.dmco.test.kafka.usecase.produce;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
+import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.Request;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
@@ -15,11 +15,12 @@ import java.util.List;
 
 @Request(apiKey = 0)
 @ApiVersion(max = 2)
+@HeaderVersion(value = 1, sinceApiVersion = 0)
 @lombok.Value
 @Accessors(fluent = true)
 public class ProduceRequest implements RequestMessage {
 
-    @ApiVersionOverride(value = 1, sinceVersion = 0)
+    @Value(ValueType.REQUEST_HEADER)
     RequestHeader header;
 
     @ApiVersion(min = 3)

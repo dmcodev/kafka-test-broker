@@ -26,11 +26,7 @@ public class StructCodec {
         int apiVersion = context.apiVersion();
         for (StructEntry field : fields) {
             if (field.presentInApiVersion(apiVersion)) {
-                int overriddenApiVersion = field.overrideApiVersion(apiVersion);
-                CodecContext fieldCodecContext = (overriddenApiVersion != apiVersion)
-                    ? context.withApiVersion(overriddenApiVersion)
-                    : context;
-                Object fieldValue = field.decode(buffer, fieldCodecContext);
+                Object fieldValue = field.decode(buffer, context);
                 constructorArguments.add(fieldValue);
             } else {
                 constructorArguments.add(field.emptyValue());
@@ -44,14 +40,9 @@ public class StructCodec {
             .fields().stream()
             .filter(field -> field.presentInApiVersion(context.apiVersion()))
             .collect(Collectors.toList());
-        int apiVersion = context.apiVersion();
         for (StructEntry field : fields) {
-            int overriddenApiVersion = field.overrideApiVersion(apiVersion);
-            CodecContext fieldCodecContext = (overriddenApiVersion != apiVersion)
-                ? context.withApiVersion(overriddenApiVersion)
-                : context;
-            Object fieldValue = field.getter().apply(value);
-            field.encode(fieldValue, buffer, fieldCodecContext);
+            Object fieldValue = field.valueFrom(value);
+            field.encode(fieldValue, buffer, context);
         }
     }
 

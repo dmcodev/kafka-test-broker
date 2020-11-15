@@ -2,7 +2,7 @@ package dev.dmco.test.kafka.usecase.apiversion;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
+import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -13,13 +13,14 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
+@HeaderVersion(value = 0, sinceApiVersion = 0)
 @lombok.Value
 @Builder
 @AllArgsConstructor
 @Accessors(fluent = true)
 public class ApiVersionsResponse implements ResponseMessage {
 
-    @ApiVersionOverride(value = 0, sinceVersion = 0)
+    @Value(ValueType.RESPOSNE_HEADER)
     ResponseHeader header;
 
     @Value(ValueType.INT16)
