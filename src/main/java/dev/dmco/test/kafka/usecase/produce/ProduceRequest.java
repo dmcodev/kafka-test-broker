@@ -1,19 +1,22 @@
-package dev.dmco.test.kafka.messages.request;
+package dev.dmco.test.kafka.usecase.produce;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
-import dev.dmco.test.kafka.messages.common.Records;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
 import dev.dmco.test.kafka.messages.meta.Request;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
+import dev.dmco.test.kafka.messages.request.RequestHeader;
+import dev.dmco.test.kafka.messages.request.RequestMessage;
+import lombok.Builder;
 import lombok.experimental.Accessors;
 
 import java.util.List;
 
+@Request(apiKey = 0)
+@ApiVersion(max = 2)
 @lombok.Value
 @Accessors(fluent = true)
-@Request(apiKey = 0, maxVersion = 2)
 public class ProduceRequest implements RequestMessage {
 
     @ApiVersionOverride(value = 1, sinceVersion = 0)
@@ -51,6 +54,14 @@ public class ProduceRequest implements RequestMessage {
         Integer partition;
 
         @Value(ValueType.RECORDS)
-        Records records;
+        List<Record> records;
+    }
+
+    @lombok.Value
+    @Builder
+    @Accessors(fluent = true)
+    public static class Record {
+        byte[] key;
+        byte[] value;
     }
 }

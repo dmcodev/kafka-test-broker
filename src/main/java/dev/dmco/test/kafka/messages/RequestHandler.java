@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.handlers;
+package dev.dmco.test.kafka.messages;
 
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;

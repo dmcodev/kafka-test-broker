@@ -29,13 +29,13 @@ class IOSession {
         List<ByteBuffer> requests = new ArrayList<>();
         while (true) {
             if (bodyBuffer == null) {
-                if (!readFully(sizeBuffer)) {
+                if (notReadFully(sizeBuffer)) {
                     break;
                 }
                 int messageSize = sizeBuffer.asIntBuffer().get();
                 bodyBuffer = ByteBuffer.allocate(messageSize);
             } else {
-                if (!readFully(bodyBuffer)) {
+                if (notReadFully(bodyBuffer)) {
                     break;
                 }
                 requests.add(bodyBuffer);
@@ -65,16 +65,16 @@ class IOSession {
         return true;
     }
 
-    private boolean readFully(ByteBuffer targetBuffer) throws IOException {
+    private boolean notReadFully(ByteBuffer targetBuffer) throws IOException {
         int readBytes = channel.read(targetBuffer);
         if (readBytes == -1) {
             throw new ClosedChannelException();
         }
         if (targetBuffer.hasRemaining()) {
-            return false;
+            return true;
         }
         targetBuffer.rewind();
-        return true;
+        return false;
     }
 
     private ByteBuffer encodeResponseSize(List<ByteBuffer> responseBuffers) {

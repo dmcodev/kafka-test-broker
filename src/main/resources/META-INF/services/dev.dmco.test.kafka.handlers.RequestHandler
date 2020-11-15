@@ -1,3 +1,0 @@
-dev.dmco.test.kafka.handlers.ApiVersionsRequestHandler
-dev.dmco.test.kafka.handlers.ProduceRequestHandler
-dev.dmco.test.kafka.handlers.MetadataRequestHandler

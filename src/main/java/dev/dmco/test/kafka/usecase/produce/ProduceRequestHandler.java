@@ -1,7 +1,6 @@
-package dev.dmco.test.kafka.handlers;
+package dev.dmco.test.kafka.usecase.produce;
 
-import dev.dmco.test.kafka.messages.request.ProduceRequest;
-import dev.dmco.test.kafka.messages.response.ProduceResponse;
+import dev.dmco.test.kafka.messages.RequestHandler;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.state.BrokerState;
 

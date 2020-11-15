@@ -1,11 +1,11 @@
-package dev.dmco.test.kafka.handlers;
+package dev.dmco.test.kafka.usecase.apiversion;
 
+import dev.dmco.test.kafka.messages.RequestHandler;
+import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.messages.request.ApiVersionsRequest;
-import dev.dmco.test.kafka.messages.response.ApiVersionsResponse;
-import dev.dmco.test.kafka.messages.response.ApiVersionsResponse.ApiKey;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.state.BrokerState;
+import dev.dmco.test.kafka.usecase.apiversion.ApiVersionsResponse.ApiKey;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,16 +34,22 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
                     .map(RequestHandler::handledRequestTypes)
                     .flatMap(Collection::stream)
                     .filter(type -> type.isAnnotationPresent(Request.class))
-                    .map(type -> type.getAnnotation(Request.class))
-                    .map(metadata ->
-                        ApiKey.builder()
-                            .apiKey((short) metadata.apiKey())
-                            .minVersion((short) 0)
-                            .maxVersion((short) metadata.maxVersion())
-                            .build()
-                    )
+                    .map(this::createApiKey)
                     .collect(Collectors.toList())
             )
+            .build();
+    }
+
+    private ApiKey createApiKey(Class<?> requestType) {
+        if (!requestType.isAnnotationPresent(ApiVersion.class)) {
+            throw new IllegalStateException("Supported api version not defined for: " + requestType);
+        }
+        int apiKey = requestType.getAnnotation(Request.class).apiKey();
+        ApiVersion apiVersion = requestType.getAnnotation(ApiVersion.class);
+        return ApiKey.builder()
+            .apiKey((short) apiKey)
+            .minVersion((short) apiVersion.min())
+            .maxVersion((short) apiVersion.max())
             .build();
     }
 }

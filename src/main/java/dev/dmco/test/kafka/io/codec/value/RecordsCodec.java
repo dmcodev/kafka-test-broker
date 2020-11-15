@@ -2,8 +2,7 @@ package dev.dmco.test.kafka.io.codec.value;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.CodecContext;
-import dev.dmco.test.kafka.messages.common.Record;
-import dev.dmco.test.kafka.messages.common.Records;
+import dev.dmco.test.kafka.usecase.produce.ProduceRequest.Record;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayInputStream;
@@ -32,15 +31,12 @@ public class RecordsCodec implements ValueTypeCodec {
                 return decodeMessageSet(buffer, recordsVersion, length, context);
             }
             return decodeCompressedMessageSet(buffer, recordsVersion, compression, context);
-        } else if (recordsVersion == 2) {
-
         } else {
             throw new IllegalArgumentException("Records version (magic) " + recordsVersion + " not supported");
         }
-        return Records.builder().build();
     }
 
-    private Records decodeMessageSet(ByteBuffer buffer, byte recordsVersion, int length, CodecContext context) {
+    private List<Record> decodeMessageSet(ByteBuffer buffer, byte recordsVersion, int length, CodecContext context) {
         int endPosition = buffer.position() + length;
         buffer.limit(buffer.position() + length);
         List<Record> records = new ArrayList<>();
@@ -55,12 +51,10 @@ public class RecordsCodec implements ValueTypeCodec {
                 .build();
             records.add(record);
         }
-        return Records.builder()
-            .records(records)
-            .build();
+        return records;
     }
 
-    private Records decodeCompressedMessageSet(ByteBuffer buffer, byte recordsVersion, Compression compression, CodecContext context) {
+    private List<Record> decodeCompressedMessageSet(ByteBuffer buffer, byte recordsVersion, Compression compression, CodecContext context) {
         buffer.position(buffer.position() + MESSAGE_TIMESTAMP_OFFSET);
         if (recordsVersion == 1) {
             buffer.getLong();

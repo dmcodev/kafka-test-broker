@@ -10,7 +10,4 @@ import java.lang.annotation.Target;
 public @interface Request {
 
     int apiKey();
-
-    // TODO: calculate max version from fields metadata?
-    int maxVersion() default 0;
 }

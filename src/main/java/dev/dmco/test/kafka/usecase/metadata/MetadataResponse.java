@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.messages.response;
+package dev.dmco.test.kafka.usecase.metadata;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
@@ -6,6 +6,8 @@ import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
+import dev.dmco.test.kafka.messages.response.ResponseHeader;
+import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Singular;

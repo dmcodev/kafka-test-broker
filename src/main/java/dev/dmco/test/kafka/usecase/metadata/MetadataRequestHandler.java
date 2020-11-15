@@ -1,7 +1,6 @@
-package dev.dmco.test.kafka.handlers;
+package dev.dmco.test.kafka.usecase.metadata;
 
-import dev.dmco.test.kafka.messages.request.MetadataRequest;
-import dev.dmco.test.kafka.messages.response.MetadataResponse;
+import dev.dmco.test.kafka.messages.RequestHandler;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.state.BrokerState;
 

@@ -2,9 +2,9 @@ package dev.dmco.test.kafka.io;
 
 import dev.dmco.test.kafka.error.BrokerException;
 import dev.dmco.test.kafka.error.ErrorCode;
-import dev.dmco.test.kafka.handlers.RequestHandler;
 import dev.dmco.test.kafka.io.codec.CodecContext;
 import dev.dmco.test.kafka.io.codec.struct.StructCodec;
+import dev.dmco.test.kafka.messages.RequestHandler;
 import dev.dmco.test.kafka.messages.meta.Request;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 
