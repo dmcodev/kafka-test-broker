@@ -10,13 +10,37 @@ import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
+import dev.dmco.test.kafka.messages.request.RequestHeader;
+import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class StructEntry implements ValueTypeCodec {
+
+    private static final Map<Class<?>, ValueType> AUTO_VALUE_TYPE_MAPPING = new HashMap<>();
+
+    static {
+        AUTO_VALUE_TYPE_MAPPING.put(RequestHeader.class, ValueType.REQUEST_HEADER);
+        AUTO_VALUE_TYPE_MAPPING.put(ResponseHeader.class, ValueType.RESPOSNE_HEADER);
+        AUTO_VALUE_TYPE_MAPPING.put(byte.class, ValueType.INT8);
+        AUTO_VALUE_TYPE_MAPPING.put(short.class, ValueType.INT16);
+        AUTO_VALUE_TYPE_MAPPING.put(int.class, ValueType.INT32);
+        AUTO_VALUE_TYPE_MAPPING.put(long.class, ValueType.INT64);
+        AUTO_VALUE_TYPE_MAPPING.put(boolean.class, ValueType.BOOLEAN);
+        AUTO_VALUE_TYPE_MAPPING.put(Byte.class, ValueType.INT8);
+        AUTO_VALUE_TYPE_MAPPING.put(Short.class, ValueType.INT16);
+        AUTO_VALUE_TYPE_MAPPING.put(Integer.class, ValueType.INT32);
+        AUTO_VALUE_TYPE_MAPPING.put(Long.class, ValueType.INT64);
+        AUTO_VALUE_TYPE_MAPPING.put(Boolean.class, ValueType.BOOLEAN);
+        AUTO_VALUE_TYPE_MAPPING.put(String.class, ValueType.NULLABLE_STRING);
+    }
 
     private final Class<?> javaType;
     private final int minApiVersion;
@@ -92,6 +116,18 @@ public abstract class StructEntry implements ValueTypeCodec {
         if (field.isAnnotationPresent(ValueSequence.class)){
             ValueType elementType = field.getAnnotation(ValueSequence.class).value();
             return new ValueSequenceField(field, elementType);
+        }
+        if (Collection.class.isAssignableFrom(field.getType())) {
+            ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
+            Class<?> elementType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+            if (AUTO_VALUE_TYPE_MAPPING.containsKey(elementType)) {
+                return new ValueSequenceField(field, AUTO_VALUE_TYPE_MAPPING.get(elementType));
+            }
+            return new StructSequenceField(field, elementType);
+        }
+        if (AUTO_VALUE_TYPE_MAPPING.containsKey(field.getType())) {
+            ValueType type = AUTO_VALUE_TYPE_MAPPING.get(field.getType());
+            return new ValueField(field, type);
         }
         return new StructField(field, field.getType());
     }

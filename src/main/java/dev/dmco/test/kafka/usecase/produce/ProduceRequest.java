@@ -4,7 +4,6 @@ import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
@@ -20,20 +19,14 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ProduceRequest implements RequestMessage {
 
-    @Value(ValueType.REQUEST_HEADER)
     RequestHeader header;
 
     @ApiVersion(min = 3)
-    @Value(ValueType.NULLABLE_STRING)
     String transactionalId;
 
-    @Value(ValueType.INT16)
-    Short acks;
+    short acks;
+    int timeout;
 
-    @Value(ValueType.INT32)
-    Integer timeout;
-
-    @StructSequence(TopicData.class)
     List<TopicData> topicData;
 
     @lombok.Value
@@ -43,7 +36,6 @@ public class ProduceRequest implements RequestMessage {
         @Value(ValueType.STRING)
         String topic;
 
-        @StructSequence(PartitionRecordSet.class)
         List<PartitionRecordSet> data;
     }
 
@@ -51,8 +43,7 @@ public class ProduceRequest implements RequestMessage {
     @Accessors(fluent = true)
     public static class PartitionRecordSet {
 
-        @Value(ValueType.INT32)
-        Integer partition;
+        int partition;
 
         @Value(ValueType.RECORDS)
         List<Record> records;

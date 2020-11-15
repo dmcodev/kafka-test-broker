@@ -1,10 +1,8 @@
 package dev.dmco.test.kafka.usecase.apiversion;
 
-import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import lombok.experimental.Accessors;
@@ -17,6 +15,5 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class ApiVersionsRequest implements RequestMessage {
 
-    @Value(ValueType.REQUEST_HEADER)
     RequestHeader header;
 }

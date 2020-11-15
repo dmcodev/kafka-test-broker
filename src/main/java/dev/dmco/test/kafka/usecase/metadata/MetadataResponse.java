@@ -3,9 +3,7 @@ package dev.dmco.test.kafka.usecase.metadata;
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
-import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
-import dev.dmco.test.kafka.messages.meta.ValueSequence;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -23,18 +21,14 @@ import java.util.List;
 @Accessors(fluent = true)
 public class MetadataResponse implements ResponseMessage {
 
-    @Value(ValueType.RESPOSNE_HEADER)
     ResponseHeader header;
 
-    @StructSequence(Broker.class)
     @Singular
     List<Broker> brokers;
 
     @ApiVersion(min = 1)
-    @Value(ValueType.INT32)
-    Integer controllerId;
+    int controllerId;
 
-    @StructSequence(Topic.class)
     @Singular
     List<Topic> topics;
 
@@ -44,17 +38,14 @@ public class MetadataResponse implements ResponseMessage {
     @Accessors(fluent = true)
     public static class Broker {
 
-        @Value(ValueType.INT32)
-        Integer nodeId;
+        int nodeId;
 
         @Value(ValueType.STRING)
         String host;
 
-        @Value(ValueType.INT32)
-        Integer port;
+        int port;
 
         @ApiVersion(min = 1)
-        @Value(ValueType.NULLABLE_STRING)
         String rack;
     }
 
@@ -64,17 +55,14 @@ public class MetadataResponse implements ResponseMessage {
     @Accessors(fluent = true)
     public static class Topic {
 
-        @Value(ValueType.INT16)
-        Short errorCode;
+        short errorCode;
 
         @Value(ValueType.STRING)
         String name;
 
         @ApiVersion(min = 1)
-        @Value(ValueType.BOOLEAN)
-        Boolean isInternal;
+        boolean isInternal;
 
-        @StructSequence(Partition.class)
         @Singular
         List<Partition> partitions;
     }
@@ -85,20 +73,13 @@ public class MetadataResponse implements ResponseMessage {
     @Accessors(fluent = true)
     public static class Partition {
 
-        @Value(ValueType.INT16)
-        Short errorCode;
+        short errorCode;
+        int partitionIndex;
+        int leaderId;
 
-        @Value(ValueType.INT32)
-        Integer partitionIndex;
-
-        @Value(ValueType.INT32)
-        Integer leaderId;
-
-        @ValueSequence(ValueType.INT32)
         @Singular
         List<Integer> replicaNodes;
 
-        @ValueSequence(ValueType.INT32)
         @Singular
         List<Integer> isrNodes;
     }

@@ -4,7 +4,6 @@ import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
@@ -20,7 +19,6 @@ import java.util.List;
 @Accessors(fluent = true)
 public class MetadataRequest implements RequestMessage {
 
-    @Value(ValueType.REQUEST_HEADER)
     RequestHeader header;
 
     @ValueSequence(ValueType.STRING)
