@@ -1,3 +1,4 @@
 dev.dmco.test.kafka.usecase.apiversion.ApiVersionsRequestHandler
 dev.dmco.test.kafka.usecase.produce.ProduceRequestHandler
 dev.dmco.test.kafka.usecase.metadata.MetadataRequestHandler
+dev.dmco.test.kafka.usecase.coordinator.FindCoordinatorRequestHandler
