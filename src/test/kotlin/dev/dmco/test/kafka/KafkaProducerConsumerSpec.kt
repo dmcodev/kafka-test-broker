@@ -9,13 +9,13 @@ import java.util.Properties
 class KafkaProducerConsumerSpec : StringSpec({
 
     "Should send message to topic" {
-        val broker = TestKafkaBroker()
+        var broker = TestKafkaBroker()
 
         val props = Properties()
         props.put("bootstrap.servers", "localhost:9092")
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-        props.put("compression.type", "gzip")
+        props.put("compression.type", "none")
 
         val producer = KafkaProducer<String, String>(props)
         val f1 = producer.send(ProducerRecord("my-topic", "key1", "value1"))
@@ -23,6 +23,8 @@ class KafkaProducerConsumerSpec : StringSpec({
 
         f1.get()
         f2.get()
+
+        Thread.sleep(1000)
 
         producer.close()
 

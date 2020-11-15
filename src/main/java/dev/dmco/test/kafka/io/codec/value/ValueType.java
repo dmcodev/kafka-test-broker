@@ -2,14 +2,10 @@ package dev.dmco.test.kafka.io.codec.value;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.CodecContext;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
 
 import java.nio.ByteBuffer;
 
-@Getter
-@Accessors(fluent = true)
 public enum ValueType implements ValueTypeCodec {
 
     INT8(Int8Codec.class),

@@ -19,11 +19,11 @@ public class ValueField extends StructEntry {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
-        return type.codec().decode(buffer, context);
+        return type.decode(buffer, context);
     }
 
     @Override
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
-        type.codec().encode(value, buffer, context);
+        type.encode(value, buffer, context);
     }
 }

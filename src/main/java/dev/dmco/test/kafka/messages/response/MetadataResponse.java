@@ -1,8 +1,8 @@
 package dev.dmco.test.kafka.messages.response;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
-import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
@@ -27,7 +27,7 @@ public class MetadataResponse implements ResponseMessage {
     @Singular
     List<Broker> brokers;
 
-    @RequiredApiVersion(min = 1)
+    @ApiVersion(min = 1)
     @Value(ValueType.INT32)
     Integer controllerId;
 
@@ -50,7 +50,7 @@ public class MetadataResponse implements ResponseMessage {
         @Value(ValueType.INT32)
         Integer port;
 
-        @RequiredApiVersion(min = 1)
+        @ApiVersion(min = 1)
         @Value(ValueType.NULLABLE_STRING)
         String rack;
     }
@@ -67,6 +67,7 @@ public class MetadataResponse implements ResponseMessage {
         @Value(ValueType.STRING)
         String name;
 
+        @ApiVersion(min = 1)
         @Value(ValueType.BOOLEAN)
         Boolean isInternal;
 

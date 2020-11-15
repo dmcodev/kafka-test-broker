@@ -4,8 +4,10 @@ import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -15,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -78,6 +81,8 @@ public class IOEventLoop implements AutoCloseable {
                             if (selectionKey.isWritable()) {
                                 onClientConnectionWritable(selectionKey);
                             }
+                        } catch (ClosedChannelException closedChannelException) {
+                            closeSelectionKey(selectionKey);
                         } catch (Exception error) {
                             System.err.println("Connection error");
                             error.printStackTrace();
@@ -90,15 +95,14 @@ public class IOEventLoop implements AutoCloseable {
         }
     }
 
-    @SneakyThrows
-    private void onClientConnectionInitializing() {
+    private void onClientConnectionInitializing() throws IOException {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
         IOSession ioSession = new IOSession(clientChannel);
         clientChannel.register(selector, SelectionKey.OP_READ, ioSession);
     }
 
-    private void onClientConnectionReadable(SelectionKey selectionKey) {
+    private void onClientConnectionReadable(SelectionKey selectionKey) throws IOException {
         IOSession ioSession = (IOSession) selectionKey.attachment();
         ioSession.readRequests()
             .stream()
@@ -161,9 +165,11 @@ public class IOEventLoop implements AutoCloseable {
         }
     }
 
+    @SneakyThrows
     private void stopExecutorService() {
         if (executorService != null) {
-            executorService.shutdownNow();
+            executorService.shutdown();
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
         }
     }
 }

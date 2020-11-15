@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.io;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -24,8 +25,7 @@ class IOSession {
 
     private ByteBuffer bodyBuffer;
 
-    @SneakyThrows
-    public List<ByteBuffer> readRequests() {
+    public List<ByteBuffer> readRequests() throws IOException {
         List<ByteBuffer> requests = new ArrayList<>();
         while (true) {
             if (bodyBuffer == null) {
@@ -65,8 +65,7 @@ class IOSession {
         return true;
     }
 
-    @SneakyThrows
-    private boolean readFully(ByteBuffer targetBuffer) {
+    private boolean readFully(ByteBuffer targetBuffer) throws IOException {
         int readBytes = channel.read(targetBuffer);
         if (readBytes == -1) {
             throw new ClosedChannelException();

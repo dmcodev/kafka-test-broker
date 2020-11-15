@@ -18,12 +18,11 @@ public class ValueSequenceField extends SequenceField {
 
     @Override
     protected Object decodeElement(ByteBuffer buffer, CodecContext context) {
-        return elementType.codec().decode(buffer, context);
+        return elementType.decode(buffer, context);
     }
 
     @Override
     protected void encodeElement(Object element, ResponseBuffer buffer, CodecContext context) {
-        elementType.codec()
-            .encode(element, buffer, context);
+        elementType.encode(element, buffer, context);
     }
 }

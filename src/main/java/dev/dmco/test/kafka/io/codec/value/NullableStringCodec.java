@@ -13,8 +13,7 @@ public class NullableStringCodec implements ValueTypeCodec {
         int length = buffer.getShort();
         if (length >= 0) {
             buffer.reset();
-            return ValueType.STRING.codec()
-                .decode(buffer, context);
+            return ValueType.STRING.decode(buffer, context);
         }
         return null;
     }
@@ -22,8 +21,7 @@ public class NullableStringCodec implements ValueTypeCodec {
     @Override
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
         if (value != null) {
-            ValueType.STRING.codec()
-                .encode(value, buffer, context);
+            ValueType.STRING.encode(value, buffer, context);
         } else {
             buffer.putShort((short) -1);
         }

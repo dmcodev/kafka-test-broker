@@ -1,8 +1,8 @@
 package dev.dmco.test.kafka.messages.response;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
-import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.AllArgsConstructor;
@@ -26,11 +26,11 @@ public class ApiVersionsResponse implements ResponseMessage {
     @StructSequence(ApiKey.class)
     List<ApiKey> apiKeys;
 
-    @RequiredApiVersion(min = 2)
+    @ApiVersion(min = 2)
     @Value(ValueType.INT32)
     Integer throttleTimeMs;
 
-    @RequiredApiVersion(min = 3)
+    @ApiVersion(min = 3)
     @Value(ValueType.TAGS_BUFFER)
     byte[] tagsBuffer;
 

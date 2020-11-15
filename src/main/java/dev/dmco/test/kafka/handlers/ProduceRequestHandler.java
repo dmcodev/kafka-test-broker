@@ -24,6 +24,18 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
                     .correlationId(request.header().correlationId())
                     .build()
             )
+            .topic(
+                ProduceResponse.Topic.builder()
+                    .name("my-topic")
+                    .partition(
+                        ProduceResponse.Partition.builder()
+                            .partition(0)
+                            .errorCode((short) 0)
+                            .baseOffset(1L)
+                            .build()
+                    )
+                    .build()
+            )
             .build();
     }
 }

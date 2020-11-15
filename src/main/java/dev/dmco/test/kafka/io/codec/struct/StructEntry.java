@@ -6,9 +6,9 @@ import dev.dmco.test.kafka.io.codec.struct.fields.ValueField;
 import dev.dmco.test.kafka.io.codec.struct.fields.ValueSequenceField;
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.io.codec.value.ValueTypeCodec;
+import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
 import dev.dmco.test.kafka.messages.meta.ApiVersionOverrides;
-import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.meta.ValueSequence;
@@ -95,14 +95,14 @@ public abstract class StructEntry implements ValueTypeCodec {
     }
 
     private int determineMinVersion(Field field) {
-        return Optional.ofNullable(field.getAnnotation(RequiredApiVersion.class))
-            .map(RequiredApiVersion::min)
+        return Optional.ofNullable(field.getAnnotation(ApiVersion.class))
+            .map(ApiVersion::min)
             .orElse(0);
     }
 
     private int determineMaxVersion(Field field) {
-        return Optional.ofNullable(field.getAnnotation(RequiredApiVersion.class))
-            .map(RequiredApiVersion::max)
+        return Optional.ofNullable(field.getAnnotation(ApiVersion.class))
+            .map(ApiVersion::max)
             .orElse(Integer.MAX_VALUE);
     }
 

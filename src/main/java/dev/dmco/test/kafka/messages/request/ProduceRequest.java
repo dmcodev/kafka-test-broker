@@ -2,9 +2,9 @@ package dev.dmco.test.kafka.messages.request;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.common.Records;
+import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.experimental.Accessors;
@@ -19,7 +19,7 @@ public class ProduceRequest implements RequestMessage {
     @ApiVersionOverride(value = 1, sinceVersion = 0)
     RequestHeader header;
 
-    @RequiredApiVersion(min = 3)
+    @ApiVersion(min = 3)
     @Value(ValueType.NULLABLE_STRING)
     String transactionalId;
 

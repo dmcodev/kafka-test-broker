@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 public class TestKafkaBrokerConfig {
 
     @Builder.Default
-    String host = "0.0.0.0";
+    String host = "localhost";
 
     @Builder.Default
     int port = 9092;
