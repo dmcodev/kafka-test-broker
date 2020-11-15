@@ -1,11 +1,13 @@
 package dev.dmco.test.kafka.messages.common;
 
-import lombok.Value;
+import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.experimental.Accessors;
 
-@Value
+@lombok.Value
 @Accessors(fluent = true)
 public class Record {
-    byte[] key;
-    byte[] body;
+
+    @Value(ValueType.VARINT)
+    Integer length;
 }

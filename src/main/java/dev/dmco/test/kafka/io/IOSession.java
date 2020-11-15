@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.io;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
@@ -44,17 +45,17 @@ class IOSession {
         return requests;
     }
 
-    public void enqueueResponse(ByteBuffer responseBuffer) {
-        responseBuffer.rewind();
-        writeQueue.addLast(encodeResponseSize(responseBuffer));
-        writeQueue.addLast(responseBuffer);
+    public void enqueueResponse(List<ByteBuffer> responseBuffers) {
+        responseBuffers.forEach(Buffer::rewind);
+        writeQueue.addLast(encodeResponseSize(responseBuffers));
+        responseBuffers.forEach(writeQueue::addLast);
     }
 
     @SneakyThrows
     public boolean writeResponses() {
         ByteBuffer buffer;
         while ((buffer = writeQueue.peekFirst()) != null) {
-            if (channel.write(buffer) == 0) {
+            if (buffer.limit() > 0 && channel.write(buffer) == 0) {
                 return false;
             }
             if (!buffer.hasRemaining()) {
@@ -77,9 +78,12 @@ class IOSession {
         return true;
     }
 
-    private ByteBuffer encodeResponseSize(ByteBuffer responseBuffer) {
+    private ByteBuffer encodeResponseSize(List<ByteBuffer> responseBuffers) {
+        int size = responseBuffers.stream()
+            .mapToInt(Buffer::remaining)
+            .sum();
         ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
-        buffer.putInt(responseBuffer.remaining());
+        buffer.putInt(size);
         buffer.rewind();
         return buffer;
     }

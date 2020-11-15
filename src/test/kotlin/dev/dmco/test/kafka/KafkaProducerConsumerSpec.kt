@@ -16,9 +16,10 @@ class KafkaProducerConsumerSpec : StringSpec({
         props.put("acks", "all")
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+        props.put("compression.type", "none")
 
         val producer = KafkaProducer<String, String>(props)
-        producer.send(ProducerRecord("my-topic", "key", "value"))
+        producer.send(ProducerRecord("my-topic", "key", "value")).get()
         producer.close()
 
         broker.close()

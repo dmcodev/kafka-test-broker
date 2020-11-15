@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.io.struct;
+package dev.dmco.test.kafka.io.codec.struct;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,14 +12,14 @@ import java.util.stream.Collectors;
 @Getter
 @RequiredArgsConstructor
 @Accessors(fluent = true)
-public class StructHandle {
+public class Struct {
 
-    private final Collection<FieldHandle> fields;
+    private final Collection<StructEntry> fields;
     private final Constructor<?> constructor;
 
-    public StructHandle(Class<?> type) {
+    public Struct(Class<?> type) {
         fields = Arrays.stream(type.getDeclaredFields())
-            .map(FieldHandle::from)
+            .map(StructEntry::from)
             .collect(Collectors.toList());
         constructor = type.getConstructors()[0];
     }

@@ -1,29 +1,28 @@
 package dev.dmco.test.kafka.messages.request;
 
-import dev.dmco.test.kafka.io.struct.FieldType;
-import dev.dmco.test.kafka.messages.meta.Field;
-import dev.dmco.test.kafka.messages.meta.SinceVersion;
-import lombok.Value;
+import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
+import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.experimental.Accessors;
 
-@Value
+@lombok.Value
 @Accessors(fluent = true)
 public class RequestHeader {
 
-    @Field(FieldType.INT16)
+    @Value(ValueType.INT16)
     Short apiKey;
 
-    @Field(FieldType.INT16)
+    @Value(ValueType.INT16)
     Short apiVersion;
 
-    @Field(FieldType.INT32)
+    @Value(ValueType.INT32)
     Integer correlationId;
 
-    @SinceVersion(1)
-    @Field(FieldType.NULLABLE_STRING)
+    @RequiredApiVersion(min = 1)
+    @Value(ValueType.NULLABLE_STRING)
     String clientId;
 
-    @SinceVersion(2)
-    @Field(FieldType.TAGS_BUFFER)
+    @RequiredApiVersion(min = 2)
+    @Value(ValueType.TAGS_BUFFER)
     byte[] tagsBuffer;
 }

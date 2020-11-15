@@ -1,23 +1,22 @@
 package dev.dmco.test.kafka.messages.response;
 
-import dev.dmco.test.kafka.io.struct.FieldType;
-import dev.dmco.test.kafka.messages.meta.Field;
-import dev.dmco.test.kafka.messages.meta.SinceVersion;
+import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
+import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
 import lombok.experimental.Accessors;
 
-@Value
+@lombok.Value
 @Builder
 @AllArgsConstructor
 @Accessors(fluent = true)
 public class ResponseHeader {
 
-    @Field(FieldType.INT32)
+    @Value(ValueType.INT32)
     Integer correlationId;
 
-    @SinceVersion(1)
-    @Field(FieldType.TAGS_BUFFER)
+    @RequiredApiVersion(min = 1)
+    @Value(ValueType.TAGS_BUFFER)
     byte[] tagsBuffer;
 }

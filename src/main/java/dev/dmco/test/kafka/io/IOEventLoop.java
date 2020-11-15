@@ -12,6 +12,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -112,8 +113,8 @@ public class IOEventLoop implements AutoCloseable {
 
     private void handleRequest(RequestMessage request, IOSession ioSession, SelectionKey selectionKey) {
         ResponseMessage response = requestHandler.apply(request);
-        ByteBuffer responseBuffer = encoder.encode(response, request.header());
-        ioSession.enqueueResponse(responseBuffer);
+        List<ByteBuffer> responseBuffers = encoder.encode(response, request.header());
+        ioSession.enqueueResponse(responseBuffers);
         writeResponses(selectionKey);
     }
 

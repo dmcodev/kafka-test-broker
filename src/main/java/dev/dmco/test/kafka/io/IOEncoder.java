@@ -1,45 +1,28 @@
 package dev.dmco.test.kafka.io;
 
-import dev.dmco.test.kafka.io.struct.FieldHandle;
-import dev.dmco.test.kafka.io.struct.StructHandle;
+import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
+import dev.dmco.test.kafka.io.codec.CodecContext;
+import dev.dmco.test.kafka.io.codec.struct.StructCodec;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
+import java.util.List;
 
 public class IOEncoder {
 
-    private final Map<Class<?>, StructHandle> typeMetadata = new HashMap<>();
+    private final StructCodec codec = new StructCodec();
 
-    public ByteBuffer encode(ResponseMessage response, RequestHeader header) {
+    public List<ByteBuffer> encode(ResponseMessage response, RequestHeader header) {
+        Class<?> responseType = response.getClass();
         int apiVersion = header.apiVersion();
-        int size = encodedSize(response, apiVersion);
-        ByteBuffer buffer = ByteBuffer.allocate(size);
-        encode(response, apiVersion, buffer);
-        return buffer;
-    }
-
-    public int encodedSize(Object instance, int apiVersion) {
-        return getFieldsFor(instance, apiVersion)
-            .mapToInt(field -> field.encodedSize(instance, field.effectiveVersion(apiVersion), this))
-            .sum();
-    }
-
-    public void encode(Object instance, int apiVersion, ByteBuffer buffer) {
-        getFieldsFor(instance, apiVersion)
-            .forEach(field -> field.encode(instance, field.effectiveVersion(apiVersion), buffer, this));
-    }
-
-    private StructHandle getMetadata(Class<?> type) {
-        return typeMetadata.computeIfAbsent(type, StructHandle::new);
-    }
-
-    private Stream<FieldHandle> getFieldsFor(Object instance, int apiVersion) {
-        return getMetadata(instance.getClass())
-            .fields().stream()
-            .filter(field -> field.presentInVersion(apiVersion));
+        CodecContext codecContext = CodecContext.builder()
+            .messageType(responseType)
+            .apiVersion(apiVersion)
+            .structCodec(codec)
+            .build();
+        ResponseBuffer buffer = new ResponseBuffer();
+        codec.encode(response, buffer, codecContext);
+        return buffer.buffers();
     }
 }

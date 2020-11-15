@@ -7,7 +7,9 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SinceVersion {
+public @interface RequiredApiVersion {
 
-    int value();
+    int min();
+
+    int max() default Integer.MAX_VALUE;
 }

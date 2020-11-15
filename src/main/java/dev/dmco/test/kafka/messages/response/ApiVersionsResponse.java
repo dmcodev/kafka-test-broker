@@ -1,55 +1,52 @@
 package dev.dmco.test.kafka.messages.response;
 
-import dev.dmco.test.kafka.io.struct.FieldType;
-import dev.dmco.test.kafka.messages.meta.Field;
-import dev.dmco.test.kafka.messages.meta.SinceVersion;
-import dev.dmco.test.kafka.messages.meta.Struct;
+import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.meta.ApiVersionOverride;
+import dev.dmco.test.kafka.messages.meta.RequiredApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
-import dev.dmco.test.kafka.messages.meta.VersionOverride;
+import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
 import lombok.experimental.Accessors;
 
 import java.util.List;
 
-@Value
+@lombok.Value
 @Builder
 @AllArgsConstructor
 @Accessors(fluent = true)
 public class ApiVersionsResponse implements ResponseMessage {
 
-    @Struct
-    @VersionOverride(value = 0, sinceVersion = 0)
+    @ApiVersionOverride(value = 0, sinceVersion = 0)
     ResponseHeader header;
 
-    @Field(FieldType.INT16)
+    @Value(ValueType.INT16)
     Short errorCode;
 
     @StructSequence(ApiKey.class)
     List<ApiKey> apiKeys;
 
-    @SinceVersion(2)
-    @Field(FieldType.INT32)
+    @RequiredApiVersion(min = 2)
+    @Value(ValueType.INT32)
     Integer throttleTimeMs;
 
-    @SinceVersion(3)
-    @Field(FieldType.TAGS_BUFFER)
+    @RequiredApiVersion(min = 3)
+    @Value(ValueType.TAGS_BUFFER)
     byte[] tagsBuffer;
 
-    @Value
+    @lombok.Value
     @Builder
     @AllArgsConstructor
     @Accessors(fluent = true)
     public static class ApiKey {
 
-        @Field(FieldType.INT16)
+        @Value(ValueType.INT16)
         Short apiKey;
 
-        @Field(FieldType.INT16)
+        @Value(ValueType.INT16)
         Short minVersion;
 
-        @Field(FieldType.INT16)
+        @Value(ValueType.INT16)
         Short maxVersion;
     }
 }
