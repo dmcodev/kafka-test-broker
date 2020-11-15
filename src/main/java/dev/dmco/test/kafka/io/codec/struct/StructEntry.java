@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @Accessors(fluent = true)
-public abstract class StructEntry extends ValueTypeCodec {
+public abstract class StructEntry implements ValueTypeCodec {
 
     private final Map<Integer, Integer> apiVersionOverridesCache = new HashMap<>();
     private final List<ApiVersionOverride> apiVersionOverrides;

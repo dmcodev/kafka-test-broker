@@ -13,7 +13,7 @@ import java.util.List;
 
 @lombok.Value
 @Accessors(fluent = true)
-@Request(apiKey = 0, maxVersion = 3)
+@Request(apiKey = 0, maxVersion = 2)
 public class ProduceRequest implements RequestMessage {
 
     @ApiVersionOverride(value = 1, sinceVersion = 0)

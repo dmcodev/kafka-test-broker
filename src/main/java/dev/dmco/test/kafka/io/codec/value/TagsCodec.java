@@ -5,7 +5,7 @@ import dev.dmco.test.kafka.io.codec.CodecContext;
 
 import java.nio.ByteBuffer;
 
-public class TagsCodec extends ValueTypeCodec {
+public class TagsCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

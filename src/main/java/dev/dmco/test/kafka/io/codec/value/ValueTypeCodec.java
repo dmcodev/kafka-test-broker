@@ -5,9 +5,9 @@ import dev.dmco.test.kafka.io.codec.CodecContext;
 
 import java.nio.ByteBuffer;
 
-public abstract class ValueTypeCodec {
+public interface ValueTypeCodec {
 
-    public abstract Object decode(ByteBuffer buffer, CodecContext context);
+    Object decode(ByteBuffer buffer, CodecContext context);
 
-    public abstract void encode(Object value, ResponseBuffer buffer, CodecContext context);
+    void encode(Object value, ResponseBuffer buffer, CodecContext context);
 }

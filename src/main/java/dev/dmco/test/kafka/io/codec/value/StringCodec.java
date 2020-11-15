@@ -6,7 +6,7 @@ import dev.dmco.test.kafka.io.codec.CodecContext;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class StringCodec extends ValueTypeCodec {
+public class StringCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

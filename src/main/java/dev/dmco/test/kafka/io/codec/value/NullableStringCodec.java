@@ -5,7 +5,7 @@ import dev.dmco.test.kafka.io.codec.CodecContext;
 
 import java.nio.ByteBuffer;
 
-public class NullableStringCodec extends ValueTypeCodec {
+public class NullableStringCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

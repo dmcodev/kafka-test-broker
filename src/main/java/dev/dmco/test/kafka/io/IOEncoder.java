@@ -23,6 +23,6 @@ public class IOEncoder {
             .build();
         ResponseBuffer buffer = new ResponseBuffer();
         codec.encode(response, buffer, codecContext);
-        return buffer.buffers();
+        return buffer.collect();
     }
 }

@@ -5,15 +5,20 @@ import dev.dmco.test.kafka.io.codec.CodecContext;
 
 import java.nio.ByteBuffer;
 
-public class Int8Codec implements ValueTypeCodec {
+public class BytesCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
-        return buffer.get();
+        int length = buffer.getInt();
+        byte[] bytes = new byte[length];
+        buffer.get(bytes);
+        return bytes;
     }
 
     @Override
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
-        buffer.putByte(value != null ? (byte) value : 0);
+        byte[] bytes = (byte[]) value;
+        buffer.putInt(bytes.length);
+        buffer.putBytes(bytes);
     }
 }

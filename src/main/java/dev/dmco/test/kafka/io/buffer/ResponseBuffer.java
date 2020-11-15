@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.io.buffer;
 import lombok.experimental.Accessors;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class ResponseBuffer {
     private ByteBuffer buffer;
 
     public ResponseBuffer() {
-        this(1);
+        this(32);
     }
 
     public ResponseBuffer(int chunkSize) {
@@ -62,24 +63,27 @@ public class ResponseBuffer {
         return this;
     }
 
-    public List<ByteBuffer> buffers() {
-        enqueueBuffer();
-        return buffers;
+    public List<ByteBuffer> collect() {
+        enqueue();
+        List<ByteBuffer> result = new ArrayList<>(buffers);
+        buffers.clear();
+        buffer = null;
+        return result;
     }
 
     private void requireBytes(int requiredBytes) {
-        if (buffer.remaining() < requiredBytes) {
+        if (buffer == null || buffer.remaining() < requiredBytes) {
             allocate(requiredBytes);
         }
     }
 
     private void allocate(int requiredBytes) {
-        enqueueBuffer();
+        enqueue();
         int allocationSize = Math.max(requiredBytes, chunkSize);
         buffer = ByteBuffer.allocate(allocationSize);
     }
 
-    private void enqueueBuffer() {
+    private void enqueue() {
         if (buffer != null) {
             buffer.limit(buffer.position());
             buffers.addLast(buffer);
