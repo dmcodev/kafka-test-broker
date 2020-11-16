@@ -1,10 +1,8 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
-import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.Request;
-import dev.dmco.test.kafka.messages.meta.ValueSequence;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import lombok.experimental.Accessors;
@@ -21,7 +19,6 @@ public class MetadataRequest implements RequestMessage {
 
     RequestHeader header;
 
-    @ValueSequence(ValueType.STRING)
     List<String> topicNames;
 
 //    @SinceVersion(4)

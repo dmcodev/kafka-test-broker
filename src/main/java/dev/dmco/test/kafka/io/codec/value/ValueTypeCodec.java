@@ -14,4 +14,12 @@ public interface ValueTypeCodec {
     default int decodeUVarInt(ByteBuffer buffer, CodecContext context) {
         return (int) ValueType.UVARINT.decode(buffer, context);
     }
+
+    default String decodeString(ByteBuffer buffer, CodecContext context) {
+        return (String) ValueType.STRING.decode(buffer, context);
+    }
+
+    default void encodeString(String value, ResponseBuffer buffer, CodecContext context) {
+        ValueType.STRING.encode(value, buffer, context);
+    }
 }

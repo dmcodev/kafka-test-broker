@@ -42,7 +42,8 @@ public abstract class StructEntry implements ValueTypeCodec {
         mapping(ValueType.INT64, Long.class),
         mapping(ValueType.BOOLEAN, boolean.class),
         mapping(ValueType.BOOLEAN, Boolean.class),
-        mapping(ValueType.NULLABLE_STRING, String.class),
+        mapping(ValueType.STRING, String.class),
+        mapping(ValueType.NULLABLE_STRING, Optional.class, String.class),
         mapping(ValueType.TAGS_BUFFER, Collection.class, Tag.class)
     );
 

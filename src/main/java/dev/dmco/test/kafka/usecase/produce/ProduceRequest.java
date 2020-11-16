@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.experimental.Accessors;
 
 import java.util.List;
+import java.util.Optional;
 
 @Request(apiKey = 0)
 @ApiVersion(max = 2)
@@ -22,7 +23,7 @@ public class ProduceRequest implements RequestMessage {
     RequestHeader header;
 
     @ApiVersion(min = 3)
-    String transactionalId;
+    Optional<String> transactionalId;
 
     short acks;
     int timeout;
@@ -33,7 +34,6 @@ public class ProduceRequest implements RequestMessage {
     @Accessors(fluent = true)
     public static class TopicData {
 
-        @Value(ValueType.STRING)
         String topic;
 
         List<PartitionRecordSet> data;

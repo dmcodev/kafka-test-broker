@@ -4,6 +4,7 @@ import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.CodecContext;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 public class NullableStringCodec implements ValueTypeCodec {
 
@@ -13,15 +14,16 @@ public class NullableStringCodec implements ValueTypeCodec {
         int length = buffer.getShort();
         if (length >= 0) {
             buffer.reset();
-            return ValueType.STRING.decode(buffer, context);
+            return Optional.ofNullable(decodeString(buffer, context));
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
-        if (value != null) {
-            ValueType.STRING.encode(value, buffer, context);
+        Optional<String> optionalString = (Optional<String>) value;
+        if (optionalString != null && optionalString.isPresent()) {
+            encodeString(optionalString.get(), buffer, context);
         } else {
             buffer.putShort((short) -1);
         }

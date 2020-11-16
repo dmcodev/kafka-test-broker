@@ -1,9 +1,7 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
-import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
-import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -13,6 +11,7 @@ import lombok.With;
 import lombok.experimental.Accessors;
 
 import java.util.List;
+import java.util.Optional;
 
 @HeaderVersion(value = 0, sinceApiVersion = 0)
 @HeaderVersion(value = 1, sinceApiVersion = 9)
@@ -42,13 +41,12 @@ public class MetadataResponse implements ResponseMessage {
 
         int nodeId;
 
-        @Value(ValueType.STRING)
         String host;
 
         int port;
 
         @ApiVersion(min = 1)
-        String rack;
+        Optional<String> rack;
     }
 
     @lombok.Value
@@ -59,7 +57,6 @@ public class MetadataResponse implements ResponseMessage {
 
         short errorCode;
 
-        @Value(ValueType.STRING)
         String name;
 
         @ApiVersion(min = 1)

@@ -5,6 +5,7 @@ import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import lombok.experimental.Accessors;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @lombok.Value
 @Accessors(fluent = true)
@@ -15,7 +16,7 @@ public class RequestHeader {
     int correlationId;
 
     @ApiVersion(min = 1)
-    String clientId;
+    Optional<String> clientId;
 
     @ApiVersion(min = 2)
     Collection<Tag> tags;
