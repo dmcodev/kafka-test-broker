@@ -15,6 +15,13 @@ public class TestKafkaBrokerConfig {
     @Builder.Default
     int port = 9092;
 
+    @Value
+    @Builder
+    @Accessors(fluent = true)
+    public static class TopicConfig {
+
+    }
+
     public static TestKafkaBrokerConfig getDefault() {
         return TestKafkaBrokerConfig.builder().build();
     }

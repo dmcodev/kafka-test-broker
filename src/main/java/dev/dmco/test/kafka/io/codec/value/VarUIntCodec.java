@@ -5,19 +5,19 @@ import dev.dmco.test.kafka.io.codec.CodecContext;
 
 import java.nio.ByteBuffer;
 
-public class VarintCodec implements ValueTypeCodec {
+public class VarUIntCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
-        int value = 0;
-        int i = 0;
-        int b;
-        while (((b = buffer.get()) & 0x80) != 0) {
-            value |= (b & 0x7f) << i;
-            i += 7;
-        }
-        value |= b << i;
-        return value;
+        int result = 0;
+        int wordNumber = 0;
+        int word;
+        do {
+            word = buffer.get();
+            result |= (word & 0b01111111) << (7 * wordNumber);
+            wordNumber++;
+        } while ((word & 0b10000000) > 0);
+        return result;
     }
 
     @Override

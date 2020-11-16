@@ -1,11 +1,12 @@
 package dev.dmco.test.kafka.messages.response;
 
-import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.common.Tag;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.With;
+
+import java.util.Collection;
 
 @lombok.Value
 @Builder
@@ -16,6 +17,5 @@ public class ResponseHeader {
     int correlationId;
 
     @ApiVersion(min = 1)
-    @Value(ValueType.TAGS_BUFFER)
-    byte[] tagsBuffer;
+    Collection<Tag> tags;
 }

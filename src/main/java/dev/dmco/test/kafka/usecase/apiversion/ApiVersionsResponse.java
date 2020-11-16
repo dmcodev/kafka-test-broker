@@ -1,9 +1,8 @@
 package dev.dmco.test.kafka.usecase.apiversion;
 
-import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.common.Tag;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
-import dev.dmco.test.kafka.messages.meta.Value;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -11,6 +10,7 @@ import lombok.Builder;
 import lombok.With;
 import lombok.experimental.Accessors;
 
+import java.util.Collection;
 import java.util.List;
 
 @HeaderVersion(value = 0, sinceApiVersion = 0)
@@ -29,8 +29,7 @@ public class ApiVersionsResponse implements ResponseMessage {
     int throttleTimeMs;
 
     @ApiVersion(min = 3)
-    @Value(ValueType.TAGS_BUFFER)
-    byte[] tagsBuffer;
+    Collection<Tag> tags;
 
     @lombok.Value
     @Builder

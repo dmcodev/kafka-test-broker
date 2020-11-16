@@ -6,6 +6,7 @@ import dev.dmco.test.kafka.io.codec.struct.fields.ValueField;
 import dev.dmco.test.kafka.io.codec.struct.fields.ValueSequenceField;
 import dev.dmco.test.kafka.io.codec.value.ValueType;
 import dev.dmco.test.kafka.io.codec.value.ValueTypeCodec;
+import dev.dmco.test.kafka.messages.common.Tag;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.StructSequence;
 import dev.dmco.test.kafka.messages.meta.Value;
@@ -16,31 +17,34 @@ import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static dev.dmco.test.kafka.io.codec.struct.StructEntry.TypeKeyMapping.mapping;
+
 public abstract class StructEntry implements ValueTypeCodec {
 
-    private static final Map<Class<?>, ValueType> AUTO_VALUE_TYPE_MAPPING = new HashMap<>();
-
-    static {
-        AUTO_VALUE_TYPE_MAPPING.put(RequestHeader.class, ValueType.REQUEST_HEADER);
-        AUTO_VALUE_TYPE_MAPPING.put(ResponseHeader.class, ValueType.RESPOSNE_HEADER);
-        AUTO_VALUE_TYPE_MAPPING.put(byte.class, ValueType.INT8);
-        AUTO_VALUE_TYPE_MAPPING.put(short.class, ValueType.INT16);
-        AUTO_VALUE_TYPE_MAPPING.put(int.class, ValueType.INT32);
-        AUTO_VALUE_TYPE_MAPPING.put(long.class, ValueType.INT64);
-        AUTO_VALUE_TYPE_MAPPING.put(boolean.class, ValueType.BOOLEAN);
-        AUTO_VALUE_TYPE_MAPPING.put(Byte.class, ValueType.INT8);
-        AUTO_VALUE_TYPE_MAPPING.put(Short.class, ValueType.INT16);
-        AUTO_VALUE_TYPE_MAPPING.put(Integer.class, ValueType.INT32);
-        AUTO_VALUE_TYPE_MAPPING.put(Long.class, ValueType.INT64);
-        AUTO_VALUE_TYPE_MAPPING.put(Boolean.class, ValueType.BOOLEAN);
-        AUTO_VALUE_TYPE_MAPPING.put(String.class, ValueType.NULLABLE_STRING);
-    }
+    private static final Collection<TypeKeyMapping> AUTO_VALUE_TYPE_MAPPING = Arrays.asList(
+        mapping(ValueType.REQUEST_HEADER, RequestHeader.class),
+        mapping(ValueType.RESPOSNE_HEADER, ResponseHeader.class),
+        mapping(ValueType.INT8, byte.class),
+        mapping(ValueType.INT8, Byte.class),
+        mapping(ValueType.INT16, short.class),
+        mapping(ValueType.INT16, Short.class),
+        mapping(ValueType.INT32, int.class),
+        mapping(ValueType.INT32, Integer.class),
+        mapping(ValueType.INT64, long.class),
+        mapping(ValueType.INT64, Long.class),
+        mapping(ValueType.BOOLEAN, boolean.class),
+        mapping(ValueType.BOOLEAN, Boolean.class),
+        mapping(ValueType.NULLABLE_STRING, String.class),
+        mapping(ValueType.TAGS_BUFFER, Collection.class, Tag.class)
+    );
 
     private final Class<?> javaType;
     private final int minApiVersion;
@@ -117,18 +121,99 @@ public abstract class StructEntry implements ValueTypeCodec {
             ValueType elementType = field.getAnnotation(ValueSequence.class).value();
             return new ValueSequenceField(field, elementType);
         }
+        TypeKey typeKey = TypeKey.from(field);
+        ValueType autoType = findAutoType(typeKey);
+        if (autoType != null) {
+            return new ValueField(field, autoType);
+        }
         if (Collection.class.isAssignableFrom(field.getType())) {
-            ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
-            Class<?> elementType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
-            if (AUTO_VALUE_TYPE_MAPPING.containsKey(elementType)) {
-                return new ValueSequenceField(field, AUTO_VALUE_TYPE_MAPPING.get(elementType));
+            ParameterizedType fieldParameterizedType = (ParameterizedType) field.getGenericType();
+            Type elementGenericType = fieldParameterizedType.getActualTypeArguments()[0];
+            TypeKey elementTypeKey = TypeKey.from(elementGenericType);
+            ValueType elementAutoType = findAutoType(elementTypeKey);
+            if (elementAutoType != null) {
+                return new ValueSequenceField(field, elementAutoType);
             }
-            return new StructSequenceField(field, elementType);
+            return new StructSequenceField(field, elementTypeKey.rawType());
         }
-        if (AUTO_VALUE_TYPE_MAPPING.containsKey(field.getType())) {
-            ValueType type = AUTO_VALUE_TYPE_MAPPING.get(field.getType());
-            return new ValueField(field, type);
+        return new StructField(field, typeKey.rawType());
+    }
+
+    private static ValueType findAutoType(TypeKey typeKey) {
+        return AUTO_VALUE_TYPE_MAPPING.stream()
+            .filter(mapping -> mapping.matches(typeKey))
+            .findFirst()
+            .map(TypeKeyMapping::getType)
+            .orElse(null);
+    }
+
+    @lombok.Value
+    static class TypeKeyMapping {
+
+        TypeKey key;
+        ValueType type;
+
+        static TypeKeyMapping mapping(ValueType type, Class<?>... keyTypes) {
+            TypeKey key = new TypeKey(Arrays.asList(keyTypes));
+            return new TypeKeyMapping(key, type);
         }
-        return new StructField(field, field.getType());
+
+        boolean matches(TypeKey candidateKey) {
+            return key.isSuperKeyOf(candidateKey);
+        }
+    }
+
+    @lombok.Value
+    static class TypeKey {
+
+        List<Class<?>> types;
+
+        Class<?> rawType() {
+            return position(0);
+        }
+
+        private int size() {
+            return types.size();
+        }
+
+        private Class<?> position(int i) {
+            return types.get(i);
+        }
+
+        static TypeKey from(Field field) {
+            return from(field.getGenericType());
+        }
+
+        static TypeKey from(Type type) {
+            List<Class<?>> types = new ArrayList<>();
+            if (type instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) type;
+                types.add((Class<?>) parameterizedType.getRawType());
+                Arrays.stream(parameterizedType.getActualTypeArguments())
+                    .filter(Class.class::isInstance)
+                    .map(Class.class::cast)
+                    .forEach(types::add);
+            } else if (Class.class.equals(type.getClass())) {
+                types.add((Class<?>) type);
+            } else {
+                throw new IllegalArgumentException("Could not construct type key from: " + type);
+            }
+            return new TypeKey(types);
+        }
+
+        public boolean isSuperKeyOf(TypeKey candidateKey) {
+            if (size() != candidateKey.size()) {
+                return false;
+            }
+            if (!position(0).isAssignableFrom(candidateKey.position(0))) {
+                return false;
+            }
+            for (int i = 1; i < types.size(); i++) {
+                if (!position(i).equals(candidateKey.position(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }

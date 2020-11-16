@@ -10,4 +10,8 @@ public interface ValueTypeCodec {
     Object decode(ByteBuffer buffer, CodecContext context);
 
     void encode(Object value, ResponseBuffer buffer, CodecContext context);
+
+    default int decodeUVarInt(ByteBuffer buffer, CodecContext context) {
+        return (int) ValueType.UVARINT.decode(buffer, context);
+    }
 }

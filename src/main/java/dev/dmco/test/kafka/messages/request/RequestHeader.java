@@ -1,9 +1,10 @@
 package dev.dmco.test.kafka.messages.request;
 
-import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.common.Tag;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.Value;
 import lombok.experimental.Accessors;
+
+import java.util.Collection;
 
 @lombok.Value
 @Accessors(fluent = true)
@@ -17,6 +18,5 @@ public class RequestHeader {
     String clientId;
 
     @ApiVersion(min = 2)
-    @Value(ValueType.TAGS_BUFFER)
-    byte[] tagsBuffer;
+    Collection<Tag> tags;
 }

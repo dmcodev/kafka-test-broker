@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka.usecase.coordinator;
 
 import dev.dmco.test.kafka.io.codec.value.ValueType;
+import dev.dmco.test.kafka.messages.common.Tag;
 import dev.dmco.test.kafka.messages.meta.ApiVersion;
 import dev.dmco.test.kafka.messages.meta.HeaderVersion;
 import dev.dmco.test.kafka.messages.meta.Value;
@@ -10,6 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.With;
 import lombok.experimental.Accessors;
+
+import java.util.Collection;
 
 @HeaderVersion(value = 0, sinceApiVersion = 0)
 @HeaderVersion(value = 1, sinceApiVersion = 3)
@@ -38,6 +41,5 @@ public class FindCoordinatorResponse implements ResponseMessage {
     int port;
 
     @ApiVersion(min = 3)
-    @Value(ValueType.TAGS_BUFFER)
-    Object tags;
+    Collection<Tag> tags;
 }
