@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.io.codec.value
 
+import dev.dmco.test.kafka.io.buffer.ResponseBuffer
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
@@ -21,6 +22,15 @@ class VarUIntCodecSpec : StringSpec({
             buffer.rewind()
 
             (codec.decode(buffer, null) as Int) shouldBe decimal
+
+            val responseBuffer = ResponseBuffer()
+            codec.encode(decimal, responseBuffer, null)
+
+            val encodeBuffer = responseBuffer.collect().first()
+            encodeBuffer.rewind()
+            encodeBuffer.limit(encodeBuffer.capacity())
+
+            encodeBuffer.int shouldBe binary
         }
     }
 })

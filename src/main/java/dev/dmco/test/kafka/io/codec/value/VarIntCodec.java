@@ -9,15 +9,7 @@ public class VarIntCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
-        int value = 0;
-        int i = 0;
-        int b;
-        while (((b = buffer.get()) & 0x80) != 0) {
-            value |= (b & 0x7f) << i;
-            i += 7;
-        }
-        value |= b << i;
-        return value;
+        throw new UnsupportedOperationException();
     }
 
     @Override

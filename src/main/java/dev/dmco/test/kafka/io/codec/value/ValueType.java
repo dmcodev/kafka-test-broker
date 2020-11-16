@@ -21,7 +21,7 @@ public enum ValueType implements ValueTypeCodec {
     BYTES(BytesCodec.class),
     TAGS_BUFFER(TagsCodec.class),
     REQUEST_HEADER(HeaderCodec.RequestHeaderCodec.class),
-    RESPOSNE_HEADER(HeaderCodec.ResponseHeaderCodec.class);
+    RESPONSE_HEADER(HeaderCodec.ResponseHeaderCodec.class);
 
     private final ValueTypeCodec codec;
 

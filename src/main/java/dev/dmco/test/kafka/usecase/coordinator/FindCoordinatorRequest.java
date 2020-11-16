@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 import java.util.Collection;
 
 @Request(apiKey = 10)
-@ApiVersion(max = 2)
+@ApiVersion(max = 3)
 @HeaderVersion(value = 1, sinceApiVersion = 0)
 @HeaderVersion(value = 2, sinceApiVersion = 3)
 @lombok.Value

@@ -31,7 +31,7 @@ public abstract class StructEntry implements ValueTypeCodec {
 
     private static final Collection<TypeKeyMapping> AUTO_VALUE_TYPE_MAPPING = Arrays.asList(
         mapping(ValueType.REQUEST_HEADER, RequestHeader.class),
-        mapping(ValueType.RESPOSNE_HEADER, ResponseHeader.class),
+        mapping(ValueType.RESPONSE_HEADER, ResponseHeader.class),
         mapping(ValueType.INT8, byte.class),
         mapping(ValueType.INT8, Byte.class),
         mapping(ValueType.INT16, short.class),
