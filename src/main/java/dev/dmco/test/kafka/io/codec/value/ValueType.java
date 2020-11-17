@@ -16,6 +16,7 @@ public enum ValueType implements ValueTypeCodec {
     UVARINT(VarUIntCodec.class),
     BOOLEAN(BooleanCodec.class),
     STRING(StringCodec.class),
+    COMPACT_STRING(CompactStringCodec.class),
     NULLABLE_STRING(NullableStringCodec.class),
     RECORDS(RecordsCodec.class),
     BYTES(BytesCodec.class),
