@@ -27,6 +27,9 @@ public class MetadataResponse implements ResponseMessage {
     @Singular
     List<Broker> brokers;
 
+    @ApiVersion(min = 2)
+    Optional<String> clusterId;
+
     @ApiVersion(min = 1)
     int controllerId;
 

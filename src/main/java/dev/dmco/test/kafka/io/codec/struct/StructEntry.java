@@ -82,6 +82,8 @@ public abstract class StructEntry implements ValueTypeCodec {
                 return 0.0f;
             } else if (double.class == javaType) {
                 return 0.0;
+            } else if (boolean.class == javaType) {
+                return false;
             } else {
                 throw new IllegalArgumentException("Unsupported field type: " + javaType);
             }

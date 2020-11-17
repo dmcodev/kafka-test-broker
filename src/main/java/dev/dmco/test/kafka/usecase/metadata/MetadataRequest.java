@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 import java.util.List;
 
 @Request(apiKey = 3)
-@ApiVersion(max = 1)
+@ApiVersion(max = 2)
 @HeaderVersion(value = 1, sinceApiVersion = 0)
 @HeaderVersion(value = 2, sinceApiVersion = 9)
 @lombok.Value
@@ -21,15 +21,12 @@ public class MetadataRequest implements RequestMessage {
 
     List<String> topicNames;
 
-//    @SinceVersion(4)
-//    @Field(FieldType.BOOLEAN)
-//    Boolean allowAutoTopicCreation;
-//
-//    @SinceVersion(8)
-//    @Field(FieldType.BOOLEAN)
-//    Boolean includeClusterAuthorizedOperations;
-//
-//    @SinceVersion(8)
-//    @Field(FieldType.BOOLEAN)
-//    Boolean includeTopicAuthorizedOperations;
+    @ApiVersion(min = 4)
+    boolean allowAutoTopicCreation;
+
+    @ApiVersion(min = 8)
+    boolean includeClusterAuthorizedOperations;
+
+    @ApiVersion(min = 8)
+    boolean includeTopicAuthorizedOperations;
 }
