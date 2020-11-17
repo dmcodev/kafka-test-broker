@@ -32,14 +32,13 @@ public class FindCoordinatorResponse implements ResponseMessage {
     short errorCode;
 
     @ApiVersion(min = 1)
-    //@TypeOverride(value = ValueType.COMPACT_STRING, sinceApiVersion = 3)
-        //TODO: COMPACT_NULLABLE_STRING
-    Optional<String> errorMessage; // TODO: COMPACT_NULLABLE_STRING since 3
+    @TypeOverride(value = ValueType.NULLABLE_COMPACT_STRING, sinceApiVersion = 3)
+    Optional<String> errorMessage;
 
     int nodeId;
 
     @TypeOverride(value = ValueType.COMPACT_STRING, sinceApiVersion = 3)
-    String host; // TODO: COMPACT_STRING since 3
+    String host;
 
     int port;
 

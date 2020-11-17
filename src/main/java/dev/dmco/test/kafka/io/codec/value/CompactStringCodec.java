@@ -10,7 +10,7 @@ public class CompactStringCodec implements ValueTypeCodec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
-        int length = decodeUVarInt(buffer, context);
+        int length = decodeUVarInt(buffer, context) - 1;
         byte[] chars = new byte[length];
         buffer.get(chars);
         return new String(chars, StandardCharsets.UTF_8);
@@ -20,7 +20,7 @@ public class CompactStringCodec implements ValueTypeCodec {
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
         String string = (String) value;
         byte[] chars = string.getBytes(StandardCharsets.UTF_8);
-        encodeUVarInt(chars.length, buffer, context);
+        encodeUVarInt(chars.length + 1, buffer, context);
         buffer.putBytes(chars);
     }
 }

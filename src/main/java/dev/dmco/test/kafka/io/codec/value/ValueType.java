@@ -18,6 +18,7 @@ public enum ValueType implements ValueTypeCodec {
     STRING(StringCodec.class),
     COMPACT_STRING(CompactStringCodec.class),
     NULLABLE_STRING(NullableStringCodec.class),
+    NULLABLE_COMPACT_STRING(NullableCompactStringCodec.class),
     RECORDS(RecordsCodec.class),
     BYTES(BytesCodec.class),
     TAGS_BUFFER(TagsCodec.class),

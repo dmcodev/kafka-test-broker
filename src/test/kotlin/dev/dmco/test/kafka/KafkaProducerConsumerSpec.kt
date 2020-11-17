@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka
 
 import io.kotest.core.spec.style.StringSpec
+import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.util.Properties
@@ -33,10 +34,10 @@ class KafkaProducerConsumerSpec : StringSpec({
 
         Thread.sleep(1000)
 
-        //val consumer = KafkaConsumer<String, String>(props)
-        //consumer.subscribe(mutableListOf("my-topic"))
-        //val records = consumer.poll(5000)
-        //consumer.close()
+        val consumer = KafkaConsumer<String, String>(props)
+        consumer.subscribe(mutableListOf("my-topic"))
+        val records = consumer.poll(5000)
+        consumer.close()
 
 
         broker.close()
