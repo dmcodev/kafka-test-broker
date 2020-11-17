@@ -11,7 +11,7 @@ public class NullableCompactStringCodec implements ValueTypeCodec {
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
         buffer.mark();
-        int length = buffer.getShort();
+        int length = decodeUVarInt(buffer, context);
         if (length > 0) {
             buffer.reset();
             return Optional.ofNullable(decodeCompactString(buffer, context));
@@ -25,7 +25,7 @@ public class NullableCompactStringCodec implements ValueTypeCodec {
         if (optionalString != null && optionalString.isPresent()) {
             encodeCompactString(optionalString.get(), buffer, context);
         } else {
-            buffer.putByte((byte) 0);
+            encodeUVarInt(0, buffer, context);
         }
     }
 }

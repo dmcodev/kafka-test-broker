@@ -25,13 +25,21 @@ public class TagsCodec implements ValueTypeCodec {
             buffer.get(value);
             tags.add(new Tag(key, value));
         }
-        return null;
-        //return tags;
+        return tags;
     }
 
     @Override
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
-        buffer.putByte((byte) 0);
-        //throw new UnsupportedOperationException();
+        if (value != null) {
+            List<Tag> tags = (List<Tag>) value;
+            encodeUVarInt(tags.size(), buffer, context);
+            for (Tag tag : tags) {
+                encodeUVarInt(tag.key(), buffer, context);
+                encodeUVarInt(tag.value().length, buffer, context);
+                buffer.putBytes(tag.value());
+            }
+        } else {
+            encodeUVarInt(0, buffer, context);
+        }
     }
 }
