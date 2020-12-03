@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.usecase.produce;
 
-import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.HeaderVersion;
+import dev.dmco.test.kafka.messages.meta.ApiVersionMapping;
+import dev.dmco.test.kafka.messages.meta.SinceApiVersion;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,6 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
-@HeaderVersion(value = 0, sinceApiVersion = 0)
 @lombok.Value
 @Builder
 @With
@@ -20,12 +19,13 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ProduceResponse implements ResponseMessage {
 
+    @ApiVersionMapping(value = 0, sinceApiVersion = 0)
     ResponseHeader header;
 
     @Singular
     List<Topic> topics;
 
-    @ApiVersion(min = 1)
+    @SinceApiVersion(1)
     int throttleTimeMs;
 
     @lombok.Value
@@ -45,10 +45,12 @@ public class ProduceResponse implements ResponseMessage {
     public static class Partition {
 
         int partition;
+
         short errorCode;
+
         long baseOffset;
 
-        @ApiVersion(min = 2)
+        @SinceApiVersion(2)
         long logAppendTime;
     }
 }

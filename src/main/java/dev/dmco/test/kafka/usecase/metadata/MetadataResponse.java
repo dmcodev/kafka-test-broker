@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
-import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.HeaderVersion;
+import dev.dmco.test.kafka.messages.meta.ApiVersionMapping;
+import dev.dmco.test.kafka.messages.meta.SinceApiVersion;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -13,8 +13,6 @@ import lombok.experimental.Accessors;
 import java.util.List;
 import java.util.Optional;
 
-@HeaderVersion(value = 0, sinceApiVersion = 0)
-@HeaderVersion(value = 1, sinceApiVersion = 9)
 @lombok.Value
 @Builder
 @With
@@ -22,15 +20,17 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class MetadataResponse implements ResponseMessage {
 
+    @ApiVersionMapping(value = 0, sinceApiVersion = 0)
+    @ApiVersionMapping(value = 1, sinceApiVersion = 9)
     ResponseHeader header;
 
     @Singular
     List<Broker> brokers;
 
-    @ApiVersion(min = 2)
+    @SinceApiVersion(2)
     Optional<String> clusterId;
 
-    @ApiVersion(min = 1)
+    @SinceApiVersion(1)
     int controllerId;
 
     @Singular
@@ -48,7 +48,7 @@ public class MetadataResponse implements ResponseMessage {
 
         int port;
 
-        @ApiVersion(min = 1)
+        @SinceApiVersion(1)
         Optional<String> rack;
     }
 
@@ -62,7 +62,7 @@ public class MetadataResponse implements ResponseMessage {
 
         String name;
 
-        @ApiVersion(min = 1)
+        @SinceApiVersion(1)
         boolean isInternal;
 
         @Singular
@@ -76,7 +76,9 @@ public class MetadataResponse implements ResponseMessage {
     public static class Partition {
 
         short errorCode;
+
         int partitionIndex;
+
         int leaderId;
 
         @Singular
