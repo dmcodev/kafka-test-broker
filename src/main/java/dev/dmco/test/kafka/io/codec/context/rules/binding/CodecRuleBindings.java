@@ -3,9 +3,9 @@ package dev.dmco.test.kafka.io.codec.context.rules.binding;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRule;
 import dev.dmco.test.kafka.io.codec.context.rules.ExcludeFieldFromApiVersionRule;
 import dev.dmco.test.kafka.io.codec.context.rules.MapApiVersionRule;
-import dev.dmco.test.kafka.messages.meta.ApiVersionMapping;
-import dev.dmco.test.kafka.messages.meta.ApiVersionMappings;
-import dev.dmco.test.kafka.messages.meta.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
+import dev.dmco.test.kafka.messages.metadata.ApiVersionMappings;
+import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;

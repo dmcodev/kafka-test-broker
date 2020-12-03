@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.io.codec.value
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer
-import dev.dmco.test.kafka.io.codec.integers.VarUIntCodec
+import dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.row

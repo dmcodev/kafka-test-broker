@@ -1,6 +1,7 @@
-package dev.dmco.test.kafka.io.codec;
+package dev.dmco.test.kafka.io.codec.structs;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
+import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest.Record;
 import lombok.SneakyThrows;

@@ -1,8 +1,8 @@
 package dev.dmco.test.kafka.usecase.apiversion;
 
 import dev.dmco.test.kafka.messages.RequestHandler;
-import dev.dmco.test.kafka.messages.meta.ApiVersion;
-import dev.dmco.test.kafka.messages.meta.Request;
+import dev.dmco.test.kafka.messages.metadata.ApiVersion;
+import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.apiversion.ApiVersionsResponse.ApiKey;
 

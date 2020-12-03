@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.io.codec.integers;
+package dev.dmco.test.kafka.io.codec.primitives;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;

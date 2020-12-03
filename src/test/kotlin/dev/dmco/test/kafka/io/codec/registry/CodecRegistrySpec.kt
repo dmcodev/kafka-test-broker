@@ -1,17 +1,17 @@
 package dev.dmco.test.kafka.io.codec.registry
 
-import dev.dmco.test.kafka.io.codec.BooleanCodec
-import dev.dmco.test.kafka.io.codec.BytesCodec
-import dev.dmco.test.kafka.io.codec.CollectionCodec
-import dev.dmco.test.kafka.io.codec.RecordsCodec
-import dev.dmco.test.kafka.io.codec.TagsCodec
-import dev.dmco.test.kafka.io.codec.integers.Int16Codec
-import dev.dmco.test.kafka.io.codec.integers.Int32Codec
-import dev.dmco.test.kafka.io.codec.integers.Int64Codec
-import dev.dmco.test.kafka.io.codec.integers.Int8Codec
+import dev.dmco.test.kafka.io.codec.bytes.BytesCodec
+import dev.dmco.test.kafka.io.codec.generic.CollectionCodec
+import dev.dmco.test.kafka.io.codec.primitives.BooleanCodec
+import dev.dmco.test.kafka.io.codec.primitives.Int16Codec
+import dev.dmco.test.kafka.io.codec.primitives.Int32Codec
+import dev.dmco.test.kafka.io.codec.primitives.Int64Codec
+import dev.dmco.test.kafka.io.codec.primitives.Int8Codec
 import dev.dmco.test.kafka.io.codec.registry.TypeKey.key
 import dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 import dev.dmco.test.kafka.io.codec.strings.StringCodec
+import dev.dmco.test.kafka.io.codec.structs.RecordsCodec
+import dev.dmco.test.kafka.io.codec.structs.TagsCodec
 import dev.dmco.test.kafka.messages.common.Tag
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest
 import io.kotest.core.spec.style.StringSpec

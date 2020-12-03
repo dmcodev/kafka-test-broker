@@ -1,6 +1,7 @@
-package dev.dmco.test.kafka.io.codec;
+package dev.dmco.test.kafka.io.codec.primitives;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
+import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 
 import java.nio.ByteBuffer;

@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.io.codec.context.rules;
 
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.messages.meta.ApiVersion;
+import dev.dmco.test.kafka.messages.metadata.ApiVersion;
 import lombok.RequiredArgsConstructor;
 
 import static dev.dmco.test.kafka.io.codec.context.ContextProperty.API_VERSION;

@@ -7,7 +7,7 @@ import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
 import dev.dmco.test.kafka.io.codec.registry.TypeKey;
 import dev.dmco.test.kafka.messages.RequestHandler;
-import dev.dmco.test.kafka.messages.meta.Request;
+import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 
 import java.nio.ByteBuffer;

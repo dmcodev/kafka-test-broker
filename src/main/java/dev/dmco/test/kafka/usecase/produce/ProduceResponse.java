@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.usecase.produce;
 
-import dev.dmco.test.kafka.messages.meta.ApiVersionMapping;
-import dev.dmco.test.kafka.messages.meta.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
+import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
