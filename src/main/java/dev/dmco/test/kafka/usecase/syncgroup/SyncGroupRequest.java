@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.syncgroup;
 
+import dev.dmco.test.kafka.messages.Assignment;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
@@ -24,15 +25,15 @@ public class SyncGroupRequest implements RequestMessage {
 
     String memberId;
 
-    List<Assignment> assignments;
+    List<MemberAssignment> memberAssignments;
 
     @lombok.Value
     @AllArgsConstructor
     @Accessors(fluent = true)
-    public static class Assignment {
+    public static class MemberAssignment {
 
         String memberId;
 
-        byte[] assignment;
+        Assignment assignment;
     }
 }

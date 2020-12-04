@@ -16,6 +16,8 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
     @Override
     public SyncGroupResponse handle(SyncGroupRequest request, BrokerState state) {
         return SyncGroupResponse.builder()
+            .errorCode((short) 0)
+            .assignment(request.memberAssignments().get(0).assignment())
             .build();
     }
 }

@@ -1,6 +1,5 @@
 package dev.dmco.test.kafka.messages;
 
-import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Singular;
@@ -13,17 +12,14 @@ import java.util.Optional;
 @lombok.Value
 @AllArgsConstructor
 @Accessors(fluent = true)
-public class Subscription implements Versioned {
+public class Assignment implements Versioned {
 
     short version;
 
-    List<String> topics;
-
-    Optional<byte[]> userData;
-
-    @SinceVersion(1)
     @Singular
     List<PartitionAssignments> partitionAssignments;
+
+    Optional<byte[]> userData;
 
     @Builder
     @lombok.Value

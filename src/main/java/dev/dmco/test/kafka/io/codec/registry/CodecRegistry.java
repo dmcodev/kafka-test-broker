@@ -14,9 +14,11 @@ import dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec;
 import dev.dmco.test.kafka.io.codec.strings.CompactStringCodec;
 import dev.dmco.test.kafka.io.codec.strings.NullableStringCodec;
 import dev.dmco.test.kafka.io.codec.strings.StringCodec;
+import dev.dmco.test.kafka.io.codec.structs.AssignmentCodec;
 import dev.dmco.test.kafka.io.codec.structs.RecordsCodec;
 import dev.dmco.test.kafka.io.codec.structs.SubscriptionCodec;
 import dev.dmco.test.kafka.io.codec.structs.TagsCodec;
+import dev.dmco.test.kafka.messages.Assignment;
 import dev.dmco.test.kafka.messages.Subscription;
 import dev.dmco.test.kafka.messages.Tag;
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest;
@@ -66,6 +68,7 @@ public class CodecRegistry {
         addFactory(key(Tag.class), (key) -> new TagsCodec());
         addFactory(key(Collection.class, key(ProduceRequest.Record.class)), (key) -> new RecordsCodec());
         addFactory(key(Subscription.class), (key) -> new SubscriptionCodec());
+        addFactory(key(Assignment.class), (key) -> new AssignmentCodec());
     }
 
     private static final Map<TypeKey, Codec> CODEC_MAPPING = new HashMap<>();
