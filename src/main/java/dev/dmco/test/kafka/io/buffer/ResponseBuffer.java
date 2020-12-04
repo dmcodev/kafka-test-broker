@@ -26,7 +26,7 @@ public class ResponseBuffer {
             throw new IllegalArgumentException("Invalid chunk size: " + chunkSize);
         }
         this.chunkSize = chunkSize;
-        allocate(chunkSize);
+        current = ByteBuffer.allocate(chunkSize);
     }
 
     public ResponseBuffer putByte(byte value) {
@@ -54,42 +54,40 @@ public class ResponseBuffer {
     }
 
     public ResponseBuffer putBytes(byte[] bytes) {
-        if (current.remaining() >= bytes.length) {
-            current.put(bytes);
-        } else {
-            int written = current.remaining();
-            current.put(bytes, 0, written);
-            int remaining = bytes.length - written;
-            requireBytes(remaining);
-            current.put(bytes, written, remaining);
-        }
+        int written = Math.min(bytes.length, current.remaining());
+        current.put(bytes, 0, written);
+        int remaining = bytes.length - written;
+        requireBytes(remaining);
+        current.put(bytes, written, remaining);
         return this;
     }
 
     public ResponseBuffer putBuffers(Collection<ByteBuffer> bufferList) {
-        enqueue();
-        current = null;
+        allocate();
         buffers.addAll(bufferList);
         return this;
     }
 
     public int size() {
         return buffers.stream().mapToInt(Buffer::limit).sum()
-            + ((current != null) ? current.position() : 0);
+            + current.position();
     }
 
     public List<ByteBuffer> collect() {
-        enqueue();
+        allocate();
         List<ByteBuffer> result = new ArrayList<>(buffers);
         buffers.clear();
-        current = null;
         return result;
     }
 
     private void requireBytes(int requiredBytes) {
-        if (current == null || current.remaining() < requiredBytes) {
+        if (current.remaining() < requiredBytes) {
             allocate(requiredBytes);
         }
+    }
+
+    private void allocate() {
+        allocate(chunkSize);
     }
 
     private void allocate(int requiredBytes) {
@@ -99,9 +97,7 @@ public class ResponseBuffer {
     }
 
     private void enqueue() {
-        if (current != null) {
-            current.limit(current.position());
-            buffers.addLast(current);
-        }
+        current.limit(current.position());
+        buffers.addLast(current);
     }
 }
