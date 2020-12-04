@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.usecase.apiversion;
 
-import dev.dmco.test.kafka.messages.common.Tag;
+import dev.dmco.test.kafka.messages.Tag;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -20,7 +20,7 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ApiVersionsResponse implements ResponseMessage {
 
-    @VersionMapping(value = 0, sinceApiVersion = 0)
+    @VersionMapping(value = 0, sinceVersion = 0)
     ResponseHeader header;
 
     short errorCode;

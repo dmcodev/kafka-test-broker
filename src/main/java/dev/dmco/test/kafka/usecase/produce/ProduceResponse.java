@@ -19,7 +19,7 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ProduceResponse implements ResponseMessage {
 
-    @VersionMapping(value = 0, sinceApiVersion = 0)
+    @VersionMapping(value = 0, sinceVersion = 0)
     ResponseHeader header;
 
     @Singular

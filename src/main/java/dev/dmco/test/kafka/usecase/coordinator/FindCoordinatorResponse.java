@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.usecase.coordinator;
 
-import dev.dmco.test.kafka.messages.common.Tag;
+import dev.dmco.test.kafka.messages.Tag;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -20,8 +20,8 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class FindCoordinatorResponse implements ResponseMessage {
 
-    @VersionMapping(value = 0, sinceApiVersion = 0)
-    @VersionMapping(value = 1, sinceApiVersion = 3)
+    @VersionMapping(value = 0, sinceVersion = 0)
+    @VersionMapping(value = 1, sinceVersion = 3)
     ResponseHeader header;
 
     @SinceVersion(1)

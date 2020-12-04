@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.messages;
+package dev.dmco.test.kafka.usecase;
 
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;

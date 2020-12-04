@@ -20,8 +20,8 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class MetadataResponse implements ResponseMessage {
 
-    @VersionMapping(value = 0, sinceApiVersion = 0)
-    @VersionMapping(value = 1, sinceApiVersion = 9)
+    @VersionMapping(value = 0, sinceVersion = 0)
+    @VersionMapping(value = 1, sinceVersion = 9)
     ResponseHeader header;
 
     @Singular

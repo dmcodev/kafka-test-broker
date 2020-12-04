@@ -17,8 +17,8 @@ import dev.dmco.test.kafka.io.codec.strings.StringCodec;
 import dev.dmco.test.kafka.io.codec.structs.RecordsCodec;
 import dev.dmco.test.kafka.io.codec.structs.SubscriptionCodec;
 import dev.dmco.test.kafka.io.codec.structs.TagsCodec;
-import dev.dmco.test.kafka.messages.common.Subscription;
-import dev.dmco.test.kafka.messages.common.Tag;
+import dev.dmco.test.kafka.messages.Subscription;
+import dev.dmco.test.kafka.messages.Tag;
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest;
 
 import java.util.Collection;

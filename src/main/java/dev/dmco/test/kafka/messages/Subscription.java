@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.messages.common;
+package dev.dmco.test.kafka.messages;
 
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.AllArgsConstructor;

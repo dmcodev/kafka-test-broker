@@ -1,9 +1,9 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
-import dev.dmco.test.kafka.messages.RequestHandler;
-import dev.dmco.test.kafka.messages.common.Subscription;
-import dev.dmco.test.kafka.messages.common.Subscription.PartitionAssignments;
+import dev.dmco.test.kafka.messages.Subscription;
+import dev.dmco.test.kafka.messages.Subscription.PartitionAssignments;
 import dev.dmco.test.kafka.state.BrokerState;
+import dev.dmco.test.kafka.usecase.RequestHandler;
 
 import java.util.Arrays;
 import java.util.Collections;

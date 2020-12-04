@@ -3,3 +3,4 @@ dev.dmco.test.kafka.usecase.produce.ProduceRequestHandler
 dev.dmco.test.kafka.usecase.metadata.MetadataRequestHandler
 dev.dmco.test.kafka.usecase.coordinator.FindCoordinatorRequestHandler
 dev.dmco.test.kafka.usecase.joingroup.JoinGroupRequestHandler
+dev.dmco.test.kafka.usecase.syncgroup.SyncGroupRequestHandler

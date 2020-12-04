@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.messages.request;
 
-import dev.dmco.test.kafka.messages.common.Tag;
+import dev.dmco.test.kafka.messages.Tag;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.experimental.Accessors;
 

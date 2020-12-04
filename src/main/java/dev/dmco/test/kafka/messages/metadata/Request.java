@@ -9,5 +9,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Request {
 
-    int apiKey();
+    int key();
+
+    int maxVersion() default 0;
 }

@@ -1,9 +1,8 @@
 package dev.dmco.test.kafka.usecase.apiversion;
 
-import dev.dmco.test.kafka.messages.RequestHandler;
-import dev.dmco.test.kafka.messages.metadata.ApiVersion;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.state.BrokerState;
+import dev.dmco.test.kafka.usecase.RequestHandler;
 import dev.dmco.test.kafka.usecase.apiversion.ApiVersionsResponse.ApiKey;
 
 import java.util.Collection;
@@ -35,15 +34,11 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
     }
 
     private ApiKey createApiKey(Class<?> requestType) {
-        if (!requestType.isAnnotationPresent(ApiVersion.class)) {
-            throw new IllegalStateException("Supported api version not defined for: " + requestType);
-        }
-        int apiKey = requestType.getAnnotation(Request.class).apiKey();
-        ApiVersion apiVersion = requestType.getAnnotation(ApiVersion.class);
+        Request metadata = requestType.getAnnotation(Request.class);
         return ApiKey.builder()
-            .apiKey((short) apiKey)
-            .minVersion((short) apiVersion.min())
-            .maxVersion((short) apiVersion.max())
+            .apiKey((short) metadata.key())
+            .minVersion((short) 0)
+            .maxVersion((short) metadata.maxVersion())
             .build();
     }
 }

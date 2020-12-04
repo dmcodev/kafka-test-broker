@@ -1,6 +1,5 @@
-package dev.dmco.test.kafka.usecase.joingroup;
+package dev.dmco.test.kafka.usecase.syncgroup;
 
-import dev.dmco.test.kafka.messages.Subscription;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
@@ -10,32 +9,30 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
-@Request(key = 11)
+@Request(key = 14)
 @lombok.Value
 @Accessors(fluent = true)
-public class JoinGroupRequest implements RequestMessage {
+public class SyncGroupRequest implements RequestMessage {
 
     @VersionMapping(value = 1, sinceVersion = 0)
-    @VersionMapping(value = 2, sinceVersion = 6)
+    @VersionMapping(value = 2, sinceVersion = 4)
     RequestHeader header;
 
     String groupId;
 
-    int sessionTimeoutMs;
+    int generationId;
 
     String memberId;
 
-    String protocolType;
-
-    List<Protocol> protocols;
+    List<Assignment> assignments;
 
     @lombok.Value
     @AllArgsConstructor
     @Accessors(fluent = true)
-    public static class Protocol {
+    public static class Assignment {
 
-        String name;
+        String memberId;
 
-        Subscription subscription;
+        byte[] assignment;
     }
 }

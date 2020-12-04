@@ -3,7 +3,7 @@ package dev.dmco.test.kafka.io.codec.structs;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.messages.common.Tag;
+import dev.dmco.test.kafka.messages.Tag;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

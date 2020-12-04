@@ -12,7 +12,7 @@ import dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 import dev.dmco.test.kafka.io.codec.strings.StringCodec
 import dev.dmco.test.kafka.io.codec.structs.RecordsCodec
 import dev.dmco.test.kafka.io.codec.structs.TagsCodec
-import dev.dmco.test.kafka.messages.common.Tag
+import dev.dmco.test.kafka.messages.Tag
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll

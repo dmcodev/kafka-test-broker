@@ -6,9 +6,9 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
 import dev.dmco.test.kafka.io.codec.registry.TypeKey;
-import dev.dmco.test.kafka.messages.RequestHandler;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
+import dev.dmco.test.kafka.usecase.RequestHandler;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class IODecoder {
     public IODecoder() {
         requestTypes = RequestHandler.loadAll().stream()
             .flatMap(handler -> handler.handledRequestTypes().stream())
-            .collect(Collectors.toMap(type -> type.getAnnotation(Request.class).apiKey(), Function.identity()));
+            .collect(Collectors.toMap(type -> type.getAnnotation(Request.class).key(), Function.identity()));
     }
 
     public RequestMessage decode(ByteBuffer buffer) {

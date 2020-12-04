@@ -5,7 +5,7 @@ import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
-import dev.dmco.test.kafka.messages.common.Subscription;
+import dev.dmco.test.kafka.messages.Subscription;
 
 import java.nio.ByteBuffer;
 import java.util.List;

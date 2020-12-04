@@ -2,9 +2,9 @@ package dev.dmco.test.kafka.state;
 
 import dev.dmco.test.kafka.error.BrokerException;
 import dev.dmco.test.kafka.error.ErrorCode;
-import dev.dmco.test.kafka.messages.RequestHandler;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
+import dev.dmco.test.kafka.usecase.RequestHandler;
 
 import java.util.HashMap;
 import java.util.Map;

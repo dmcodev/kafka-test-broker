@@ -8,12 +8,12 @@ import static dev.dmco.test.kafka.io.codec.context.ContextProperty.EXCLUDE_FIELD
 import static dev.dmco.test.kafka.io.codec.context.ContextProperty.VERSION;
 
 @RequiredArgsConstructor
-public class ExcludeFieldFromApiVersionRule implements CodecRule {
+public class ExcludeFieldOnVersionRule implements CodecRule {
 
     private final int min;
 
-    public static ExcludeFieldFromApiVersionRule from(SinceVersion metadata) {
-        return new ExcludeFieldFromApiVersionRule(metadata.value());
+    public static ExcludeFieldOnVersionRule from(SinceVersion metadata) {
+        return new ExcludeFieldOnVersionRule(metadata.value());
     }
 
     @Override

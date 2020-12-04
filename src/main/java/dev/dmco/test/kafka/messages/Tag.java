@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.messages.common;
+package dev.dmco.test.kafka.messages;
 
 import lombok.AllArgsConstructor;
 import lombok.experimental.Accessors;

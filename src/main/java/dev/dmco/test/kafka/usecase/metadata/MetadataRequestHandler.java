@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
-import dev.dmco.test.kafka.messages.RequestHandler;
 import dev.dmco.test.kafka.state.BrokerState;
+import dev.dmco.test.kafka.usecase.RequestHandler;
 
 import java.util.Collections;
 import java.util.List;

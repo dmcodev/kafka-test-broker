@@ -7,22 +7,22 @@ import lombok.RequiredArgsConstructor;
 import static dev.dmco.test.kafka.io.codec.context.ContextProperty.VERSION;
 
 @RequiredArgsConstructor
-public class MapApiVersionRule implements CodecRule {
+public class MapVersionRule implements CodecRule {
 
-    private final int apiVersion;
-    private final int sinceApiVersion;
+    private final int version;
+    private final int sinceVersion;
 
-    public static MapApiVersionRule from(VersionMapping metadata) {
-        return new MapApiVersionRule(metadata.value(), metadata.sinceApiVersion());
+    public static MapVersionRule from(VersionMapping metadata) {
+        return new MapVersionRule(metadata.value(), metadata.sinceVersion());
     }
 
     @Override
     public boolean applies(CodecContext context) {
-        return context.get(VERSION) >= sinceApiVersion;
+        return context.get(VERSION) >= sinceVersion;
     }
 
     @Override
     public CodecContext apply(CodecContext context) {
-        return context.set(VERSION, apiVersion);
+        return context.set(VERSION, version);
     }
 }

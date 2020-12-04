@@ -6,12 +6,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Repeatable(ApiVersionMappings.class)
+@Repeatable(VersionMappings.class)
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface VersionMapping {
 
     int value();
 
-    int sinceApiVersion();
+    int sinceVersion();
 }

@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
-import dev.dmco.test.kafka.messages.common.Subscription;
+import dev.dmco.test.kafka.messages.Subscription;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
@@ -19,8 +19,8 @@ import java.util.List;
 @Accessors(fluent = true)
 public class JoinGroupResponse implements ResponseMessage {
 
-    @VersionMapping(value = 0, sinceApiVersion = 0)
-    @VersionMapping(value = 1, sinceApiVersion = 6)
+    @VersionMapping(value = 0, sinceVersion = 0)
+    @VersionMapping(value = 1, sinceVersion = 6)
     ResponseHeader header;
 
     short errorCode;
