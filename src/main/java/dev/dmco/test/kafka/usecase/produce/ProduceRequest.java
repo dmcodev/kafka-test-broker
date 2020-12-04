@@ -1,9 +1,9 @@
 package dev.dmco.test.kafka.usecase.produce;
 
 import dev.dmco.test.kafka.messages.metadata.ApiVersion;
-import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
 import dev.dmco.test.kafka.messages.metadata.Request;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import lombok.Builder;
@@ -18,10 +18,10 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class ProduceRequest implements RequestMessage {
 
-    @ApiVersionMapping(value = 1, sinceApiVersion = 0)
+    @VersionMapping(value = 1, sinceApiVersion = 0)
     RequestHeader header;
 
-    @SinceApiVersion(3)
+    @SinceVersion(3)
     Optional<String> transactionalId;
 
     short acknowledgments;

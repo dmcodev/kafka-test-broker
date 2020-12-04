@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.usecase.produce;
 
-import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -19,13 +19,13 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ProduceResponse implements ResponseMessage {
 
-    @ApiVersionMapping(value = 0, sinceApiVersion = 0)
+    @VersionMapping(value = 0, sinceApiVersion = 0)
     ResponseHeader header;
 
     @Singular
     List<Topic> topics;
 
-    @SinceApiVersion(1)
+    @SinceVersion(1)
     int throttleTimeMs;
 
     @lombok.Value
@@ -50,7 +50,7 @@ public class ProduceResponse implements ResponseMessage {
 
         long baseOffset;
 
-        @SinceApiVersion(2)
+        @SinceVersion(2)
         long logAppendTime;
     }
 }

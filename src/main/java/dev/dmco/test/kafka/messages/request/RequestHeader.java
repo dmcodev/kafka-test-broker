@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.messages.request;
 
 import dev.dmco.test.kafka.messages.common.Tag;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.experimental.Accessors;
 
 import java.util.Collection;
@@ -17,9 +17,9 @@ public class RequestHeader {
 
     int correlationId;
 
-    @SinceApiVersion(1)
+    @SinceVersion(1)
     Optional<String> clientId;
 
-    @SinceApiVersion(2)
+    @SinceVersion(2)
     Collection<Tag> tags;
 }

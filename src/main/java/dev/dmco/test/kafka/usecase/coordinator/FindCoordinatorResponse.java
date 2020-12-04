@@ -1,8 +1,8 @@
 package dev.dmco.test.kafka.usecase.coordinator;
 
 import dev.dmco.test.kafka.messages.common.Tag;
-import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -20,16 +20,16 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class FindCoordinatorResponse implements ResponseMessage {
 
-    @ApiVersionMapping(value = 0, sinceApiVersion = 0)
-    @ApiVersionMapping(value = 1, sinceApiVersion = 3)
+    @VersionMapping(value = 0, sinceApiVersion = 0)
+    @VersionMapping(value = 1, sinceApiVersion = 3)
     ResponseHeader header;
 
-    @SinceApiVersion(1)
+    @SinceVersion(1)
     int throttleTimeMs;
 
     short errorCode;
 
-    @SinceApiVersion(1)
+    @SinceVersion(1)
     //@TypeOverride(value = ValueType.NULLABLE_COMPACT_STRING, sinceApiVersion = 3)
     Optional<String> errorMessage;
 
@@ -40,6 +40,6 @@ public class FindCoordinatorResponse implements ResponseMessage {
 
     int port;
 
-    @SinceApiVersion(3)
+    @SinceVersion(3)
     Collection<Tag> tags;
 }

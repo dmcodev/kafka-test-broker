@@ -2,8 +2,10 @@ package dev.dmco.test.kafka.io.buffer;
 
 import lombok.experimental.Accessors;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,7 +15,7 @@ public class ResponseBuffer {
     private final LinkedList<ByteBuffer> buffers = new LinkedList<>();
 
     private final int chunkSize;
-    private ByteBuffer buffer;
+    private ByteBuffer current;
 
     public ResponseBuffer() {
         this(32);
@@ -29,50 +31,63 @@ public class ResponseBuffer {
 
     public ResponseBuffer putByte(byte value) {
         requireBytes(1);
-        buffer.put(value);
+        current.put(value);
         return this;
     }
 
     public ResponseBuffer putShort(short value) {
         requireBytes(2);
-        buffer.putShort(value);
+        current.putShort(value);
         return this;
     }
 
     public ResponseBuffer putInt(int value) {
         requireBytes(4);
-        buffer.putInt(value);
+        current.putInt(value);
         return this;
     }
 
     public ResponseBuffer putLong(long value) {
         requireBytes(8);
-        buffer.putLong(value);
+        current.putLong(value);
         return this;
     }
 
     public ResponseBuffer putBytes(byte[] bytes) {
-        if (buffer.remaining() >= bytes.length) {
-            buffer.put(bytes);
+        if (current.remaining() >= bytes.length) {
+            current.put(bytes);
         } else {
-            int written = buffer.remaining();
-            buffer.put(bytes, 0, written);
-            requireBytes(bytes.length - written);
-            buffer.put(bytes, written, bytes.length);
+            int written = current.remaining();
+            current.put(bytes, 0, written);
+            int remaining = bytes.length - written;
+            requireBytes(remaining);
+            current.put(bytes, written, remaining);
         }
         return this;
+    }
+
+    public ResponseBuffer putBuffers(Collection<ByteBuffer> bufferList) {
+        enqueue();
+        current = null;
+        buffers.addAll(bufferList);
+        return this;
+    }
+
+    public int size() {
+        return buffers.stream().mapToInt(Buffer::limit).sum()
+            + ((current != null) ? current.position() : 0);
     }
 
     public List<ByteBuffer> collect() {
         enqueue();
         List<ByteBuffer> result = new ArrayList<>(buffers);
         buffers.clear();
-        buffer = null;
+        current = null;
         return result;
     }
 
     private void requireBytes(int requiredBytes) {
-        if (buffer == null || buffer.remaining() < requiredBytes) {
+        if (current == null || current.remaining() < requiredBytes) {
             allocate(requiredBytes);
         }
     }
@@ -80,13 +95,13 @@ public class ResponseBuffer {
     private void allocate(int requiredBytes) {
         enqueue();
         int allocationSize = Math.max(requiredBytes, chunkSize);
-        buffer = ByteBuffer.allocate(allocationSize);
+        current = ByteBuffer.allocate(allocationSize);
     }
 
     private void enqueue() {
-        if (buffer != null) {
-            buffer.limit(buffer.position());
-            buffers.addLast(buffer);
+        if (current != null) {
+            current.limit(current.position());
+            buffers.addLast(current);
         }
     }
 }

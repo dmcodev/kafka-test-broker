@@ -8,14 +8,14 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.COMPACT_STRING;
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.UVAR_INT;
+import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.VAR_UINT;
 
 public class NullableCompactStringCodec implements Codec {
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
         buffer.mark();
-        int length = UVAR_INT.decode(buffer, context);
+        int length = VAR_UINT.decode(buffer, context);
         if (length > 0) {
             buffer.reset();
             return Optional.ofNullable(COMPACT_STRING.decode(buffer, context));
@@ -29,7 +29,7 @@ public class NullableCompactStringCodec implements Codec {
         if (optionalString != null && optionalString.isPresent()) {
             COMPACT_STRING.encode(optionalString.get(), buffer, context);
         } else {
-            UVAR_INT.encode(0, buffer, context);
+            VAR_UINT.encode(0, buffer, context);
         }
     }
 }

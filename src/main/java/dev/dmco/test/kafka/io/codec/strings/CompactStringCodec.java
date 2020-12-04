@@ -7,13 +7,13 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.UVAR_INT;
+import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.VAR_UINT;
 
 public class CompactStringCodec implements Codec {
 
     @Override
     public String decode(ByteBuffer buffer, CodecContext context) {
-        int length = UVAR_INT.decode(buffer, context) - 1;
+        int length = VAR_UINT.decode(buffer, context) - 1;
         byte[] chars = new byte[length];
         buffer.get(chars);
         return new String(chars, StandardCharsets.UTF_8);
@@ -23,7 +23,7 @@ public class CompactStringCodec implements Codec {
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
         String string = (String) value;
         byte[] chars = string.getBytes(StandardCharsets.UTF_8);
-        UVAR_INT.encode(chars.length + 1, buffer, context);
+        VAR_UINT.encode(chars.length + 1, buffer, context);
         buffer.putBytes(chars);
     }
 }

@@ -1,9 +1,9 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
 import dev.dmco.test.kafka.messages.metadata.ApiVersion;
-import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
 import dev.dmco.test.kafka.messages.metadata.Request;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import lombok.experimental.Accessors;
@@ -16,18 +16,18 @@ import java.util.List;
 @Accessors(fluent = true)
 public class MetadataRequest implements RequestMessage {
 
-    @ApiVersionMapping(value = 1, sinceApiVersion = 0)
-    @ApiVersionMapping(value = 2, sinceApiVersion = 9)
+    @VersionMapping(value = 1, sinceApiVersion = 0)
+    @VersionMapping(value = 2, sinceApiVersion = 9)
     RequestHeader header;
 
     List<String> topicNames;
 
-    @SinceApiVersion(4)
+    @SinceVersion(4)
     boolean allowAutoTopicCreation;
 
-    @SinceApiVersion(8)
+    @SinceVersion(8)
     boolean includeClusterAuthorizedOperations;
 
-    @SinceApiVersion(8)
+    @SinceVersion(8)
     boolean includeTopicAuthorizedOperations;
 }

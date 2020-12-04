@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
-import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import lombok.AllArgsConstructor;
@@ -20,17 +20,17 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class MetadataResponse implements ResponseMessage {
 
-    @ApiVersionMapping(value = 0, sinceApiVersion = 0)
-    @ApiVersionMapping(value = 1, sinceApiVersion = 9)
+    @VersionMapping(value = 0, sinceApiVersion = 0)
+    @VersionMapping(value = 1, sinceApiVersion = 9)
     ResponseHeader header;
 
     @Singular
     List<Broker> brokers;
 
-    @SinceApiVersion(2)
+    @SinceVersion(2)
     Optional<String> clusterId;
 
-    @SinceApiVersion(1)
+    @SinceVersion(1)
     int controllerId;
 
     @Singular
@@ -48,7 +48,7 @@ public class MetadataResponse implements ResponseMessage {
 
         int port;
 
-        @SinceApiVersion(1)
+        @SinceVersion(1)
         Optional<String> rack;
     }
 
@@ -62,7 +62,7 @@ public class MetadataResponse implements ResponseMessage {
 
         String name;
 
-        @SinceApiVersion(1)
+        @SinceVersion(1)
         boolean isInternal;
 
         @Singular

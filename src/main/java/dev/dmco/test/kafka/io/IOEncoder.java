@@ -22,7 +22,7 @@ public class IOEncoder {
             .build();
         ResponseMessage responseWithHeader = response.withHeader(responseHeader);
         CodecContext codecContext = new CodecContext()
-            .set(ContextProperty.API_VERSION, apiVersion);
+            .set(ContextProperty.VERSION, apiVersion);
         TypeKey responseTypeKey = TypeKey.key(response.getClass());
         CodecRegistry.getCodec(responseTypeKey)
             .encode(responseWithHeader, buffer, codecContext);

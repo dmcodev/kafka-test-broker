@@ -1,7 +1,7 @@
 package dev.dmco.test.kafka.messages.response;
 
 import dev.dmco.test.kafka.messages.common.Tag;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.With;
@@ -16,6 +16,6 @@ public class ResponseHeader {
 
     int correlationId;
 
-    @SinceApiVersion(1)
+    @SinceVersion(1)
     Collection<Tag> tags;
 }

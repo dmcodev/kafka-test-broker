@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Repeatable(ApiVersionMappings.class)
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ApiVersionMapping {
+public @interface VersionMapping {
 
     int value();
 

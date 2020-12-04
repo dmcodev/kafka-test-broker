@@ -4,8 +4,8 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.messages.metadata.ApiVersion;
 import lombok.RequiredArgsConstructor;
 
-import static dev.dmco.test.kafka.io.codec.context.ContextProperty.API_VERSION;
 import static dev.dmco.test.kafka.io.codec.context.ContextProperty.EXCLUDE_FIELD;
+import static dev.dmco.test.kafka.io.codec.context.ContextProperty.VERSION;
 
 @RequiredArgsConstructor
 public class ApiVersionRule implements CodecRule {
@@ -19,7 +19,7 @@ public class ApiVersionRule implements CodecRule {
 
     @Override
     public boolean applies(CodecContext context) {
-        int apiVersion = context.get(API_VERSION);
+        int apiVersion = context.get(VERSION);
         return apiVersion >= min && apiVersion <= max;
     }
 

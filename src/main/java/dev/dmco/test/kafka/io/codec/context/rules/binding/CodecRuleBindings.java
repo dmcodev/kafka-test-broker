@@ -3,9 +3,9 @@ package dev.dmco.test.kafka.io.codec.context.rules.binding;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRule;
 import dev.dmco.test.kafka.io.codec.context.rules.ExcludeFieldFromApiVersionRule;
 import dev.dmco.test.kafka.io.codec.context.rules.MapApiVersionRule;
-import dev.dmco.test.kafka.messages.metadata.ApiVersionMapping;
 import dev.dmco.test.kafka.messages.metadata.ApiVersionMappings;
-import dev.dmco.test.kafka.messages.metadata.SinceApiVersion;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -22,8 +22,8 @@ public class CodecRuleBindings {
     private static final Map<Class<?>, CodecRuleBinding<Object>> BINDINGS = new HashMap<>();
 
     static  {
-        addBinding(SinceApiVersion.class, single(ExcludeFieldFromApiVersionRule::from));
-        addBinding(ApiVersionMapping.class, single(MapApiVersionRule::from));
+        addBinding(SinceVersion.class, single(ExcludeFieldFromApiVersionRule::from));
+        addBinding(VersionMapping.class, single(MapApiVersionRule::from));
         addBinding(ApiVersionMappings.class, compound(ApiVersionMappings::value, MapApiVersionRule::from));
     }
 
