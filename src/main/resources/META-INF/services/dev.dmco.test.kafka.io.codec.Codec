@@ -1,0 +1,15 @@
+dev.dmco.test.kafka.io.codec.primitives.BooleanCodec
+dev.dmco.test.kafka.io.codec.primitives.Int8Codec
+dev.dmco.test.kafka.io.codec.primitives.Int16Codec
+dev.dmco.test.kafka.io.codec.primitives.Int32Codec
+dev.dmco.test.kafka.io.codec.primitives.Int64Codec
+dev.dmco.test.kafka.io.codec.bytes.BytesCodec
+dev.dmco.test.kafka.io.codec.bytes.NullableBytesCodec
+dev.dmco.test.kafka.io.codec.strings.StringCodec
+dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
+dev.dmco.test.kafka.io.codec.generic.CollectionCodec
+dev.dmco.test.kafka.io.codec.generic.ObjectCodec
+dev.dmco.test.kafka.io.codec.structs.TagsCodec
+dev.dmco.test.kafka.io.codec.structs.RecordsCodec
+dev.dmco.test.kafka.io.codec.structs.SubscriptionCodec
+dev.dmco.test.kafka.io.codec.structs.AssignmentCodec

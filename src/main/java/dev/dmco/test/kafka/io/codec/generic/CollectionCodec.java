@@ -3,34 +3,28 @@ package dev.dmco.test.kafka.io.codec.generic;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
+import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
 import dev.dmco.test.kafka.io.codec.registry.TypeKey;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
+
 public class CollectionCodec implements Codec {
 
-    private final Codec elementCodec;
-
-    public static CollectionCodec from(TypeKey typeKey) {
-        List<TypeKey> typeParameters = typeKey.typeParameters();
-        if (typeParameters.size() != 1) {
-            throw new IllegalArgumentException("Single type parameter expected, was: " + typeParameters);
-        }
-        TypeKey elementTypeKey = typeParameters.get(0);
-        Codec elementCodec = CodecRegistry.getCodec(elementTypeKey);
-        return new CollectionCodec(elementCodec);
+    @Override
+    public Stream<TypeKey> handledTypes() {
+        return Stream.of(
+            key(Collection.class, key(Object.class))
+        );
     }
-
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {
@@ -38,8 +32,12 @@ public class CollectionCodec implements Codec {
         if (size <= 0) {
             return Collections.emptyList();
         }
+        TypeKey elementTypeKey = context.get(ContextProperty.CURRENT_TYPE_KEY)
+            .typeParameters().get(0);
+        Codec elementCodec = CodecRegistry.getCodec(elementTypeKey);
+        CodecContext elementContext = context.set(ContextProperty.CURRENT_TYPE_KEY, elementTypeKey);
         return IntStream.range(0, size)
-            .mapToObj(i -> elementCodec.decode(buffer, context))
+            .mapToObj(i -> elementCodec.decode(buffer, elementContext))
             .collect(Collectors.toList());
     }
 
@@ -49,6 +47,9 @@ public class CollectionCodec implements Codec {
             .map(Collection.class::cast)
             .orElseGet(Collections::emptyList);
         buffer.putInt(collection.size());
-        collection.forEach(element -> elementCodec.encode(element, buffer, context));
+        TypeKey elementTypeKey = context.get(ContextProperty.CURRENT_TYPE_KEY).typeParameters().get(0);
+        Codec elementCodec = CodecRegistry.getCodec(elementTypeKey);
+        CodecContext elementContext = context.set(ContextProperty.CURRENT_TYPE_KEY, elementTypeKey);
+        collection.forEach(element -> elementCodec.encode(element, buffer, elementContext));
     }
 }

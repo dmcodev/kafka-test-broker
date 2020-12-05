@@ -30,9 +30,10 @@ public class IODecoder {
         int apiKey = buffer.getShort();
         int apiVersion = buffer.getShort();
         buffer.rewind();
-        CodecContext codecContext = new CodecContext()
-            .set(ContextProperty.VERSION, apiVersion);
         TypeKey requestTypeKey = TypeKey.key(getRequestType(apiKey));
+        CodecContext codecContext = new CodecContext()
+            .set(ContextProperty.VERSION, apiVersion)
+            .set(ContextProperty.CURRENT_TYPE_KEY, requestTypeKey);
         return (RequestMessage) CodecRegistry.getCodec(requestTypeKey).decode(buffer, codecContext);
     }
 

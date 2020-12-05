@@ -21,9 +21,10 @@ public class IOEncoder {
             .correlationId(requestHeader.correlationId())
             .build();
         ResponseMessage responseWithHeader = response.withHeader(responseHeader);
-        CodecContext codecContext = new CodecContext()
-            .set(ContextProperty.VERSION, apiVersion);
         TypeKey responseTypeKey = TypeKey.key(response.getClass());
+        CodecContext codecContext = new CodecContext()
+            .set(ContextProperty.VERSION, apiVersion)
+            .set(ContextProperty.CURRENT_TYPE_KEY, responseTypeKey);
         CodecRegistry.getCodec(responseTypeKey)
             .encode(responseWithHeader, buffer, codecContext);
         return buffer.collect();

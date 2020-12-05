@@ -7,9 +7,11 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.VAR_UINT;
+import static dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec.VAR_UINT;
 
 public class CompactStringCodec implements Codec {
+
+    public static final CompactStringCodec COMPACT_STRING = new CompactStringCodec();
 
     @Override
     public String decode(ByteBuffer buffer, CodecContext context) {

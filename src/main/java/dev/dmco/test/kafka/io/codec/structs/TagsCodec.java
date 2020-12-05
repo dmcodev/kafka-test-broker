@@ -3,16 +3,27 @@ package dev.dmco.test.kafka.io.codec.structs;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
+import dev.dmco.test.kafka.io.codec.registry.TypeKey;
 import dev.dmco.test.kafka.messages.Tag;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.VAR_UINT;
+import static dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec.VAR_UINT;
+import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
 
 public class TagsCodec implements Codec {
+
+    @Override
+    public Stream<TypeKey> handledTypes() {
+        return Stream.of(
+            key(Collection.class, key(Tag.class))
+        );
+    }
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

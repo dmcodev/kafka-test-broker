@@ -3,11 +3,24 @@ package dev.dmco.test.kafka.io.codec.strings;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
+import dev.dmco.test.kafka.io.codec.registry.TypeKey;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
+
+import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
 
 public class StringCodec implements Codec {
+
+    public static final StringCodec STRING = new StringCodec();
+
+    @Override
+    public Stream<TypeKey> handledTypes() {
+        return Stream.of(
+            key(String.class)
+        );
+    }
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

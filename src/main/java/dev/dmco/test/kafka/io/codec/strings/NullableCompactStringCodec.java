@@ -7,8 +7,8 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.COMPACT_STRING;
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.VAR_UINT;
+import static dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec.VAR_UINT;
+import static dev.dmco.test.kafka.io.codec.strings.CompactStringCodec.COMPACT_STRING;
 
 public class NullableCompactStringCodec implements Codec {
 

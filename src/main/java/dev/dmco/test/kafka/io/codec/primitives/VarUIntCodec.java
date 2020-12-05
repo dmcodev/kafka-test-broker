@@ -8,6 +8,8 @@ import java.nio.ByteBuffer;
 
 public class VarUIntCodec implements Codec {
 
+    public static final VarUIntCodec VAR_UINT = new VarUIntCodec();
+
     private static final int LOW_WORD_MASK = 0b01111111;
     private static final int NEXT_BYTE_PRESENT_MASK = 0b10000000;
     private static final int SHIFT_SIZE = 7;

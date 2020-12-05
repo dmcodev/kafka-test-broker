@@ -4,7 +4,7 @@ import dev.dmco.test.kafka.io.IOEventLoop;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.state.BrokerState;
-import dev.dmco.test.kafka.state.RequestHandlersRegistry;
+import dev.dmco.test.kafka.usecase.RequestHandlersRegistry;
 import lombok.RequiredArgsConstructor;
 
 import java.net.InetSocketAddress;

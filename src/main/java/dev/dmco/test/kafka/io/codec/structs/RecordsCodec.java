@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.io.codec.structs;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
+import dev.dmco.test.kafka.io.codec.registry.TypeKey;
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest.Record;
 import lombok.SneakyThrows;
 
@@ -10,16 +11,26 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-import static dev.dmco.test.kafka.io.codec.registry.CodecRegistry.BYTES;
+import static dev.dmco.test.kafka.io.codec.bytes.BytesCodec.BYTES;
+import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
 
 public class RecordsCodec implements Codec {
 
     private static final int RECORD_VERSION_OFFSET = 16;
     private static final int MESSAGE_ATTRIBUTES_OFFSET = RECORD_VERSION_OFFSET + 1;
     private static final int MESSAGE_TIMESTAMP_OFFSET = MESSAGE_ATTRIBUTES_OFFSET + 1;
+
+    @Override
+    public Stream<TypeKey> handledTypes() {
+        return Stream.of(
+            key(Collection.class, key(Record.class))
+        );
+    }
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

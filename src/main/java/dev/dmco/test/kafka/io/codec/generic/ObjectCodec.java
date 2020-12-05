@@ -19,30 +19,36 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
 
 public class ObjectCodec implements Codec {
 
-    private final TypeMetadata metadata;
+    private final Map<TypeKey, TypeMetadata> metadata = new HashMap<>();
 
-    public ObjectCodec(Class<?> type) {
-        metadata = new TypeMetadata(type);
-    }
-
-    public static ObjectCodec from(TypeKey typeKey) {
-        return new ObjectCodec(typeKey.rawType());
+    @Override
+    public Stream<TypeKey> handledTypes() {
+        return Stream.of(
+            key(Object.class)
+        );
     }
 
     @Override
     @SneakyThrows
     public Object decode(ByteBuffer buffer, CodecContext context) {
-        CodecContext objectContext = metadata.createContext(context);
+        TypeMetadata metadata = getMetadata(context);
+        CodecContext objectContext = metadata.createContextFromRules(context);
         Constructor<?> constructor = metadata.constructor();
         Collection<TypeProperty> properties = metadata.properties();
         List<Object> constructorArguments = new ArrayList<>(constructor.getParameterCount());
         for (TypeProperty property : properties) {
-            CodecContext propertyContext = property.createContext(objectContext);
+            CodecContext propertyContext = property.createContextFromRules(objectContext)
+                .set(ContextProperty.CURRENT_TYPE_KEY, property.typeKey());
             if (property.isExcluded(propertyContext)) {
                 constructorArguments.add(property.getEmptyValue());
             } else {
@@ -56,16 +62,22 @@ public class ObjectCodec implements Codec {
 
     @Override
     public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
-        CodecContext objectContext = metadata.createContext(context);
+        TypeMetadata metadata = getMetadata(context);
+        CodecContext objectContext = metadata.createContextFromRules(context);
         Collection<TypeProperty> properties = metadata.properties();
         for (TypeProperty property : properties) {
-            CodecContext propertyContext = property.createContext(objectContext);
+            CodecContext propertyContext = property.createContextFromRules(objectContext)
+                .set(ContextProperty.CURRENT_TYPE_KEY, property.typeKey());
             if (!property.isExcluded(propertyContext)) {
                 Object propertyValue = property.getValue(value);
                 property.selectCodec()
                     .encode(propertyValue, buffer, propertyContext);
             }
         }
+    }
+
+    private TypeMetadata getMetadata(CodecContext context) {
+        return metadata.computeIfAbsent(context.get(ContextProperty.CURRENT_TYPE_KEY), key -> new TypeMetadata(key.rawType()));
     }
 
     @Getter

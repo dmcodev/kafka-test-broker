@@ -8,7 +8,7 @@ public interface CodecRulesAware {
 
     Collection<CodecRule> codecRules();
 
-    default CodecContext createContext(CodecContext initialContext) {
+    default CodecContext createContextFromRules(CodecContext initialContext) {
         return codecRules().stream()
             .reduce(
                 initialContext,
