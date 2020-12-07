@@ -20,7 +20,6 @@ public class CodecRegistry {
             .forEach(codec -> codec.handledTypes()
                 .forEach(type -> CODEC_MAPPING.put(type, codec))
             );
-        System.out.println();
     }
 
     public static Codec getCodec(TypeKey key) {

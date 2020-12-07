@@ -1,16 +1,17 @@
-package dev.dmco.test.kafka.io.codec.bytes;
+package dev.dmco.test.kafka.io.codec.generic;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
-import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
+import dev.dmco.test.kafka.io.codec.registry.TypeKey;
 import dev.dmco.test.kafka.messages.Versioned;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
 
@@ -18,6 +19,13 @@ import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
 public abstract class VersionedBytesCodec implements Codec {
 
     private final Class<? extends Versioned> objectType;
+
+    @Override
+    public Stream<TypeKey> handledTypes() {
+        return Stream.of(
+            key(objectType)
+        );
+    }
 
     @Override
     public Object decode(ByteBuffer buffer, CodecContext context) {

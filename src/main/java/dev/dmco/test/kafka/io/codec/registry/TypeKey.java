@@ -23,8 +23,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class TypeKey {
 
-    public static TypeKey STRING = key(String.class);
-
     private final Class<?> rawType;
     private final List<TypeKey> typeParameters;
 
