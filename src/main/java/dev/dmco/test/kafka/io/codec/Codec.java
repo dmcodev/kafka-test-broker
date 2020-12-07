@@ -2,18 +2,16 @@ package dev.dmco.test.kafka.io.codec;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.registry.Type;
 
 import java.nio.ByteBuffer;
 import java.util.stream.Stream;
 
 public interface Codec {
 
-    Object decode(ByteBuffer buffer, CodecContext context);
+    Stream<Type> handledTypes();
 
-    void encode(Object value, ResponseBuffer buffer, CodecContext context);
+    Object decode(ByteBuffer buffer, Type targetType, CodecContext context);
 
-    default Stream<TypeKey> handledTypes() {
-        return Stream.empty();
-    }
+    void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context);
 }

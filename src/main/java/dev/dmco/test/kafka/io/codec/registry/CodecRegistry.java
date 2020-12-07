@@ -11,26 +11,19 @@ import java.util.stream.Collectors;
 
 public class CodecRegistry {
 
-    private static final Map<TypeKey, Codec> CODEC_MAPPING = new HashMap<>();
-    private static final Map<TypeKey, Codec> CODEC_BY_TYPE_KEY = new HashMap<>();
-    private static final Map<Class<?>, Codec> CODEC_BY_CODEC_TYPE = new HashMap<>();
+    private static final Map<Type, Codec> CODEC_MAPPING = new HashMap<>();
+    private static final Map<Type, Codec> CODEC_BY_TYPE_KEY = new HashMap<>();
 
     static {
         ServiceLoader.load(Codec.class)
-            .forEach(codec -> codec.handledTypes()
-                .forEach(type -> CODEC_MAPPING.put(type, codec))
-            );
+            .forEach(codec -> codec.handledTypes().forEach(type -> CODEC_MAPPING.put(type, codec)));
     }
 
-    public static Codec getCodec(TypeKey key) {
+    public static Codec getCodec(Type key) {
         return CODEC_BY_TYPE_KEY.computeIfAbsent(key, CodecRegistry::select);
     }
 
-    public static <T extends Codec> T getCodec(Class<T> codecType) {
-        return (T) CODEC_BY_CODEC_TYPE.computeIfAbsent(codecType, CodecRegistry::select);
-    }
-
-    private static Codec select(TypeKey key) {
+    private static Codec select(Type key) {
         return CODEC_MAPPING.keySet().stream()
             .collect(Collectors.toMap(Function.identity(), candidateKey -> candidateKey.differenceFactor(key)))
             .entrySet().stream()
@@ -39,12 +32,5 @@ public class CodecRegistry {
             .map(Map.Entry::getKey)
             .map(CODEC_MAPPING::get)
             .orElseThrow(() -> new IllegalStateException("No suitable codec found for key: " + key));
-    }
-
-    private static Codec select(Class<?> codecType) {
-        return CODEC_MAPPING.values().stream()
-            .filter(codec -> codec.getClass().isAssignableFrom(codecType))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Could not find codec of type: " + codecType));
     }
 }

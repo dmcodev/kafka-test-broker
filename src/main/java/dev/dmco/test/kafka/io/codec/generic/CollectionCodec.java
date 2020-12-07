@@ -3,9 +3,8 @@ package dev.dmco.test.kafka.io.codec.generic;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.registry.Type;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -15,41 +14,34 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
-
 public class CollectionCodec implements Codec {
 
     @Override
-    public Stream<TypeKey> handledTypes() {
-        return Stream.of(
-            key(Collection.class, key(Object.class))
-        );
+    public Stream<Type> handledTypes() {
+        return Stream.of(Type.of(Collection.class, Type.of(Object.class)));
     }
 
     @Override
-    public Object decode(ByteBuffer buffer, CodecContext context) {
+    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
         int size = buffer.getInt();
         if (size <= 0) {
             return Collections.emptyList();
         }
-        TypeKey elementTypeKey = context.get(ContextProperty.CURRENT_TYPE_KEY)
-            .typeParameters().get(0);
-        Codec elementCodec = CodecRegistry.getCodec(elementTypeKey);
-        CodecContext elementContext = context.set(ContextProperty.CURRENT_TYPE_KEY, elementTypeKey);
+        Type elementType = targetType.typeParameters().get(0);
+        Codec elementCodec = CodecRegistry.getCodec(elementType);
         return IntStream.range(0, size)
-            .mapToObj(i -> elementCodec.decode(buffer, elementContext))
+            .mapToObj(i -> elementCodec.decode(buffer, elementType, context))
             .collect(Collectors.toList());
     }
 
     @Override
-    public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
+    public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Collection<?> collection = Optional.ofNullable(value)
             .map(Collection.class::cast)
             .orElseGet(Collections::emptyList);
         buffer.putInt(collection.size());
-        TypeKey elementTypeKey = context.get(ContextProperty.CURRENT_TYPE_KEY).typeParameters().get(0);
-        Codec elementCodec = CodecRegistry.getCodec(elementTypeKey);
-        CodecContext elementContext = context.set(ContextProperty.CURRENT_TYPE_KEY, elementTypeKey);
-        collection.forEach(element -> elementCodec.encode(element, buffer, elementContext));
+        Type elementType = valueType.typeParameters().get(0);
+        Codec elementCodec = CodecRegistry.getCodec(elementType);
+        collection.forEach(element -> elementCodec.encode(element, elementType, buffer, context));
     }
 }

@@ -3,7 +3,8 @@ package dev.dmco.test.kafka.io.codec.structs;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.primitives.VarUInt;
+import dev.dmco.test.kafka.io.codec.registry.Type;
 import dev.dmco.test.kafka.messages.Tag;
 
 import java.nio.ByteBuffer;
@@ -13,28 +14,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec.VAR_UINT;
-import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
-
 public class TagsCodec implements Codec {
 
     @Override
-    public Stream<TypeKey> handledTypes() {
-        return Stream.of(
-            key(Collection.class, key(Tag.class))
-        );
+    public Stream<Type> handledTypes() {
+        return Stream.of(Type.of(Collection.class, Type.of(Tag.class)));
     }
 
     @Override
-    public Object decode(ByteBuffer buffer, CodecContext context) {
+    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
         List<Tag> tags = Collections.emptyList();
-        int numberOfFields = VAR_UINT.decode(buffer, context);
+        int numberOfFields = VarUInt.decode(buffer);
         if (numberOfFields > 0) {
             tags = new ArrayList<>();
         }
         for (int i = 0; i < numberOfFields; i++) {
-            int key = VAR_UINT.decode(buffer, context);
-            int size = VAR_UINT.decode(buffer, context);
+            int key = VarUInt.decode(buffer);
+            int size = VarUInt.decode(buffer);
             byte[] value = new byte[size];
             buffer.get(value);
             tags.add(new Tag(key, value));
@@ -43,17 +39,17 @@ public class TagsCodec implements Codec {
     }
 
     @Override
-    public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
+    public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         if (value != null) {
             List<Tag> tags = (List<Tag>) value;
-            VAR_UINT.encode(tags.size(), buffer, context);
+            VarUInt.encode(tags.size(), buffer);
             for (Tag tag : tags) {
-                VAR_UINT.encode(tag.key(), buffer, context);
-                VAR_UINT.encode(tag.value().length, buffer, context);
+                VarUInt.encode(tag.key(), buffer);
+                VarUInt.encode(tag.value().length, buffer);
                 buffer.putBytes(tag.value());
             }
         } else {
-            VAR_UINT.encode(0, buffer, context);
+            VarUInt.encode(0, buffer);
         }
     }
 }

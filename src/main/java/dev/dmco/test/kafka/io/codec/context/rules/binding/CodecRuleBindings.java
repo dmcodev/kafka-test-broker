@@ -1,8 +1,8 @@
 package dev.dmco.test.kafka.io.codec.context.rules.binding;
 
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRule;
-import dev.dmco.test.kafka.io.codec.context.rules.ExcludeFieldOnVersionRule;
 import dev.dmco.test.kafka.io.codec.context.rules.MapVersionRule;
+import dev.dmco.test.kafka.io.codec.context.rules.VersionRule;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.metadata.VersionMappings;
@@ -22,7 +22,7 @@ public class CodecRuleBindings {
     private static final Map<Class<?>, CodecRuleBinding<Object>> BINDINGS = new HashMap<>();
 
     static  {
-        addBinding(SinceVersion.class, single(ExcludeFieldOnVersionRule::from));
+        addBinding(SinceVersion.class, single(VersionRule::from));
         addBinding(VersionMapping.class, single(MapVersionRule::from));
         addBinding(VersionMappings.class, compound(VersionMappings::value, MapVersionRule::from));
     }

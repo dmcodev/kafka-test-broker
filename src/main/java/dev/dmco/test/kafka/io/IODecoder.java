@@ -4,8 +4,7 @@ import dev.dmco.test.kafka.error.BrokerException;
 import dev.dmco.test.kafka.error.ErrorCode;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
-import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.usecase.RequestHandler;
@@ -30,11 +29,9 @@ public class IODecoder {
         int apiKey = buffer.getShort();
         int apiVersion = buffer.getShort();
         buffer.rewind();
-        TypeKey requestTypeKey = TypeKey.key(getRequestType(apiKey));
         CodecContext codecContext = new CodecContext()
-            .set(ContextProperty.VERSION, apiVersion)
-            .set(ContextProperty.CURRENT_TYPE_KEY, requestTypeKey);
-        return (RequestMessage) CodecRegistry.getCodec(requestTypeKey).decode(buffer, codecContext);
+            .set(ContextProperty.VERSION, apiVersion);
+        return (RequestMessage) ObjectCodec.decode(buffer, getRequestType(apiKey),codecContext);
     }
 
     private Class<?> getRequestType(int apiKey) {

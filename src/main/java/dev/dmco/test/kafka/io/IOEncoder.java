@@ -3,8 +3,7 @@ package dev.dmco.test.kafka.io;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
-import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
@@ -21,12 +20,9 @@ public class IOEncoder {
             .correlationId(requestHeader.correlationId())
             .build();
         ResponseMessage responseWithHeader = response.withHeader(responseHeader);
-        TypeKey responseTypeKey = TypeKey.key(response.getClass());
         CodecContext codecContext = new CodecContext()
-            .set(ContextProperty.VERSION, apiVersion)
-            .set(ContextProperty.CURRENT_TYPE_KEY, responseTypeKey);
-        CodecRegistry.getCodec(responseTypeKey)
-            .encode(responseWithHeader, buffer, codecContext);
+            .set(ContextProperty.VERSION, apiVersion);
+        ObjectCodec.encode(responseWithHeader, buffer, codecContext);
         return buffer.collect();
     }
 }

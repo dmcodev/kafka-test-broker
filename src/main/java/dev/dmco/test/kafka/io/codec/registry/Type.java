@@ -8,7 +8,6 @@ import lombok.experimental.Accessors;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -21,43 +20,43 @@ import java.util.stream.Stream;
 @Accessors(fluent = true)
 @EqualsAndHashCode
 @RequiredArgsConstructor
-public class TypeKey {
+public class Type {
 
-    private final Class<?> rawType;
-    private final List<TypeKey> typeParameters;
+    private final Class<?> raw;
+    private final List<Type> typeParameters;
 
-    public static TypeKey key(Class<?> type) {
-        return new TypeKey(type, Collections.emptyList());
+    public static Type of(Class<?> type) {
+        return new Type(type, Collections.emptyList());
     }
 
-    public static TypeKey key(Class<?> type, TypeKey... parameters) {
-        return new TypeKey(type, Arrays.stream(parameters).collect(Collectors.toList()));
+    public static Type of(Class<?> type, Type... parameters) {
+        return new Type(type, Arrays.stream(parameters).collect(Collectors.toList()));
     }
 
-    public static TypeKey key(Field field) {
-        return key(field.getGenericType());
+    public static Type of(Field field) {
+        return of(field.getGenericType());
     }
 
-    public static TypeKey key(Type type) {
+    public static Type of(java.lang.reflect.Type type) {
         if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
             Class<?> rawType = (Class<?>) parameterizedType.getRawType();
-            List<TypeKey> typeParameters = Arrays.stream(parameterizedType.getActualTypeArguments())
-                .map(TypeKey::key)
+            List<Type> typeParameters = Arrays.stream(parameterizedType.getActualTypeArguments())
+                .map(Type::of)
                 .collect(Collectors.toList());
-            return new TypeKey(rawType, typeParameters);
+            return new Type(rawType, typeParameters);
         } else if (Class.class.equals(type.getClass())) {
-            return key((Class<?>) type);
+            return of((Class<?>) type);
         } else {
             throw new IllegalArgumentException("Could not construct type key from: " + type);
         }
     }
 
-    public int differenceFactor(TypeKey coveredKey) {
-        if (!rawType.isAssignableFrom(coveredKey.rawType)) {
+    public int differenceFactor(Type coveredKey) {
+        if (!raw.isAssignableFrom(coveredKey.raw)) {
             return Integer.MAX_VALUE;
         }
-        int difference = typeDistance(coveredKey.rawType, rawType);
+        int difference = typeDistance(coveredKey.raw, raw);
         if (typeParameters.size() != coveredKey.typeParameters.size()) {
             return Integer.MAX_VALUE;
         }

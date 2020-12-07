@@ -1,16 +1,14 @@
 package dev.dmco.test.kafka.io.codec.value
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer
-import dev.dmco.test.kafka.io.codec.primitives.VarUIntCodec
+import dev.dmco.test.kafka.io.codec.primitives.VarUInt
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import java.nio.ByteBuffer
 
-class VarUIntCodecSpec : StringSpec({
-
-    val codec = VarUIntCodec()
+class VarUIntSpec : StringSpec({
 
     "Should decode unsigned VarInt" {
         forAll(
@@ -22,10 +20,10 @@ class VarUIntCodecSpec : StringSpec({
             buffer.putInt(binary)
             buffer.rewind()
 
-            (codec.decode(buffer, null) as Int) shouldBe decimal
+            VarUInt.decode(buffer) shouldBe decimal
 
             val responseBuffer = ResponseBuffer()
-            codec.encode(decimal, responseBuffer, null)
+            VarUInt.encode(decimal, responseBuffer)
 
             val encodeBuffer = responseBuffer.collect().first()
             encodeBuffer.rewind()

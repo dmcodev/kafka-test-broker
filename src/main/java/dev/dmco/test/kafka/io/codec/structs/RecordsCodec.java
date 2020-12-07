@@ -2,8 +2,9 @@ package dev.dmco.test.kafka.io.codec.structs;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
+import dev.dmco.test.kafka.io.codec.bytes.BytesCodec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.registry.Type;
 import dev.dmco.test.kafka.usecase.produce.ProduceRequest.Record;
 import lombok.SneakyThrows;
 
@@ -16,9 +17,6 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-import static dev.dmco.test.kafka.io.codec.bytes.BytesCodec.BYTES;
-import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
-
 public class RecordsCodec implements Codec {
 
     private static final int RECORD_VERSION_OFFSET = 16;
@@ -26,14 +24,12 @@ public class RecordsCodec implements Codec {
     private static final int MESSAGE_TIMESTAMP_OFFSET = MESSAGE_ATTRIBUTES_OFFSET + 1;
 
     @Override
-    public Stream<TypeKey> handledTypes() {
-        return Stream.of(
-            key(Collection.class, key(Record.class))
-        );
+    public Stream<Type> handledTypes() {
+        return Stream.of(Type.of(Collection.class, Type.of(Record.class)));
     }
 
     @Override
-    public Object decode(ByteBuffer buffer, CodecContext context) {
+    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
         int length = buffer.getInt();
         if (length == -1) {
             return null;
@@ -60,8 +56,8 @@ public class RecordsCodec implements Codec {
                 buffer.getLong();
             }
             Record record = Record.builder()
-                .key((byte[]) BYTES.decode(buffer, context))
-                .value((byte[]) BYTES.decode(buffer, context))
+                .key((byte[]) BytesCodec.decode(buffer))
+                .value((byte[]) BytesCodec.decode(buffer))
                 .build();
             records.add(record);
         }
@@ -74,7 +70,7 @@ public class RecordsCodec implements Codec {
             buffer.getLong();
         }
         buffer.getInt();
-        byte[] compressedMessages = (byte[]) BYTES.decode(buffer, context);
+        byte[] compressedMessages = (byte[]) BytesCodec.decode(buffer);
         ByteBuffer decompressedMessages = ByteBuffer.wrap(compression.decompress(compressedMessages));
         return decodeMessageSet(decompressedMessages, recordsVersion, decompressedMessages.remaining(), context);
     }
@@ -96,7 +92,7 @@ public class RecordsCodec implements Codec {
     }
 
     @Override
-    public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
+    public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         throw new UnsupportedOperationException();
     }
 

@@ -8,7 +8,7 @@ import dev.dmco.test.kafka.io.codec.context.rules.CodecRule;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRulesAware;
 import dev.dmco.test.kafka.io.codec.context.rules.binding.CodecRuleBindings;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.registry.Type;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
@@ -25,59 +25,46 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
-
 public class ObjectCodec implements Codec {
 
-    private final Map<TypeKey, TypeMetadata> metadata = new HashMap<>();
+    private static final Map<Class<?>, TypeMetadata> METADATA = new HashMap<>();
 
     @Override
-    public Stream<TypeKey> handledTypes() {
-        return Stream.of(
-            key(Object.class)
-        );
+    public Stream<Type> handledTypes() {
+        return Stream.of(Type.of(Object.class));
     }
 
     @Override
     @SneakyThrows
-    public Object decode(ByteBuffer buffer, CodecContext context) {
-        TypeMetadata metadata = getMetadata(context);
+    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
+        return decode(buffer, targetType.raw(), context);
+    }
+
+    @Override
+    public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(value, buffer, context);
+    }
+
+    @SneakyThrows
+    public static Object decode(ByteBuffer buffer, Class<?> targetType, CodecContext context) {
+        TypeMetadata metadata = METADATA.computeIfAbsent(targetType, TypeMetadata::new);
         CodecContext objectContext = metadata.createContextFromRules(context);
         Constructor<?> constructor = metadata.constructor();
         Collection<TypeProperty> properties = metadata.properties();
         List<Object> constructorArguments = new ArrayList<>(constructor.getParameterCount());
         for (TypeProperty property : properties) {
-            CodecContext propertyContext = property.createContextFromRules(objectContext)
-                .set(ContextProperty.CURRENT_TYPE_KEY, property.typeKey());
-            if (property.isExcluded(propertyContext)) {
-                constructorArguments.add(property.getEmptyValue());
-            } else {
-                Object fieldValue = property.selectCodec()
-                    .decode(buffer, propertyContext);
-                constructorArguments.add(fieldValue);
-            }
+            constructorArguments.add(property.decode(buffer, objectContext));
         }
         return constructor.newInstance(constructorArguments.toArray());
     }
 
-    @Override
-    public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
-        TypeMetadata metadata = getMetadata(context);
+    public static void encode(Object value, ResponseBuffer buffer, CodecContext context) {
+        TypeMetadata metadata = METADATA.computeIfAbsent(value.getClass(), TypeMetadata::new);
         CodecContext objectContext = metadata.createContextFromRules(context);
         Collection<TypeProperty> properties = metadata.properties();
         for (TypeProperty property : properties) {
-            CodecContext propertyContext = property.createContextFromRules(objectContext)
-                .set(ContextProperty.CURRENT_TYPE_KEY, property.typeKey());
-            if (!property.isExcluded(propertyContext)) {
-                Object propertyValue = property.getValue(value);
-                property.selectCodec()
-                    .encode(propertyValue, buffer, propertyContext);
-            }
+            property.encode(value, buffer, objectContext);
         }
-    }
-
-    private TypeMetadata getMetadata(CodecContext context) {
-        return metadata.computeIfAbsent(context.get(ContextProperty.CURRENT_TYPE_KEY), key -> new TypeMetadata(key.rawType()));
     }
 
     @Getter
@@ -105,52 +92,63 @@ public class ObjectCodec implements Codec {
     private static class TypeProperty implements CodecRulesAware {
 
         private final Field getter;
-        private final Class<?> propertyType;
-        private final TypeKey typeKey;
+        private final Class<?> rawType;
+        private final Type type;
         private final Collection<CodecRule> codecRules;
 
         TypeProperty(Field field) {
             field.setAccessible(true);
             getter = field;
-            propertyType = field.getType();
-            typeKey = TypeKey.key(field);
+            rawType = field.getType();
+            type = Type.of(field);
             codecRules = Arrays.stream(field.getAnnotations())
                 .map(CodecRuleBindings::createRules)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
         }
 
+        Object decode(ByteBuffer buffer, CodecContext objectContext) {
+            CodecContext propertyContext = createContextFromRules(objectContext);
+            if (isIncluded(propertyContext)) {
+                return CodecRegistry.getCodec(type)
+                    .decode(buffer, type, propertyContext);
+            } else {
+                return produceEmptyValue();
+            }
+        }
+
         @SneakyThrows
-        Object getValue(Object instance) {
-            return getter.get(instance);
+        void encode(Object instance, ResponseBuffer buffer, CodecContext objectContext) {
+            CodecContext propertyContext = createContextFromRules(objectContext);
+            if (isIncluded(propertyContext)) {
+                Object value = getter.get(instance);
+                CodecRegistry.getCodec(type)
+                    .encode(value, type, buffer, propertyContext);
+            }
         }
 
-        Codec selectCodec() {
-            return CodecRegistry.getCodec(typeKey);
+        private boolean isIncluded(CodecContext context) {
+            return !context.getOrDefault(ContextProperty.VERSION_MISMATCH, false);
         }
 
-        boolean isExcluded(CodecContext context) {
-            return context.getOrDefault(ContextProperty.EXCLUDE_FIELD, false);
-        }
-
-        Object getEmptyValue() {
-            if (Object.class.isAssignableFrom(propertyType)) {
+        private Object produceEmptyValue() {
+            if (Object.class.isAssignableFrom(rawType)) {
                 return null;
             } else {
-                if (byte.class == propertyType) {
+                if (byte.class == rawType) {
                     return (byte) 0;
-                } else if (short.class == propertyType) {
+                } else if (short.class == rawType) {
                     return (short) 0;
-                } else if (int.class == propertyType) {
+                } else if (int.class == rawType) {
                     return 0;
-                } else if (float.class == propertyType) {
+                } else if (float.class == rawType) {
                     return 0.0f;
-                } else if (double.class == propertyType) {
+                } else if (double.class == rawType) {
                     return 0.0;
-                } else if (boolean.class == propertyType) {
+                } else if (boolean.class == rawType) {
                     return false;
                 } else {
-                    throw new IllegalArgumentException("Could not produce empty value for field type: " + propertyType);
+                    throw new IllegalArgumentException("Could not produce empty value for field type: " + rawType);
                 }
             }
         }

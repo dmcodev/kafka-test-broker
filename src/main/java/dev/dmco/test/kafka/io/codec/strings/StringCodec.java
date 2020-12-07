@@ -3,35 +3,37 @@ package dev.dmco.test.kafka.io.codec.strings;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.registry.TypeKey;
+import dev.dmco.test.kafka.io.codec.registry.Type;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
-import static dev.dmco.test.kafka.io.codec.registry.TypeKey.key;
-
 public class StringCodec implements Codec {
 
-    public static final StringCodec STRING = new StringCodec();
-
     @Override
-    public Stream<TypeKey> handledTypes() {
-        return Stream.of(
-            key(String.class)
-        );
+    public Stream<Type> handledTypes() {
+        return Stream.of(Type.of(String.class));
     }
 
     @Override
-    public Object decode(ByteBuffer buffer, CodecContext context) {
+    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
+        return decode(buffer);
+    }
+
+    @Override
+    public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(value, buffer);
+    }
+
+    public static String decode(ByteBuffer buffer) {
         int length = buffer.getShort();
         byte[] chars = new byte[length];
         buffer.get(chars);
         return new String(chars, StandardCharsets.UTF_8);
     }
 
-    @Override
-    public void encode(Object value, ResponseBuffer buffer, CodecContext context) {
+    public static void encode(Object value, ResponseBuffer buffer) {
         String string = (String) value;
         byte[] chars = string.getBytes(StandardCharsets.UTF_8);
         buffer.putShort((short) chars.length)
