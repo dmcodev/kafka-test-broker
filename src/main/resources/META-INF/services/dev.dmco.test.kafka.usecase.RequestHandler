@@ -5,3 +5,4 @@ dev.dmco.test.kafka.usecase.coordinator.FindCoordinatorRequestHandler
 dev.dmco.test.kafka.usecase.joingroup.JoinGroupRequestHandler
 dev.dmco.test.kafka.usecase.syncgroup.SyncGroupRequestHandler
 dev.dmco.test.kafka.usecase.offsetfetch.OffsetFetchRequestHandler
+dev.dmco.test.kafka.usecase.fetch.FetchRequestHandler

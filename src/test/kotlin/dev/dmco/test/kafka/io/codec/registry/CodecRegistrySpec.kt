@@ -12,8 +12,8 @@ import dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 import dev.dmco.test.kafka.io.codec.strings.StringCodec
 import dev.dmco.test.kafka.io.codec.structs.RecordsCodec
 import dev.dmco.test.kafka.io.codec.structs.TagsCodec
+import dev.dmco.test.kafka.messages.Records
 import dev.dmco.test.kafka.messages.Tag
-import dev.dmco.test.kafka.usecase.produce.ProduceRequest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
@@ -38,7 +38,7 @@ class CodecRegistrySpec : StringSpec({
             row(of(Set::class.java, of(String::class.java)), CollectionCodec::class.java),
             row(of(Set::class.java, of(java.lang.Integer::class.java)), CollectionCodec::class.java),
             row(of(Collection::class.java, of(java.lang.Boolean::class.java)), CollectionCodec::class.java),
-            row(of(Collection::class.java, of(ProduceRequest.Record::class.java)), RecordsCodec::class.java),
+            row(of(Collection::class.java, of(Records::class.java)), RecordsCodec::class.java),
         ) { typeKey, expectedCodecType ->
 
             CodecRegistry.getCodec(typeKey)::class.java shouldBeSameInstanceAs expectedCodecType

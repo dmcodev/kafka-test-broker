@@ -34,7 +34,7 @@ public class BytesCodec implements Codec {
 
     public static void encode(Object value, ResponseBuffer buffer) {
         byte[] bytes = (byte[]) value;
-        buffer.putInt(bytes.length);
-        buffer.putBytes(bytes);
+        buffer.putInt(bytes.length)
+            .putBytes(bytes);
     }
 }

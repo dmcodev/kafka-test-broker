@@ -1,11 +1,11 @@
 package dev.dmco.test.kafka.usecase.produce;
 
+import dev.dmco.test.kafka.messages.Records;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
-import lombok.Builder;
 import lombok.experimental.Accessors;
 
 import java.util.List;
@@ -43,16 +43,6 @@ public class ProduceRequest implements RequestMessage {
 
         int partition;
 
-        List<Record> records;
-    }
-
-    @lombok.Value
-    @Builder
-    @Accessors(fluent = true)
-    public static class Record {
-
-        byte[] key;
-
-        byte[] value;
+        Records records;
     }
 }

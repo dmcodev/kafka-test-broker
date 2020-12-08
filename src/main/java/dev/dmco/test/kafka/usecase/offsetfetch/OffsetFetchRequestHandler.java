@@ -22,7 +22,7 @@ public class OffsetFetchRequestHandler implements RequestHandler<OffsetFetchRequ
                     .partition(
                         OffsetFetchResponse.Partition.builder()
                             .partitionId(0)
-                            .committedOffset(1)
+                            .committedOffset(0)
                             .metadata(null)
                             .errorCode((short) 0)
                             .build()

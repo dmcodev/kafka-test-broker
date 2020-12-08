@@ -4,7 +4,6 @@ import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -57,10 +56,12 @@ public class ResponseBuffer {
         return this;
     }
 
-    public ResponseBuffer putBuffers(Collection<ByteBuffer> bufferList) {
-        commit();
-        committedBuffers.addAll(bufferList);
-        return this;
+    public ByteBuffer putSlot(int size) {
+        requireBytes(size);
+        ByteBuffer slot = currentBuffer.duplicate();
+        currentBuffer.position(currentBuffer.position() + size);
+        slot.limit(slot.position() + size);
+        return slot;
     }
 
     public byte[] read(int from, int length) {

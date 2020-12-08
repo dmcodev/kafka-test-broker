@@ -9,7 +9,6 @@ import dev.dmco.test.kafka.messages.Versioned;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
@@ -36,10 +35,10 @@ public abstract class VersionedTypeBytesCodec implements Codec {
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Versioned versioned = (Versioned) value;
         CodecContext objectContext = context.set(ContextProperty.VERSION, (int) versioned.version());
-        ResponseBuffer objectBuffer = new ResponseBuffer();
-        ObjectCodec.encode(value, objectBuffer, objectContext);
-        buffer.putInt(objectBuffer.size());
-        List<ByteBuffer> objectBuffers = objectBuffer.collect();
-        buffer.putBuffers(objectBuffers);
+        ByteBuffer sizeSlot = buffer.putSlot(Integer.BYTES);
+        int startPosition = buffer.position();
+        ObjectCodec.encode(value, buffer, objectContext);
+        int objectSize = buffer.position() - startPosition;
+        sizeSlot.putInt(objectSize);
     }
 }

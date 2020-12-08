@@ -5,18 +5,20 @@ import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.bytes.BytesCodec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.registry.Type;
-import dev.dmco.test.kafka.usecase.produce.ProduceRequest.Record;
+import dev.dmco.test.kafka.messages.Records;
+import dev.dmco.test.kafka.messages.Records.Record;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.zip.CRC32;
 import java.util.zip.GZIPInputStream;
 
+// TODO: current records format
 public class RecordsCodec implements Codec {
 
     private static final int RECORD_VERSION_OFFSET = 16;
@@ -25,7 +27,7 @@ public class RecordsCodec implements Codec {
 
     @Override
     public Stream<Type> handledTypes() {
-        return Stream.of(Type.of(Collection.class, Type.of(Record.class)));
+        return Stream.of(Type.of(Records.class));
     }
 
     @Override
@@ -38,33 +40,39 @@ public class RecordsCodec implements Codec {
         if (recordsVersion == 0 || recordsVersion == 1) {
             Compression compression = getMessageCompression(buffer);
             if (compression == Compression.NONE) {
-                return decodeMessageSet(buffer, recordsVersion, length, context);
+                return decodeMessageSet(buffer, recordsVersion, length);
             }
-            return decodeCompressedMessageSet(buffer, recordsVersion, compression, context);
+            return decodeCompressedMessageSet(buffer, recordsVersion, compression);
         } else {
-            throw new IllegalArgumentException("Records version (magic) " + recordsVersion + " not supported");
+            throw versionNotSupportedException(recordsVersion);
         }
     }
 
-    private List<Record> decodeMessageSet(ByteBuffer buffer, byte recordsVersion, int length, CodecContext context) {
+    private Records decodeMessageSet(ByteBuffer buffer, byte recordsVersion, int length) {
         int endPosition = buffer.position() + length;
         buffer.limit(buffer.position() + length);
         List<Record> records = new ArrayList<>();
         while (buffer.position() < endPosition) {
-            buffer.position(buffer.position() + MESSAGE_TIMESTAMP_OFFSET);
+            int messageStartPosition = buffer.position();
+            long offset = buffer.getLong();
+            buffer.position(messageStartPosition + MESSAGE_TIMESTAMP_OFFSET);
             if (recordsVersion == 1) {
                 buffer.getLong();
             }
             Record record = Record.builder()
+                .offset(offset)
                 .key((byte[]) BytesCodec.decode(buffer))
                 .value((byte[]) BytesCodec.decode(buffer))
                 .build();
             records.add(record);
         }
-        return records;
+        return Records.builder()
+            .version(recordsVersion)
+            .records(records)
+            .build();
     }
 
-    private List<Record> decodeCompressedMessageSet(ByteBuffer buffer, byte recordsVersion, Compression compression, CodecContext context) {
+    private Records decodeCompressedMessageSet(ByteBuffer buffer, byte recordsVersion, Compression compression) {
         buffer.position(buffer.position() + MESSAGE_TIMESTAMP_OFFSET);
         if (recordsVersion == 1) {
             buffer.getLong();
@@ -72,7 +80,7 @@ public class RecordsCodec implements Codec {
         buffer.getInt();
         byte[] compressedMessages = (byte[]) BytesCodec.decode(buffer);
         ByteBuffer decompressedMessages = ByteBuffer.wrap(compression.decompress(compressedMessages));
-        return decodeMessageSet(decompressedMessages, recordsVersion, decompressedMessages.remaining(), context);
+        return decodeMessageSet(decompressedMessages, recordsVersion, decompressedMessages.remaining());
     }
 
     private byte getRecordsVersion(ByteBuffer buffer) {
@@ -93,7 +101,54 @@ public class RecordsCodec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        throw new UnsupportedOperationException();
+        Records records = (Records) value;
+        byte recordsVersion = (byte) records.version();
+        if (recordsVersion == 0 || recordsVersion == 1) {
+            encodeMessageSet(records.records(), recordsVersion, buffer);
+        } else {
+            throw versionNotSupportedException(recordsVersion);
+        }
+    }
+
+    private void encodeMessageSet(List<Record> records, byte recordsVersion, ResponseBuffer buffer) {
+        ByteBuffer messageSetSizeSlot = buffer.putSlot(Integer.BYTES);
+        int sizeStartPosition = buffer.position();
+        for (Record record : records) {
+            encodeMessage(record, recordsVersion, buffer);
+        }
+        int messageSetSize = buffer.position() - sizeStartPosition;
+        messageSetSizeSlot.putInt(messageSetSize);
+    }
+
+    private void encodeMessage(Record record, byte recordsVersion, ResponseBuffer buffer) {
+        buffer.putLong(record.offset());
+        ByteBuffer sizeSlot = buffer.putSlot(Integer.BYTES);
+        int sizeStartPosition = buffer.position();
+        ByteBuffer checkSumSlot = buffer.putSlot(Integer.BYTES);
+        int checksumInputStartPosition = buffer.position();
+        buffer.putByte(recordsVersion);
+        buffer.putByte((byte) 0);
+        if (recordsVersion == 1) {
+            buffer.putLong(System.currentTimeMillis());
+        }
+        BytesCodec.encode(record.key(), buffer);
+        BytesCodec.encode(record.value(), buffer);
+        int messageEndPosition = buffer.position();
+        byte[] checksumInput = buffer.read(checksumInputStartPosition, messageEndPosition - checksumInputStartPosition);
+        int checksum = computeMessageChecksum(checksumInput);
+        checkSumSlot.putInt(checksum);
+        int size = messageEndPosition - sizeStartPosition;
+        sizeSlot.putInt(size);
+    }
+
+    private int computeMessageChecksum(byte[] message) {
+        CRC32 checksum = new CRC32();
+        checksum.update(message);
+        return (int) checksum.getValue();
+    }
+
+    private RuntimeException versionNotSupportedException(int recordsVersion) {
+        return new IllegalArgumentException("Records version (magic) " + recordsVersion + " not supported");
     }
 
     private enum Compression {
