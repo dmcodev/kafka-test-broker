@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka.io.buffer;
 
 import java.nio.Buffer;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,7 +63,24 @@ public class ResponseBuffer {
         return this;
     }
 
-    public int size() {
+    public byte[] read(int from, int length) {
+        int position = 0;
+        byte[] result = new byte[length];
+        List<ByteBuffer> buffers = readSeek(from);
+        for (int i = 0; i < buffers.size() && position < length; i++) {
+            int remainingToTransfer = length - position;
+            ByteBuffer source = buffers.get(i);
+            int transferred = Math.min(source.remaining(), remainingToTransfer);
+            source.get(result, position, transferred);
+            position += transferred;
+        }
+        if (position < length) {
+            throw new BufferUnderflowException();
+        }
+        return result;
+    }
+
+    public int position() {
         return committedBuffers.stream().mapToInt(Buffer::limit).sum() + currentBuffer.position();
     }
 
@@ -70,6 +88,26 @@ public class ResponseBuffer {
         commit();
         List<ByteBuffer> result = new ArrayList<>(committedBuffers);
         committedBuffers.clear();
+        return result;
+    }
+
+    private List<ByteBuffer> readSeek(int targetPosition) {
+        commit();
+        List<ByteBuffer> result = new ArrayList<>(committedBuffers.size());
+        int position = 0;
+        for (ByteBuffer committed : committedBuffers) {
+            if (!result.isEmpty()) {
+                ByteBuffer copy = committed.duplicate();
+                copy.rewind();
+                result.add(copy);
+            } else if (position + committed.position() > targetPosition) {
+                ByteBuffer startCopy = committed.duplicate();
+                startCopy.position(targetPosition - position);
+                result.add(startCopy);
+            } else {
+                position += committed.position();
+            }
+        }
         return result;
     }
 
