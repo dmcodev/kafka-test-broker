@@ -6,15 +6,8 @@ import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest, JoinGroupResponse> {
-
-    @Override
-    public List<Class<? extends JoinGroupRequest>> handledRequestTypes() {
-        return Collections.singletonList(JoinGroupRequest.class);
-    }
 
     @Override
     public JoinGroupResponse handle(JoinGroupRequest request, BrokerState state) {

@@ -5,16 +5,7 @@ import dev.dmco.test.kafka.messages.Records;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
-import java.util.List;
-
-import static java.util.Collections.singletonList;
-
 public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchResponse> {
-
-    @Override
-    public List<Class<? extends FetchRequest>> handledRequestTypes() {
-        return singletonList(FetchRequest.class);
-    }
 
     @Override
     public FetchResponse handle(FetchRequest request, BrokerState state) {

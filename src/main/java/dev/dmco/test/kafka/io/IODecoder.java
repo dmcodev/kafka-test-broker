@@ -21,7 +21,7 @@ public class IODecoder {
 
     public IODecoder() {
         requestTypes = RequestHandler.loadAll().stream()
-            .flatMap(handler -> handler.handledRequestTypes().stream())
+            .map(RequestHandler::getHandledRequestType)
             .collect(Collectors.toMap(type -> type.getAnnotation(Request.class).key(), Function.identity()));
     }
 

@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -40,6 +41,7 @@ class KafkaProducerConsumerSpec : StringSpec({
         consumer.close()
 
 
+        records.count() shouldBe 1
         broker.close()
     }
 })

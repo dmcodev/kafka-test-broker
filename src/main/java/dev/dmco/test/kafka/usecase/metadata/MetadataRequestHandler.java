@@ -3,17 +3,9 @@ package dev.dmco.test.kafka.usecase.metadata;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
-import java.util.Collections;
-import java.util.List;
-
 public class MetadataRequestHandler implements RequestHandler<MetadataRequest, MetadataResponse> {
 
     private static final int NODE_ID = 1;
-
-    @Override
-    public List<Class<? extends MetadataRequest>> handledRequestTypes() {
-        return Collections.singletonList(MetadataRequest.class);
-    }
 
     @Override
     public MetadataResponse handle(MetadataRequest request, BrokerState state) {

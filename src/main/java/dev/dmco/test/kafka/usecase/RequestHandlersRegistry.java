@@ -32,6 +32,6 @@ public class RequestHandlersRegistry {
     }
 
     private void register(RequestHandler<?, ?> handler) {
-        handler.handledRequestTypes().forEach(key -> handlers.put(key, handler));
+        handlers.put(RequestHandler.getHandledRequestType(handler), handler);
     }
 }
