@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.util.List;
 import java.util.Optional;
 
+// TODO: magic version 2 starts from api version 3
 @Request(key = 0, maxVersion = 2)
 @lombok.Value
 @Accessors(fluent = true)
@@ -26,22 +27,22 @@ public class ProduceRequest implements RequestMessage {
 
     int timeout;
 
-    List<TopicData> topicData;
+    List<Topic> topics;
 
     @lombok.Value
     @Accessors(fluent = true)
-    public static class TopicData {
+    public static class Topic {
 
-        String topic;
+        String name;
 
-        List<PartitionRecordSet> data;
+        List<Partition> partitions;
     }
 
     @lombok.Value
     @Accessors(fluent = true)
-    public static class PartitionRecordSet {
+    public static class Partition {
 
-        int partition;
+        int id;
 
         Records records;
     }

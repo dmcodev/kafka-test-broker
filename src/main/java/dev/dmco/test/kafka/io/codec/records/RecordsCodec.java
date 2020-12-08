@@ -3,10 +3,12 @@ package dev.dmco.test.kafka.io.codec.records;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
+import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.registry.Type;
-import dev.dmco.test.kafka.messages.Records;
+import dev.dmco.test.kafka.messages.Record;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.stream.Stream;
 
 // TODO: current records format
@@ -16,7 +18,7 @@ public class RecordsCodec implements Codec {
 
     @Override
     public Stream<Type> handledTypes() {
-        return Stream.of(Type.of(Records.class));
+        return Stream.of(Type.of(Collection.class, Type.of(Record.class)));
     }
 
     @Override
@@ -35,16 +37,16 @@ public class RecordsCodec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        Records records = (Records) value;
-        byte recordsVersion = (byte) records.version();
-        if (recordsVersion == 0 || recordsVersion == 1) {
-            LegacyRecordsEncoder.encode(records, buffer);
+        Collection<Record> records = (Collection<Record>) value;
+        int version = context.get(ContextProperty.VERSION);
+        if (version == 0 || version == 1) {
+            LegacyRecordsEncoder.encode(records, buffer, version);
         } else {
-            throw versionNotSupportedException(recordsVersion);
+            throw versionNotSupportedException(version);
         }
     }
 
-    private RuntimeException versionNotSupportedException(int recordsVersion) {
-        return new IllegalArgumentException("Records version (magic) " + recordsVersion + " not supported");
+    private RuntimeException versionNotSupportedException(int version) {
+        return new IllegalArgumentException("Records version (magic) " + version + " not supported");
     }
 }

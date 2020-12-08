@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ContextProperty<T> {
 
-    public static final ContextProperty<Integer> VERSION = new ContextProperty<>("API_VERSION");
+    public static final ContextProperty<Integer> VERSION = new ContextProperty<>("VERSION");
     public static final ContextProperty<Boolean> VERSION_MISMATCH = new ContextProperty<>("VERSION_MISMATCH");
 
     private final String name;

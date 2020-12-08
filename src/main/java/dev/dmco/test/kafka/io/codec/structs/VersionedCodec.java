@@ -1,9 +1,10 @@
-package dev.dmco.test.kafka.io.codec.generic;
+package dev.dmco.test.kafka.io.codec.structs;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
+import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
 import dev.dmco.test.kafka.io.codec.registry.Type;
 import dev.dmco.test.kafka.messages.Versioned;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
-public abstract class VersionedTypeBytesCodec implements Codec {
+abstract class VersionedCodec implements Codec {
 
     private final Class<? extends Versioned> type;
 

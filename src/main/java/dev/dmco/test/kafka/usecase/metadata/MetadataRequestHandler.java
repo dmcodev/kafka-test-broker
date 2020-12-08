@@ -8,6 +8,8 @@ import java.util.List;
 
 public class MetadataRequestHandler implements RequestHandler<MetadataRequest, MetadataResponse> {
 
+    private static final int NODE_ID = 1;
+
     @Override
     public List<Class<? extends MetadataRequest>> handledRequestTypes() {
         return Collections.singletonList(MetadataRequest.class);
@@ -18,7 +20,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
         return MetadataResponse.builder()
             .broker(
                 MetadataResponse.Broker.builder()
-                    .nodeId(state.nodeId())
+                    .nodeId(NODE_ID)
                     .host(state.config().host())
                     .port(state.config().port())
                     .build()
@@ -32,7 +34,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
                         MetadataResponse.Partition.builder()
                             .errorCode((short) 0)
                             .partitionIndex(0)
-                            .leaderId(state.nodeId())
+                            .leaderId(NODE_ID)
                             .build()
                     )
                     .build()

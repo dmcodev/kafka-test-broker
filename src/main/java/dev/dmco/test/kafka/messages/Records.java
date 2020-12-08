@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.messages;
 
+import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Singular;
@@ -13,22 +14,9 @@ import java.util.List;
 @Accessors(fluent = true)
 public class Records {
 
-    int version;
-
+    @VersionMapping(value = 0, sinceVersion = 0)
+    @VersionMapping(value = 1, sinceVersion = 2)
+    @VersionMapping(value = 2, sinceVersion = 3)
     @Singular
-    List<Record> records;
-
-    @lombok.Value
-    @Builder
-    @AllArgsConstructor
-    @Accessors(fluent = true)
-    public static class Record {
-
-        long offset;
-
-        byte[] key;
-
-        byte[] value;
-    }
-
+    List<Record> entries;
 }

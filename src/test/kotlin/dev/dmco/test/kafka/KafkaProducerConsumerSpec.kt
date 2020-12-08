@@ -20,7 +20,7 @@ class KafkaProducerConsumerSpec : StringSpec({
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
 
-        props.put("compression.type", "none")
+        props.put("compression.type", "gzip")
 
         props.put("group.id", "my-consumer-group")
 

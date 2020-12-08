@@ -2,20 +2,15 @@ package dev.dmco.test.kafka.io.codec.records;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.bytes.BytesCodec;
-import dev.dmco.test.kafka.messages.Records;
-import dev.dmco.test.kafka.messages.Records.Record;
+import dev.dmco.test.kafka.messages.Record;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Collection;
 import java.util.zip.CRC32;
 
 class LegacyRecordsEncoder {
 
-    static void encode(Records records, ResponseBuffer buffer) {
-        encode(records.records(), buffer, records.version());
-    }
-
-    private static void encode(List<Record> records, ResponseBuffer buffer, int version) {
+    static void encode(Collection<Record> records, ResponseBuffer buffer, int version) {
         ByteBuffer recordsSizeSlot = buffer.putIntSlot();
         int recordsStartOffset = buffer.position();
         for (Record record : records) {

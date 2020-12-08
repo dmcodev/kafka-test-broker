@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.fetch;
 
+import dev.dmco.test.kafka.messages.Record;
 import dev.dmco.test.kafka.messages.Records;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.RequestHandler;
@@ -28,9 +29,8 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
                             .highWatermark(2)
                             .records(
                                 Records.builder()
-                                    .version((short) 0)
-                                    .record(
-                                        Records.Record.builder()
+                                    .entry(
+                                        Record.builder()
                                             .offset(0)
                                             .key("some-key".getBytes())
                                             .value("some-value".getBytes())

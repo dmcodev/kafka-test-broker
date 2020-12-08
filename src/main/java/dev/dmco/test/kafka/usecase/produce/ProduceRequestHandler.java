@@ -1,8 +1,10 @@
 package dev.dmco.test.kafka.usecase.produce;
 
+import dev.dmco.test.kafka.messages.Record;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
+import java.util.Collection;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -16,6 +18,8 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
 
     @Override
     public ProduceResponse handle(ProduceRequest request, BrokerState state) {
+        request.topics()
+            .forEach(topic -> appendTopic(topic, state));
         return ProduceResponse.builder()
             .topic(
                 ProduceResponse.Topic.builder()
@@ -30,5 +34,15 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
                     .build()
             )
             .build();
+    }
+
+    private void appendTopic(ProduceRequest.Topic topic, BrokerState state) {
+        topic.partitions()
+            .forEach(partition -> appendPartition(topic, partition, state));
+    }
+
+    private void appendPartition(ProduceRequest.Topic topic, ProduceRequest.Partition partition, BrokerState state) {
+        Collection<Record> records = partition.records().entries();
+        state.append(topic.name(), partition.id(), records);
     }
 }
