@@ -11,9 +11,9 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @Accessors(fluent = true)
-public class Records implements Versioned {
+public class Records {
 
-    short version;
+    int version;
 
     @Singular
     List<Record> records;

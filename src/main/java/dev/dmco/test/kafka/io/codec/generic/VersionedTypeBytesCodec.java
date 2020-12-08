@@ -35,7 +35,7 @@ public abstract class VersionedTypeBytesCodec implements Codec {
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Versioned versioned = (Versioned) value;
         CodecContext objectContext = context.set(ContextProperty.VERSION, (int) versioned.version());
-        ByteBuffer sizeSlot = buffer.putSlot(Integer.BYTES);
+        ByteBuffer sizeSlot = buffer.putIntSlot();
         int startPosition = buffer.position();
         ObjectCodec.encode(value, buffer, objectContext);
         int objectSize = buffer.position() - startPosition;

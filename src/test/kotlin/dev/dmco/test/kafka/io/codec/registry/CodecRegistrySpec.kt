@@ -7,10 +7,10 @@ import dev.dmco.test.kafka.io.codec.primitives.Int16Codec
 import dev.dmco.test.kafka.io.codec.primitives.Int32Codec
 import dev.dmco.test.kafka.io.codec.primitives.Int64Codec
 import dev.dmco.test.kafka.io.codec.primitives.Int8Codec
+import dev.dmco.test.kafka.io.codec.records.RecordsCodec
 import dev.dmco.test.kafka.io.codec.registry.Type.of
 import dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 import dev.dmco.test.kafka.io.codec.strings.StringCodec
-import dev.dmco.test.kafka.io.codec.structs.RecordsCodec
 import dev.dmco.test.kafka.io.codec.structs.TagsCodec
 import dev.dmco.test.kafka.messages.Records
 import dev.dmco.test.kafka.messages.Tag
@@ -32,13 +32,13 @@ class CodecRegistrySpec : StringSpec({
             row(of(ByteArray::class.java), BytesCodec::class.java),
             row(of(String::class.java), StringCodec::class.java),
             row(of(Optional::class.java, of(String::class.java)), NullableStringCodec::class.java),
-            row(of(Tag::class.java), TagsCodec::class.java),
+            row(of(Collection::class.java, of(Tag::class.java)), TagsCodec::class.java),
             row(of(List::class.java, of(String::class.java)), CollectionCodec::class.java),
             row(of(List::class.java, of(Any::class.java)), CollectionCodec::class.java),
             row(of(Set::class.java, of(String::class.java)), CollectionCodec::class.java),
             row(of(Set::class.java, of(java.lang.Integer::class.java)), CollectionCodec::class.java),
             row(of(Collection::class.java, of(java.lang.Boolean::class.java)), CollectionCodec::class.java),
-            row(of(Collection::class.java, of(Records::class.java)), RecordsCodec::class.java),
+            row(of(Records::class.java), RecordsCodec::class.java),
         ) { typeKey, expectedCodecType ->
 
             CodecRegistry.getCodec(typeKey)::class.java shouldBeSameInstanceAs expectedCodecType

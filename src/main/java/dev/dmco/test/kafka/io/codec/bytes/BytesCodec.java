@@ -25,7 +25,7 @@ public class BytesCodec implements Codec {
         encode(value, buffer);
     }
 
-    public static Object decode(ByteBuffer buffer) {
+    public static byte[] decode(ByteBuffer buffer) {
         int length = buffer.getInt();
         byte[] bytes = new byte[length];
         buffer.get(bytes);

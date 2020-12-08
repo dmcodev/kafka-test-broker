@@ -10,6 +10,6 @@ dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 dev.dmco.test.kafka.io.codec.generic.CollectionCodec
 dev.dmco.test.kafka.io.codec.generic.ObjectCodec
 dev.dmco.test.kafka.io.codec.structs.TagsCodec
-dev.dmco.test.kafka.io.codec.structs.RecordsCodec
+dev.dmco.test.kafka.io.codec.records.RecordsCodec
 dev.dmco.test.kafka.io.codec.structs.SubscriptionCodec
 dev.dmco.test.kafka.io.codec.structs.AssignmentCodec

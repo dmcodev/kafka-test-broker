@@ -56,12 +56,8 @@ public class ResponseBuffer {
         return this;
     }
 
-    public ByteBuffer putSlot(int size) {
-        requireBytes(size);
-        ByteBuffer slot = currentBuffer.duplicate();
-        currentBuffer.position(currentBuffer.position() + size);
-        slot.limit(slot.position() + size);
-        return slot;
+    public ByteBuffer putIntSlot() {
+        return putSlot(Integer.BYTES);
     }
 
     public byte[] read(int from, int length) {
@@ -90,6 +86,14 @@ public class ResponseBuffer {
         List<ByteBuffer> result = new ArrayList<>(committedBuffers);
         committedBuffers.clear();
         return result;
+    }
+
+    private ByteBuffer putSlot(int size) {
+        requireBytes(size);
+        ByteBuffer slot = currentBuffer.duplicate();
+        currentBuffer.position(currentBuffer.position() + size);
+        slot.limit(slot.position() + size);
+        return slot;
     }
 
     private List<ByteBuffer> readSeek(int targetPosition) {
