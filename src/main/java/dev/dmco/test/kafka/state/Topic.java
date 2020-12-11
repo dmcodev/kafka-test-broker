@@ -1,17 +1,24 @@
 package dev.dmco.test.kafka.state;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Accessors(fluent = true)
 @RequiredArgsConstructor
-class Topic {
+public class Topic {
 
     private final Map<Integer, Partition> partitions = new HashMap<>();
-    private final String name;
+    @Getter private final String name;
 
-    Partition partition(int id) {
-        return partitions.computeIfAbsent(id, Partition::new);
+    Partition partition(int partitionId) {
+        return partitions.computeIfAbsent(partitionId, this::createPartition);
+    }
+
+    private Partition createPartition(int partitionId) {
+        return new Partition(this, partitionId);
     }
 }

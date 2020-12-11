@@ -18,8 +18,8 @@ public class BrokerState {
     private final Map<String, Topic> topics = new HashMap<>();
     private final TestKafkaBrokerConfig config;
 
-    public void append(String topicName, int partitionId, Collection<Record> records) {
-        topic(topicName).partition(partitionId).append(records);
+    public Partition.AppendResult append(String topicName, int partitionId, Collection<Record> records) {
+        return topic(topicName).partition(partitionId).append(records);
     }
 
     private Topic topic(String name) {

@@ -44,13 +44,13 @@ public class ProduceResponse implements ResponseMessage {
     @AllArgsConstructor
     public static class Partition {
 
-        int partition;
+        int id;
 
         short errorCode;
 
         long baseOffset;
 
         @SinceVersion(2)
-        long logAppendTime;
+        long appendTime;
     }
 }

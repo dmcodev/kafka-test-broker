@@ -23,7 +23,7 @@ public class ProduceRequest implements RequestMessage {
     @SinceVersion(3)
     Optional<String> transactionalId;
 
-    short acknowledgments;
+    short requiredAcknowledgments;
 
     int timeout;
 
