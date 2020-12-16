@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.io.codec.structs;
+package dev.dmco.test.kafka.io.codec.consumer;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
@@ -6,16 +6,16 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
 import dev.dmco.test.kafka.io.codec.registry.Type;
-import dev.dmco.test.kafka.messages.Versioned;
+import dev.dmco.test.kafka.messages.consumer.ConsumerMessage;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.ByteBuffer;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
-abstract class VersionedCodec implements Codec {
+abstract class ConsumerMessageCodec implements Codec {
 
-    private final Class<? extends Versioned> type;
+    private final Class<? extends ConsumerMessage> type;
 
     @Override
     public Stream<Type> handledTypes() {
@@ -34,12 +34,17 @@ abstract class VersionedCodec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        Versioned versioned = (Versioned) value;
+        ConsumerMessage versioned = (ConsumerMessage) value;
         CodecContext objectContext = context.set(ContextProperty.VERSION, (int) versioned.version());
         ByteBuffer sizeSlot = buffer.putIntSlot();
         int startPosition = buffer.position();
         ObjectCodec.encode(value, buffer, objectContext);
         int objectSize = buffer.position() - startPosition;
         sizeSlot.putInt(objectSize);
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        throw new NullPointerException("Could not encode null " + type.getSimpleName());
     }
 }

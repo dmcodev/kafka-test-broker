@@ -32,10 +32,15 @@ public class NullableCompactStringCodec implements Codec {
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Optional<String> string = (Optional<String>) value;
-        if (string != null && string.isPresent()) {
+        if (string.isPresent()) {
             CompactStringCodec.encode(string.get(), buffer);
         } else {
             VarUInt.encode(0, buffer);
         }
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(Optional.empty(), valueType, buffer, context);
     }
 }

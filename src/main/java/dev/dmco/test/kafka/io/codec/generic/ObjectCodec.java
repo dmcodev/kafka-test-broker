@@ -45,6 +45,11 @@ public class ObjectCodec implements Codec {
         encode(value, buffer, context);
     }
 
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        throw new NullPointerException("Could not encode null object of type: " + valueType);
+    }
+
     @SneakyThrows
     public static Object decode(ByteBuffer buffer, Class<?> targetType, CodecContext context) {
         TypeMetadata metadata = METADATA.computeIfAbsent(targetType, TypeMetadata::new);
@@ -122,8 +127,12 @@ public class ObjectCodec implements Codec {
             CodecContext propertyContext = createContextFromRules(objectContext);
             if (isIncluded(propertyContext)) {
                 Object value = getter.get(instance);
-                CodecRegistry.getCodec(type)
-                    .encode(value, type, buffer, propertyContext);
+                Codec codec = CodecRegistry.getCodec(type);
+                if (value != null) {
+                    codec.encode(value, type, buffer, propertyContext);
+                } else {
+                    codec.encodeNull(type, buffer, propertyContext);
+                }
             }
         }
 

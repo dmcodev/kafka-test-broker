@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.messages;
+package dev.dmco.test.kafka.messages.consumer;
 
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.Optional;
 @lombok.Value
 @AllArgsConstructor
 @Accessors(fluent = true)
-public class Subscription implements Versioned {
+public class Subscription implements ConsumerMessage {
 
     short version;
 

@@ -26,6 +26,11 @@ public class StringCodec implements Codec {
         encode(value, buffer);
     }
 
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode("", buffer);
+    }
+
     public static String decode(ByteBuffer buffer) {
         int length = buffer.getShort();
         byte[] chars = new byte[length];

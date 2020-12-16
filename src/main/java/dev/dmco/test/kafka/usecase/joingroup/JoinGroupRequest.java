@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
-import dev.dmco.test.kafka.messages.Subscription;
+import dev.dmco.test.kafka.messages.consumer.Subscription;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
@@ -25,7 +25,7 @@ public class JoinGroupRequest implements RequestMessage {
 
     String memberId;
 
-    String protocolType;
+    String protocolName;
 
     List<Protocol> protocols;
 

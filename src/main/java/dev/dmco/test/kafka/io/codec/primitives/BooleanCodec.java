@@ -22,7 +22,11 @@ public class BooleanCodec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        byte encoded = (value != null && (boolean) value) ? (byte) 1 : 0;
-        buffer.putByte(encoded);
+        buffer.putByte(((boolean) value) ? (byte) 1 : 0);
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(false, valueType, buffer, context);
     }
 }

@@ -28,6 +28,11 @@ public class CompactStringCodec implements Codec {
         encode((String) value, buffer);
     }
 
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode("", buffer);
+    }
+
     public static String decode(ByteBuffer buffer) {
         int length = VarUInt.decode(buffer) - 1;
         byte[] chars = new byte[length];

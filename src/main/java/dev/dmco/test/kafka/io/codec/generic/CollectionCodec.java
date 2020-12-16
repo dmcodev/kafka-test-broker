@@ -42,6 +42,19 @@ public class CollectionCodec implements Codec {
         buffer.putInt(collection.size());
         Type elementType = valueType.typeParameters().get(0);
         Codec elementCodec = CodecRegistry.getCodec(elementType);
-        collection.forEach(element -> elementCodec.encode(element, elementType, buffer, context));
+        collection.forEach(element -> encodeElement(element, elementType, elementCodec, buffer, context));
+    }
+
+    private void encodeElement(Object element, Type elementType, Codec elementCodec, ResponseBuffer buffer, CodecContext context) {
+        if (element != null) {
+            elementCodec.encode(element, elementType, buffer, context);
+        } else {
+            elementCodec.encodeNull(elementType, buffer, context);
+        }
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(Collections.emptyList(), valueType, buffer, context);
     }
 }

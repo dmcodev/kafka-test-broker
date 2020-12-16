@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.produce;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -46,7 +47,7 @@ public class ProduceResponse implements ResponseMessage {
 
         int id;
 
-        short errorCode;
+        ErrorCode errorCode;
 
         long baseOffset;
 

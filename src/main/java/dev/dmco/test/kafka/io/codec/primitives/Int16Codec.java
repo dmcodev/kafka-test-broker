@@ -22,6 +22,11 @@ public class Int16Codec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        buffer.putShort(value != null ? (short) value : 0);
+        buffer.putShort((short) value);
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode((short) 0, valueType, buffer, context);
     }
 }

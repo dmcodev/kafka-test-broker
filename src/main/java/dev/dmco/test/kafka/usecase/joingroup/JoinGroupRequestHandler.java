@@ -1,7 +1,8 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
-import dev.dmco.test.kafka.messages.Subscription;
-import dev.dmco.test.kafka.messages.Subscription.PartitionAssignments;
+import dev.dmco.test.kafka.messages.ErrorCode;
+import dev.dmco.test.kafka.messages.consumer.Subscription;
+import dev.dmco.test.kafka.messages.consumer.Subscription.PartitionAssignments;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
@@ -13,7 +14,7 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
     public JoinGroupResponse handle(JoinGroupRequest request, BrokerState state) {
         Subscription subscription = request.protocols().get(0).subscription();
         return JoinGroupResponse.builder()
-            .errorCode((short) 0)
+            .errorCode(ErrorCode.NO_ERROR)
             .generationId(0)
             .protocolName(request.protocols().get(0).name())
             .leader("leader-id")

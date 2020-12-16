@@ -25,7 +25,7 @@ public class ProduceRequest implements RequestMessage {
 
     short requiredAcknowledgments;
 
-    int timeout;
+    int timeoutMs;
 
     List<Topic> topics;
 

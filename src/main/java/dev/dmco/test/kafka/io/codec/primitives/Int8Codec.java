@@ -22,6 +22,11 @@ public class Int8Codec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        buffer.putByte(value != null ? (byte) value : 0);
+        buffer.putByte((byte) value);
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode((byte) 0, valueType, buffer, context);
     }
 }

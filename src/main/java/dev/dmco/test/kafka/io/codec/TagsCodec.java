@@ -1,7 +1,6 @@
-package dev.dmco.test.kafka.io.codec.structs;
+package dev.dmco.test.kafka.io.codec;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
-import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.primitives.VarUInt;
 import dev.dmco.test.kafka.io.codec.registry.Type;
@@ -40,16 +39,17 @@ public class TagsCodec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        if (value != null) {
-            List<Tag> tags = (List<Tag>) value;
-            VarUInt.encode(tags.size(), buffer);
-            for (Tag tag : tags) {
-                VarUInt.encode(tag.key(), buffer);
-                VarUInt.encode(tag.value().length, buffer);
-                buffer.putBytes(tag.value());
-            }
-        } else {
-            VarUInt.encode(0, buffer);
+        List<Tag> tags = (List<Tag>) value;
+        VarUInt.encode(tags.size(), buffer);
+        for (Tag tag : tags) {
+            VarUInt.encode(tag.key(), buffer);
+            VarUInt.encode(tag.value().length, buffer);
+            buffer.putBytes(tag.value());
         }
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(Collections.emptyList(), valueType, buffer, context);
     }
 }

@@ -14,4 +14,6 @@ public interface Codec {
     Object decode(ByteBuffer buffer, Type targetType, CodecContext context);
 
     void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context);
+
+    void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context);
 }

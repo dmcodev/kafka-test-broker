@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
-import dev.dmco.test.kafka.messages.Subscription;
+import dev.dmco.test.kafka.messages.ErrorCode;
+import dev.dmco.test.kafka.messages.consumer.Subscription;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
@@ -23,7 +24,7 @@ public class JoinGroupResponse implements ResponseMessage {
     @VersionMapping(value = 1, sinceVersion = 6)
     ResponseHeader header;
 
-    short errorCode;
+    ErrorCode errorCode;
 
     int generationId;
 
@@ -45,5 +46,11 @@ public class JoinGroupResponse implements ResponseMessage {
         String memberId;
 
         Subscription subscription;
+    }
+
+    public static JoinGroupResponse inconsistentGroupProtocol() {
+        return JoinGroupResponse.builder()
+            .errorCode(ErrorCode.INCONSISTENT_GROUP_PROTOCOL)
+            .build();
     }
 }

@@ -30,10 +30,15 @@ public class NullableStringCodec implements Codec {
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Optional<String> string = (Optional<String>) value;
-        if (string != null && string.isPresent()) {
+        if (string.isPresent()) {
             StringCodec.encode(string.get(), buffer);
         } else {
             buffer.putShort((short) -1);
         }
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(Optional.empty(), valueType, buffer, context);
     }
 }

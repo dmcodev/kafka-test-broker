@@ -25,6 +25,11 @@ public class BytesCodec implements Codec {
         encode(value, buffer);
     }
 
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(new byte[0], buffer);
+    }
+
     public static byte[] decode(ByteBuffer buffer) {
         int length = buffer.getInt();
         byte[] bytes = new byte[length];

@@ -9,6 +9,7 @@ import dev.dmco.test.kafka.messages.Record;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 
 // TODO: current records format
@@ -44,6 +45,11 @@ public class RecordsCodec implements Codec {
         } else {
             throw versionNotSupportedException(version);
         }
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(Collections.emptyList(), valueType, buffer, context);
     }
 
     private RuntimeException versionNotSupportedException(int version) {

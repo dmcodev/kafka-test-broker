@@ -22,6 +22,11 @@ public class Int64Codec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        buffer.putLong(value != null ? (long) value : 0);
+        buffer.putLong((long) value);
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        encode(0L, valueType, buffer, context);
     }
 }

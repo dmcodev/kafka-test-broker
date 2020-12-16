@@ -29,10 +29,11 @@ public class NullableBytesCodec implements Codec {
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        if (value != null) {
-            BytesCodec.encode(value, buffer);
-        } else {
-            buffer.putInt(-1);
-        }
+        BytesCodec.encode(value, buffer);
+    }
+
+    @Override
+    public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
+        buffer.putInt(-1);
     }
 }

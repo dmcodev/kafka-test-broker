@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.io.codec.registry
 
+import dev.dmco.test.kafka.io.codec.TagsCodec
 import dev.dmco.test.kafka.io.codec.bytes.BytesCodec
 import dev.dmco.test.kafka.io.codec.generic.CollectionCodec
 import dev.dmco.test.kafka.io.codec.primitives.BooleanCodec
@@ -11,7 +12,6 @@ import dev.dmco.test.kafka.io.codec.records.RecordsCodec
 import dev.dmco.test.kafka.io.codec.registry.Type.of
 import dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 import dev.dmco.test.kafka.io.codec.strings.StringCodec
-import dev.dmco.test.kafka.io.codec.structs.TagsCodec
 import dev.dmco.test.kafka.messages.Records
 import dev.dmco.test.kafka.messages.Tag
 import io.kotest.core.spec.style.StringSpec

@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.messages;
+package dev.dmco.test.kafka.messages.consumer;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +12,7 @@ import java.util.Optional;
 @lombok.Value
 @AllArgsConstructor
 @Accessors(fluent = true)
-public class Assignment implements Versioned {
+public class Assignment implements ConsumerMessage {
 
     short version;
 
