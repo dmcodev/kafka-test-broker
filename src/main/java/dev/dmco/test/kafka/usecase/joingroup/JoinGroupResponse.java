@@ -47,10 +47,4 @@ public class JoinGroupResponse implements ResponseMessage {
 
         Subscription subscription;
     }
-
-    public static JoinGroupResponse inconsistentGroupProtocol() {
-        return JoinGroupResponse.builder()
-            .errorCode(ErrorCode.INCONSISTENT_GROUP_PROTOCOL)
-            .build();
-    }
 }

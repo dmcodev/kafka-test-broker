@@ -20,7 +20,7 @@ public class Partition {
 
     private long head = 0;
 
-    AppendResult append(Collection<Record> records) {
+    public AppendResult append(Collection<Record> records) {
         long baseOffset = head;
         records.forEach(this::append);
         return AppendResult.builder()

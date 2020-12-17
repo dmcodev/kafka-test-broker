@@ -14,7 +14,7 @@ public class Topic {
     private final Map<Integer, Partition> partitions = new HashMap<>();
     @Getter private final String name;
 
-    Partition partition(int partitionId) {
+    public Partition partition(int partitionId) {
         return partitions.computeIfAbsent(partitionId, this::createPartition);
     }
 

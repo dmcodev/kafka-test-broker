@@ -25,7 +25,7 @@ public class JoinGroupRequest implements RequestMessage {
 
     String memberId;
 
-    String protocolName;
+    String protocolFamily;
 
     List<Protocol> protocols;
 
