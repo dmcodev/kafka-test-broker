@@ -1,7 +1,10 @@
 package dev.dmco.test.kafka
 
+import dev.dmco.test.kafka.config.BrokerConfig
+import dev.dmco.test.kafka.config.TopicConfig
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.delay
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -11,7 +14,10 @@ import java.util.Properties
 class KafkaProducerConsumerSpec : StringSpec({
 
     "Should send message to topic" {
-        var broker = TestKafkaBroker()
+        val config = BrokerConfig.builder()
+            .topic(TopicConfig.create("my-topic", 5))
+            .build()
+        val broker = TestKafkaBroker(config)
 
         val props = Properties()
         props.put("bootstrap.servers", "localhost:9092")
@@ -35,13 +41,23 @@ class KafkaProducerConsumerSpec : StringSpec({
 
         Thread.sleep(1000)
 
-        val consumer = KafkaConsumer<String, String>(props)
-        consumer.subscribe(mutableListOf("my-topic"))
-        val records = consumer.poll(5000)
-        consumer.close()
+        val consumer1 = KafkaConsumer<String, String>(props)
+        consumer1.subscribe(mutableListOf("my-topic"))
+
+        val consumer2 = KafkaConsumer<String, String>(props)
+        consumer2.subscribe(mutableListOf("my-topic"))
+
+        delay(2000)
+
+        val records1 = consumer1.poll(5000)
+        val records2 = consumer2.poll(5000)
 
 
-        records.count() shouldBe 1
+        consumer1.close()
+        consumer2.close()
+
+
+        records1.count() shouldBe 1
         broker.close()
     }
 })

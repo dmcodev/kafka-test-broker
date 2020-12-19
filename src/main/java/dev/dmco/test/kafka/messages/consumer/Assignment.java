@@ -29,6 +29,6 @@ public class Assignment implements ConsumerMessage {
 
         String topicName;
 
-        List<Integer> partitions;
+        List<Integer> partitionIds;
     }
 }

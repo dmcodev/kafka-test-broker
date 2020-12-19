@@ -33,6 +33,6 @@ public class Subscription implements ConsumerMessage {
 
         String topicName;
 
-        List<Integer> partitions;
+        List<Integer> partitionIds;
     }
 }

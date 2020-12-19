@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -58,7 +59,7 @@ public class MetadataResponse implements ResponseMessage {
     @Accessors(fluent = true)
     public static class Topic {
 
-        short errorCode;
+        ErrorCode errorCode;
 
         String name;
 
@@ -75,11 +76,11 @@ public class MetadataResponse implements ResponseMessage {
     @Accessors(fluent = true)
     public static class Partition {
 
-        short errorCode;
+        ErrorCode errorCode;
 
-        int partitionIndex;
+        int id;
 
-        int leaderId;
+        int leaderNodeId;
 
         @Singular
         List<Integer> replicaNodes;

@@ -5,13 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class ConsumerGroup {
@@ -24,41 +24,38 @@ public class ConsumerGroup {
     private String leaderId;
     private int nextMemberId;
 
-    public Optional<String> selectProtocol(Set<String> candidateProtocols) {
-        Set<String> candidates = new HashSet<>(candidateProtocols);
-        members.values().stream().map(Member::getProtocols).forEach(candidates::retainAll);
+    public Optional<String> selectProtocol(Member candidateMember) {
+        Set<String> candidates = new HashSet<>(candidateMember.protocols());
+        members.values().stream().map(Member::protocols).forEach(candidates::retainAll);
         return candidates.stream().findFirst();
     }
 
-    public AddMemberResult addMember(
-        String lastMemberId,
-        Set<String> memberProtocols,
-        String selectedProtocol,
-        Map<String, List<Integer>> assignments
-    ) {
-        String memberId = lastMemberId.isEmpty() ? generateMemberId() : lastMemberId;
-        Member member = new Member(memberId, memberProtocols);
-        member.setAssignments(assignments);
-        members.put(memberId, member);
-        if (noLeaderSelected()) {
-            leaderId = memberId;
-        }
+    public AddMemberResult addMember(Member candidateMember, String selectedProtocol) {
+        Member member = assignId(candidateMember);
+        members.put(member.id(), member);
         protocol = selectedProtocol;
+        if (noLeaderSelected()) {
+            leaderId = member.id();
+        } else {
+            generationId++;
+        }
         return AddMemberResult.builder()
             .leaderId(leaderId)
-            .memberId(memberId)
-            .generationId(generationId++)
+            .memberId(member.id())
+            .generationId(generationId)
             .build();
     }
 
-    public List<MemberSnapshot> membersSnapshot() {
-        return members.values().stream()
-            .map(Member::getSnapshot)
-            .collect(Collectors.toList());
+    public List<Member> members() {
+        return new ArrayList<>(members.values());
     }
 
-    private String generateMemberId() {
-        return Member.NAME_PREFIX + "-" + (nextMemberId++);
+    private Member assignId(Member member) {
+        if (member.id().isEmpty()) {
+            return member.withId(Member.NAME_PREFIX + "-" + (nextMemberId++));
+        } else {
+            return member;
+        }
     }
 
     private boolean noLeaderSelected() {
@@ -69,8 +66,13 @@ public class ConsumerGroup {
     @Builder
     @Accessors(fluent = true)
     public static class AddMemberResult {
+
         String leaderId;
         String memberId;
         int generationId;
+
+        public boolean isLeaderAssignment() {
+            return leaderId.equals(memberId);
+        }
     }
 }

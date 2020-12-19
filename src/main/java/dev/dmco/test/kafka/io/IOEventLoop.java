@@ -2,6 +2,7 @@ package dev.dmco.test.kafka.io;
 
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
+import dev.dmco.test.kafka.state.BrokerState;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
@@ -19,7 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 public class IOEventLoop implements AutoCloseable {
 
@@ -29,18 +29,15 @@ public class IOEventLoop implements AutoCloseable {
     private final ServerSocketChannel serverChannel;
     private final ExecutorService executorService;
 
-    private final Function<RequestMessage, ResponseMessage> requestHandler;
+    private final BrokerState brokerState;
 
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final IOEncoder encoder = new IOEncoder();
     private final IODecoder decoder = new IODecoder();
 
     @SneakyThrows
-    public IOEventLoop(
-        InetSocketAddress bindAddress,
-        Function<RequestMessage, ResponseMessage> requestHandler
-    ) {
-        this.requestHandler = requestHandler;
+    public IOEventLoop(InetSocketAddress bindAddress, BrokerState brokerState) {
+        this.brokerState = brokerState;
         try {
             selector = Selector.open();
             serverChannel = ServerSocketChannel.open();
@@ -116,7 +113,8 @@ public class IOEventLoop implements AutoCloseable {
     }
 
     private void handleRequest(RequestMessage request, IOSession ioSession, SelectionKey selectionKey) {
-        ResponseMessage response = requestHandler.apply(request);
+        ResponseMessage response = brokerState.selectRequestHandler(request)
+            .handle(request, brokerState);
         List<ByteBuffer> responseBuffers = encoder.encode(response, request.header());
         ioSession.enqueueResponse(responseBuffers);
         writeResponses(selectionKey);
