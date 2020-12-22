@@ -6,6 +6,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +45,20 @@ public class ConsumerGroup {
             .memberId(member.id())
             .generationId(generationId)
             .build();
+    }
+
+    public void assignPartitions(Map<String, List<AssignedPartitions>> assignedPartitions) {
+        assignedPartitions.forEach((key, value) ->
+            Optional.ofNullable(members.get(key))
+                .map(member -> member.withPartitionAssignments(value))
+                .ifPresent(member -> members.put(member.id(), member))
+        );
+    }
+
+    public List<AssignedPartitions> getAssignment(String memberId) {
+        return Optional.ofNullable(members.get(memberId))
+            .map(Member::partitionAssignments)
+            .orElseGet(Collections::emptyList);
     }
 
     public List<Member> members() {
