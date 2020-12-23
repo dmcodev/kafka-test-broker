@@ -3,7 +3,10 @@ package dev.dmco.test.kafka
 import dev.dmco.test.kafka.config.BrokerConfig
 import dev.dmco.test.kafka.config.TopicConfig
 import io.kotest.core.spec.style.StringSpec
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -29,6 +32,7 @@ class KafkaProducerConsumerSpec : StringSpec({
         props.put("compression.type", "gzip")
 
         props.put("group.id", "my-consumer-group")
+        props.put("heartbeat.interval.ms", "50")
 
         val producer = KafkaProducer<String, String>(props)
 
@@ -39,31 +43,55 @@ class KafkaProducerConsumerSpec : StringSpec({
 
         Thread.sleep(1000)
 
+
         val consumer1 = KafkaConsumer<String, String>(props)
         consumer1.subscribe(mutableListOf("my-topic"))
 
         val consumer2 = KafkaConsumer<String, String>(props)
         consumer2.subscribe(mutableListOf("my-topic"))
 
-        repeat(100) {
-            producer.send(ProducerRecord("my-topic", "key$it", "value$it")).get()
+        val c1 = GlobalScope.launch {
+            while(true) {
+                val records = consumer1.poll(2000)
+                if (records.count() > 0) {
+                    println("[1] Fetched records: ${records.count()}")
+                }
+            }
         }
 
         delay(1000)
 
-        val records1 = consumer1.poll(1000)
-        val records2 = consumer2.poll(1000)
+        val c2 = GlobalScope.launch {
+            while(true) {
+                val records = consumer2.poll(2000)
+                if (records.count() > 0) {
+                    println("[2] Fetched records: ${records.count()}")
+                }
 
-        println(records1.count())
-        println(records2.count())
-
-        delay(1000)
-
-        repeat(100) {
-            producer.send(ProducerRecord("my-topic", "key$it", "value$it")).get()
+            }
         }
 
-        consumer1.poll(1000)
+        val p1 = GlobalScope.launch {
+            while(true) {
+                repeat(10) {
+                    producer.send(ProducerRecord("my-topic", "key$it", "value$it")).get()
+                }
+                delay(1000)
+            }
+        }
+
+
+
+        delay(100000)
+
+        p1.cancelAndJoin()
+        producer.close()
+
+        c1.cancelAndJoin()
+        c2.cancelAndJoin()
+
+        consumer1.close()
+        consumer2.close()
 
 //        consumer1.close()
 //        consumer2.close()

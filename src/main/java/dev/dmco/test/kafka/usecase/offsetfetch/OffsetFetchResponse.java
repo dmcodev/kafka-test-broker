@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.offsetfetch;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
@@ -48,6 +49,6 @@ public class OffsetFetchResponse implements ResponseMessage {
 
         Optional<String> metadata;
 
-        short errorCode;
+        ErrorCode errorCode;
     }
 }

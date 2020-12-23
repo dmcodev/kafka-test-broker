@@ -26,7 +26,7 @@ public class ConsumerGroup {
     private final Map<Partition, Long> offsets = new HashMap<>();
 
     @Getter
-    private int generationId;
+    private int generationId = -1;
 
     @Getter
     private String leaderId;
@@ -37,25 +37,23 @@ public class ConsumerGroup {
     private int nextMemberId;
 
     public AddMemberResult addMember(String memberId, Set<String> proposedProtocols) {
-        Member member;
-        if (members.containsKey(memberId)) {
-            member = members.get(memberId);
-        } else {
-            member = new Member(generateMemberId());
-        }
+        boolean rejoin = members.containsKey(memberId);
+        Member member = rejoin ? members.get(memberId) : new Member(generateMemberId());
         String selectedProtocol = selectProtocol(proposedProtocols);
         if (selectedProtocol == null) {
             removeMember(member.id());
             return AddMemberResult.builder().protocolMatched(false).build();
         }
-        member.setProtocols(proposedProtocols);
-        members.put(member.id(), member);
-        protocol = selectedProtocol;
         if (noLeaderSelected()) {
             leaderId = member.id();
-        } else {
-            setupNextGeneration();
         }
+        members.put(member.id(), member);
+        if (!rejoin) {
+            nextGeneration();
+        }
+        protocol = selectedProtocol;
+        member.setProtocols(proposedProtocols);
+        member.synchronize();
         return AddMemberResult.builder()
             .protocolMatched(true)
             .member(member)
@@ -64,7 +62,7 @@ public class ConsumerGroup {
 
     public void removeMember(String memberId) {
         if (members.remove(memberId) != null) {
-            setupNextGeneration();
+            nextGeneration();
         }
     }
 
@@ -75,7 +73,7 @@ public class ConsumerGroup {
 
     public void markSynchronized(String memberId) {
         Optional.ofNullable(members.get(memberId))
-            .ifPresent(Member::markSynchronized);
+            .ifPresent(Member::synchronize);
     }
 
     public List<Partition> getAssignedPartitions(String memberId) {
@@ -88,11 +86,11 @@ public class ConsumerGroup {
         return new ArrayList<>(members.values());
     }
 
-    public ErrorCode validateMember(String memberId, int expectedGenerationId) {
+    public ErrorCode validateMember(String memberId) {
         if (!members.containsKey(memberId)) {
             return ErrorCode.UNKNOWN_MEMBER_ID;
         }
-        if (generationId != expectedGenerationId || !members.get(memberId).inSync()) {
+        if (!members.get(memberId).synchronized_()) {
             return ErrorCode.REBALANCE_IN_PROGRESS;
         }
         return ErrorCode.NO_ERROR;
@@ -100,7 +98,7 @@ public class ConsumerGroup {
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
         return members.values().stream()
-            .filter(Member::inSync)
+            .filter(Member::synchronized_)
             .map(Member::assignedPartitions)
             .flatMap(Collection::stream)
             .filter(partition -> topicName.equals(partition.topic().name()))
@@ -123,13 +121,13 @@ public class ConsumerGroup {
             .ifPresent(member -> member.assignPartitions(partitions));
     }
 
-    private void setupNextGeneration() {
+    private void nextGeneration() {
         generationId++;
         invalidateMembers();
     }
 
     private void invalidateMembers() {
-        members.values().forEach(Member::markDesynchronized);
+        members.values().forEach(Member::invalidate);
     }
 
     private boolean noLeaderSelected() {

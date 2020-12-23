@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.state;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
+@ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Member {
 
@@ -25,16 +27,18 @@ public class Member {
     private final Map<String, Set<Partition>> assignedPartitions = new HashMap<>();
 
     @Getter
+    @ToString.Include
     private final String id;
 
     @Getter
-    private boolean inSync;
+    private boolean synchronized_;
 
     public void subscribe(Collection<String> topicNames) {
         topicNames.forEach(topic -> assignedPartitions.putIfAbsent(topic, new HashSet<>()));
     }
 
     public void assignPartitions(List<Partition> partitions) {
+        assignedPartitions.values().forEach(Set::clear);
         partitions.forEach(partition -> assignedPartitions.get(partition.topic().name()).add(partition));
     }
 
@@ -57,11 +61,11 @@ public class Member {
         protocols.addAll(newProtocols);
     }
 
-    public void markDesynchronized() {
-        inSync = false;
+    public void invalidate() {
+        synchronized_ = false;
     }
 
-    public void markSynchronized() {
-        inSync = true;
+    public void synchronize() {
+        synchronized_ = true;
     }
 }

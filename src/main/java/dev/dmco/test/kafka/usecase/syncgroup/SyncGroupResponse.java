@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.syncgroup;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.consumer.Assignment;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -20,7 +21,7 @@ public class SyncGroupResponse implements ResponseMessage {
     @VersionMapping(value = 1, sinceVersion = 4)
     ResponseHeader header;
 
-    short errorCode;
+    ErrorCode errorCode;
 
     Assignment assignment;
 }
