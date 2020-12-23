@@ -8,6 +8,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,7 +99,10 @@ public class ConsumerGroup {
     }
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
-        return offsets.keySet().stream()
+        return members.values().stream()
+            .filter(Member::inSync)
+            .map(Member::assignedPartitions)
+            .flatMap(Collection::stream)
             .filter(partition -> topicName.equals(partition.topic().name()))
             .collect(
                 Collectors.toMap(

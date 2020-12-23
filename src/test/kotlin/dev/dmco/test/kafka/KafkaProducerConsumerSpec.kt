@@ -49,21 +49,21 @@ class KafkaProducerConsumerSpec : StringSpec({
             producer.send(ProducerRecord("my-topic", "key$it", "value$it")).get()
         }
 
-        delay(2000)
+        delay(1000)
 
-        val records1 = consumer1.poll(5000)
-        val records2 = consumer2.poll(5000)
+        val records1 = consumer1.poll(1000)
+        val records2 = consumer2.poll(1000)
 
         println(records1.count())
         println(records2.count())
 
-        delay(2000)
+        delay(1000)
 
         repeat(100) {
             producer.send(ProducerRecord("my-topic", "key$it", "value$it")).get()
         }
 
-        consumer1.poll(5000)
+        consumer1.poll(1000)
 
 //        consumer1.close()
 //        consumer2.close()
