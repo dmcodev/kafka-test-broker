@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.state;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -8,11 +9,17 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 @Accessors(fluent = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Topic {
 
     private final Map<Integer, Partition> partitions = new HashMap<>();
-    @Getter private final String name;
-    @Getter private final int partitionsNumber;
+
+    @Getter
+    @EqualsAndHashCode.Include
+    private final String name;
+
+    @Getter
+    private final int partitionsNumber;
 
     public Topic(String name, int partitionsNumber) {
         this.name = name;

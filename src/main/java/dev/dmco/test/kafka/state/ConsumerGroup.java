@@ -1,6 +1,8 @@
 package dev.dmco.test.kafka.state;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
@@ -13,81 +15,132 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Accessors(fluent = true)
 public class ConsumerGroup {
 
     private final Map<String, Member> members = new HashMap<>();
-    private final String name;
+    private final Map<Partition, Long> offsets = new HashMap<>();
 
+    @Getter
     private int generationId;
-    private String protocol;
+
+    @Getter
     private String leaderId;
+
+    @Getter
+    private String protocol;
+
     private int nextMemberId;
 
-    public Optional<String> selectProtocol(Member candidateMember) {
-        Set<String> candidates = new HashSet<>(candidateMember.protocols());
-        members.values().stream().map(Member::protocols).forEach(candidates::retainAll);
-        return candidates.stream().findFirst();
-    }
-
-    public AddMemberResult addMember(Member candidateMember, String selectedProtocol) {
-        Member member = assignId(candidateMember);
+    public AddMemberResult addMember(String memberId, Set<String> proposedProtocols) {
+        Member member;
+        if (members.containsKey(memberId)) {
+            member = members.get(memberId);
+        } else {
+            member = new Member(generateMemberId());
+        }
+        String selectedProtocol = selectProtocol(proposedProtocols);
+        if (selectedProtocol == null) {
+            removeMember(member.id());
+            return AddMemberResult.builder().protocolMatched(false).build();
+        }
+        member.setProtocols(proposedProtocols);
         members.put(member.id(), member);
         protocol = selectedProtocol;
         if (noLeaderSelected()) {
             leaderId = member.id();
         } else {
-            generationId++;
+            setupNextGeneration();
         }
         return AddMemberResult.builder()
-            .leaderId(leaderId)
-            .memberId(member.id())
-            .generationId(generationId)
+            .protocolMatched(true)
+            .member(member)
             .build();
     }
 
-    public void assignPartitions(Map<String, List<AssignedPartitions>> assignedPartitions) {
-        assignedPartitions.forEach((key, value) ->
-            Optional.ofNullable(members.get(key))
-                .map(member -> member.withPartitionAssignments(value))
-                .ifPresent(member -> members.put(member.id(), member))
-        );
+    public void removeMember(String memberId) {
+        if (members.remove(memberId) != null) {
+            setupNextGeneration();
+        }
     }
 
-    public List<AssignedPartitions> getAssignment(String memberId) {
+    public void assignPartitions(Map<String, List<Partition>> assignedPartitions) {
+        assignedPartitions.forEach(this::assignMemberPartitions);
+        invalidateMembers();
+    }
+
+    public void markSynchronized(String memberId) {
+        Optional.ofNullable(members.get(memberId))
+            .ifPresent(Member::markSynchronized);
+    }
+
+    public List<Partition> getAssignedPartitions(String memberId) {
         return Optional.ofNullable(members.get(memberId))
-            .map(Member::partitionAssignments)
+            .map(Member::assignedPartitions)
             .orElseGet(Collections::emptyList);
     }
 
-    public List<Member> members() {
+    public List<Member> getMembers() {
         return new ArrayList<>(members.values());
     }
 
-    private Member assignId(Member member) {
-        if (member.id().isEmpty()) {
-            return member.withId(Member.NAME_PREFIX + "-" + (nextMemberId++));
-        } else {
-            return member;
+    public ErrorCode validateMember(String memberId, int expectedGenerationId) {
+        if (!members.containsKey(memberId)) {
+            return ErrorCode.UNKNOWN_MEMBER_ID;
         }
+        if (generationId != expectedGenerationId || !members.get(memberId).inSync()) {
+            return ErrorCode.REBALANCE_IN_PROGRESS;
+        }
+        return ErrorCode.NO_ERROR;
+    }
+
+    public Map<Integer, Long> getPartitionOffsets(String topicName) {
+        return offsets.keySet().stream()
+            .filter(partition -> topicName.equals(partition.topic().name()))
+            .collect(
+                Collectors.toMap(
+                    Partition::id,
+                    partition -> offsets.computeIfAbsent(partition, it -> 0L)
+                )
+            );
+    }
+
+    private String selectProtocol(Set<String> candidateProtocols) {
+        Set<String> candidates = new HashSet<>(candidateProtocols);
+        members.values().stream().map(Member::protocols).forEach(candidates::retainAll);
+        return candidates.stream().findFirst().orElse(null);
+    }
+
+    private void assignMemberPartitions(String memberId, List<Partition> partitions) {
+        Optional.ofNullable(members.get(memberId))
+            .ifPresent(member -> member.assignPartitions(partitions));
+    }
+
+    private void setupNextGeneration() {
+        generationId++;
+        invalidateMembers();
+    }
+
+    private void invalidateMembers() {
+        members.values().forEach(Member::markDesynchronized);
     }
 
     private boolean noLeaderSelected() {
         return leaderId == null;
     }
 
+    private String generateMemberId() {
+        return Member.NAME_PREFIX + "-" + (nextMemberId++);
+    }
+
     @Value
     @Builder
     @Accessors(fluent = true)
     public static class AddMemberResult {
-
-        String leaderId;
-        String memberId;
-        int generationId;
-
-        public boolean isLeaderAssignment() {
-            return leaderId.equals(memberId);
-        }
+        boolean protocolMatched;
+        Member member;
     }
 }

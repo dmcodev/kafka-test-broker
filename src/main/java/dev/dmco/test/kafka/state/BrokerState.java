@@ -32,7 +32,7 @@ public class BrokerState {
     }
 
     public ConsumerGroup getConsumerGroup(String name) {
-        return consumerGroups.computeIfAbsent(name, ConsumerGroup::new);
+        return consumerGroups.computeIfAbsent(name, it -> new ConsumerGroup());
     }
 
     public Topic getTopic(String name) {

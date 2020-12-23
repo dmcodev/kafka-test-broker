@@ -6,3 +6,5 @@ dev.dmco.test.kafka.usecase.joingroup.JoinGroupRequestHandler
 dev.dmco.test.kafka.usecase.syncgroup.SyncGroupRequestHandler
 dev.dmco.test.kafka.usecase.offsetfetch.OffsetFetchRequestHandler
 dev.dmco.test.kafka.usecase.fetch.FetchRequestHandler
+dev.dmco.test.kafka.usecase.listoffsets.ListOffsetsRequestHandler
+dev.dmco.test.kafka.usecase.heartbeat.HeartBeatRequestHandler

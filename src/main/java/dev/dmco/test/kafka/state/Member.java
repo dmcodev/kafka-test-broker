@@ -1,29 +1,67 @@
 package dev.dmco.test.kafka.state;
 
-import lombok.Builder;
-import lombok.Value;
-import lombok.With;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Value
-@With
-@Builder
+@RequiredArgsConstructor
 @Accessors(fluent = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Member {
 
     static final String NAME_PREFIX = "member";
 
-    String id;
-    Set<String> protocols;
-    List<AssignedPartitions> partitionAssignments;
+    private final Set<String> protocols = new HashSet<>();
+    private final Map<String, Set<Partition>> assignedPartitions = new HashMap<>();
+
+    @Getter
+    private final String id;
+
+    @Getter
+    private boolean inSync;
+
+    public void subscribe(Collection<String> topicNames) {
+        topicNames.forEach(topic -> assignedPartitions.putIfAbsent(topic, new HashSet<>()));
+    }
+
+    public void assignPartitions(List<Partition> partitions) {
+        partitions.forEach(partition -> assignedPartitions.get(partition.topic().name()).add(partition));
+    }
 
     public List<String> subscribedTopics() {
-        return partitionAssignments.stream()
-            .map(AssignedPartitions::topicName)
+        return new ArrayList<>(assignedPartitions.keySet());
+    }
+
+    public List<Partition> assignedPartitions() {
+        return assignedPartitions.values().stream()
+            .flatMap(Collection::stream)
             .collect(Collectors.toList());
+    }
+
+    public Set<String> protocols() {
+        return new HashSet<>(protocols);
+    }
+
+    public void setProtocols(Set<String> newProtocols) {
+        protocols.clear();
+        protocols.addAll(newProtocols);
+    }
+
+    public void markDesynchronized() {
+        inSync = false;
+    }
+
+    public void markSynchronized() {
+        inSync = true;
     }
 }

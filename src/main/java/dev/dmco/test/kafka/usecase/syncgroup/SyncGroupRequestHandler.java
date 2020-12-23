@@ -1,9 +1,9 @@
 package dev.dmco.test.kafka.usecase.syncgroup;
 
 import dev.dmco.test.kafka.messages.consumer.Assignment;
-import dev.dmco.test.kafka.state.AssignedPartitions;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
+import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
 import java.util.List;
@@ -15,39 +15,47 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
     @Override
     public SyncGroupResponse handle(SyncGroupRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        Map<String, List<AssignedPartitions>> assignedPartitions = extractAssignedPartitions(request);
-        group.assignPartitions(assignedPartitions);
-        List<AssignedPartitions> memberAssignedPartitions = group.getAssignment(request.memberId());
+        Map<String, List<Partition>> assignedPartitions = extractAssignedPartitions(request, state);
+        if (!assignedPartitions.isEmpty()) {
+            group.assignPartitions(assignedPartitions);
+        }
+        group.markSynchronized(request.memberId());
+        List<Partition> memberAssignedPartitions = group.getAssignedPartitions(request.memberId());
         return SyncGroupResponse.builder()
             .assignment(createResponseAssignment(memberAssignedPartitions))
             .build();
     }
 
-    private Map<String, List<AssignedPartitions>> extractAssignedPartitions(SyncGroupRequest request) {
+    private Map<String, List<Partition>> extractAssignedPartitions(SyncGroupRequest request, BrokerState state) {
         return request.memberAssignments().stream()
             .collect(
                 Collectors.toMap(
                     SyncGroupRequest.MemberAssignment::memberId,
                     member -> member.assignment().partitionAssignments().stream()
-                        .map(assignment ->
-                            AssignedPartitions.builder()
-                                .topicName(assignment.topicName())
-                                .partitionIds(assignment.partitionIds())
-                                .build()
+                        .flatMap(assignment ->
+                            assignment.partitionIds().stream()
+                                .map(partitionId -> state.getTopic(assignment.topicName()).getPartition(partitionId))
                         )
                         .collect(Collectors.toList())
                 )
             );
     }
 
-    private Assignment createResponseAssignment(List<AssignedPartitions> memberAssignedPartitions) {
+    private Assignment createResponseAssignment(List<Partition> memberAssignedPartitions) {
+        Map<String, List<Partition>> partitionsGrouped = memberAssignedPartitions.stream()
+            .collect(Collectors.groupingBy(partition -> partition.topic().name()));
         return Assignment.builder()
             .partitionAssignments(
-                memberAssignedPartitions.stream()
-                    .map(assignedPartitions ->
+                partitionsGrouped.entrySet().stream()
+                    .map(entry ->
                         Assignment.PartitionAssignments.builder()
-                            .topicName(assignedPartitions.topicName())
-                            .partitionIds(assignedPartitions.partitionIds())
+                            .topicName(entry.getKey())
+                            .partitionIds(
+                                entry.getValue().stream()
+                                    .map(Partition::id)
+                                    .sorted()
+                                    .collect(Collectors.toList())
+                            )
                             .build()
                     )
                     .collect(Collectors.toList())
