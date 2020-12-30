@@ -16,22 +16,22 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
     @Override
     public SyncGroupResponse handle(SyncGroupRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        ErrorCode memberError = group.validateMember(request.memberId());
+        ErrorCode memberError = group.checkMemberSynchronization(request.memberId());
         if (memberError != ErrorCode.NO_ERROR) {
             return SyncGroupResponse.builder().errorCode(memberError).build();
         }
-        Map<String, List<Partition>> assignedPartitions = extractAssignedPartitions(request, state);
-        if (!assignedPartitions.isEmpty()) {
-            group.assignPartitions(assignedPartitions);
+        Map<String, List<Partition>> partitionAssignments = extractPartitionAssignments(request, state);
+        if (!partitionAssignments.isEmpty()) {
+            group.assignPartitions(partitionAssignments);
         }
         group.markSynchronized(request.memberId());
-        List<Partition> memberAssignedPartitions = group.getAssignedPartitions(request.memberId());
+        List<Partition> assignedPartitions = group.getAssignedPartitions(request.memberId());
         return SyncGroupResponse.builder()
-            .assignment(createResponseAssignment(memberAssignedPartitions))
+            .assignment(createResponseAssignment(assignedPartitions))
             .build();
     }
 
-    private Map<String, List<Partition>> extractAssignedPartitions(SyncGroupRequest request, BrokerState state) {
+    private Map<String, List<Partition>> extractPartitionAssignments(SyncGroupRequest request, BrokerState state) {
         return request.memberAssignments().stream()
             .collect(
                 Collectors.toMap(

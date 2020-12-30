@@ -11,10 +11,11 @@ class ResponseBufferSpec : StringSpec({
     }
 
     "Should read written values" {
-        val buffer = ResponseBuffer(3)
-        buffer.putShort(42).putInt(541).putInt(964)
+        val buffer = ResponseBuffer()
+        buffer.putShort(42).putLong(43523L).putInt(541).putInt(964)
+        ByteBuffer.wrap(buffer.read(2, 8)).asLongBuffer().get() shouldBe 43523L
         repeat(2) {
-            val ints = ByteBuffer.wrap(buffer.read(2, 8)).asIntBuffer()
+            val ints = ByteBuffer.wrap(buffer.read(10, 8)).asIntBuffer()
             ints.get() shouldBe 541
             ints.get() shouldBe 964
         }

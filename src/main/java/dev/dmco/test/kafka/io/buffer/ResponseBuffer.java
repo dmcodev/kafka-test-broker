@@ -1,58 +1,56 @@
 package dev.dmco.test.kafka.io.buffer;
 
-import java.nio.Buffer;
-import java.nio.BufferUnderflowException;
+import lombok.SneakyThrows;
+
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class ResponseBuffer {
+public class ResponseBuffer extends ByteArrayOutputStream {
 
-    private final LinkedList<ByteBuffer> committedBuffers = new LinkedList<>();
-
-    private final int defaultAllocationSize;
-    private ByteBuffer currentBuffer;
+    private final Map<Integer, ByteBuffer> slots = new HashMap<>();
 
     public ResponseBuffer() {
-        this(32);
-    }
-
-    public ResponseBuffer(int defaultAllocationSize) {
-        this.defaultAllocationSize = defaultAllocationSize;
-        currentBuffer = ByteBuffer.allocate(defaultAllocationSize);
+        super(128);
     }
 
     public ResponseBuffer putByte(byte value) {
-        requireBytes(1);
-        currentBuffer.put(value);
+        write(value);
         return this;
     }
 
     public ResponseBuffer putShort(short value) {
-        requireBytes(2);
-        currentBuffer.putShort(value);
+        write(value >> 8);
+        write(value);
         return this;
     }
 
     public ResponseBuffer putInt(int value) {
-        requireBytes(4);
-        currentBuffer.putInt(value);
+        write(value >> 24);
+        write(value >> 16);
+        write(value >> 8);
+        write(value);
         return this;
     }
 
     public ResponseBuffer putLong(long value) {
-        requireBytes(8);
-        currentBuffer.putLong(value);
+        write((int) (value >> 56));
+        write((int) (value >> 48));
+        write((int) (value >> 40));
+        write((int) (value >> 32));
+        write((int) (value >> 24));
+        write((int) (value >> 16));
+        write((int) (value >> 8));
+        write((int) value);
         return this;
     }
 
+    @SneakyThrows
     public ResponseBuffer putBytes(byte[] bytes) {
-        int written = Math.min(bytes.length, currentBuffer.remaining());
-        currentBuffer.put(bytes, 0, written);
-        int remaining = bytes.length - written;
-        requireBytes(remaining);
-        currentBuffer.put(bytes, written, remaining);
+        write(bytes);
         return this;
     }
 
@@ -61,79 +59,28 @@ public class ResponseBuffer {
     }
 
     public byte[] read(int from, int length) {
-        int position = 0;
         byte[] result = new byte[length];
-        List<ByteBuffer> buffers = readSeek(from);
-        for (int i = 0; i < buffers.size() && position < length; i++) {
-            int remainingToTransfer = length - position;
-            ByteBuffer source = buffers.get(i);
-            int transferred = Math.min(source.remaining(), remainingToTransfer);
-            source.get(result, position, transferred);
-            position += transferred;
-        }
-        if (position < length) {
-            throw new BufferUnderflowException();
-        }
+        System.arraycopy(buf, from, result, 0, length);
         return result;
     }
 
     public int position() {
-        return committedBuffers.stream().mapToInt(Buffer::limit).sum() + currentBuffer.position();
+        return count;
     }
 
     public List<ByteBuffer> collect() {
-        commit();
-        List<ByteBuffer> result = new ArrayList<>(committedBuffers);
-        committedBuffers.clear();
-        return result;
+        slots.forEach((key, value) -> materializeSlot(key, value, buf));
+        return Collections.singletonList(ByteBuffer.wrap(buf));
     }
 
     private ByteBuffer putSlot(int size) {
-        requireBytes(size);
-        ByteBuffer slot = currentBuffer.duplicate();
-        currentBuffer.position(currentBuffer.position() + size);
-        slot.limit(slot.position() + size);
+        ByteBuffer slot = ByteBuffer.allocate(size);
+        slots.put(count, slot);
+        putBytes(new byte[size]);
         return slot;
     }
 
-    private List<ByteBuffer> readSeek(int targetPosition) {
-        commit();
-        List<ByteBuffer> result = new ArrayList<>(committedBuffers.size());
-        int position = 0;
-        for (ByteBuffer committed : committedBuffers) {
-            if (!result.isEmpty()) {
-                ByteBuffer copy = committed.duplicate();
-                copy.rewind();
-                result.add(copy);
-            } else if (position + committed.position() > targetPosition) {
-                ByteBuffer startCopy = committed.duplicate();
-                startCopy.position(targetPosition - position);
-                result.add(startCopy);
-            } else {
-                position += committed.position();
-            }
-        }
-        return result;
-    }
-
-    private void requireBytes(int requiredBytes) {
-        if (currentBuffer.remaining() < requiredBytes) {
-            commitAndAllocate(requiredBytes);
-        }
-    }
-
-    private void commit() {
-        commitAndAllocate(defaultAllocationSize);
-    }
-
-    private void commitAndAllocate(int requiredBytes) {
-        commitCurrentBuffer();
-        int allocationSize = Math.max(requiredBytes, defaultAllocationSize);
-        currentBuffer = ByteBuffer.allocate(allocationSize);
-    }
-
-    private void commitCurrentBuffer() {
-        currentBuffer.limit(currentBuffer.position());
-        committedBuffers.addLast(currentBuffer);
+    private void materializeSlot(int offset, ByteBuffer slot, byte[] bytes) {
+        System.arraycopy(slot.array(), 0, bytes, offset, slot.limit());
     }
 }

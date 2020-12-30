@@ -71,11 +71,6 @@ public class ConsumerGroup {
         invalidateMembers();
     }
 
-    public void markSynchronized(String memberId) {
-        Optional.ofNullable(members.get(memberId))
-            .ifPresent(Member::synchronize);
-    }
-
     public List<Partition> getAssignedPartitions(String memberId) {
         return Optional.ofNullable(members.get(memberId))
             .map(Member::assignedPartitions)
@@ -86,19 +81,24 @@ public class ConsumerGroup {
         return new ArrayList<>(members.values());
     }
 
-    public ErrorCode validateMember(String memberId) {
+    public ErrorCode checkMemberSynchronization(String memberId) {
         if (!members.containsKey(memberId)) {
             return ErrorCode.UNKNOWN_MEMBER_ID;
         }
-        if (!members.get(memberId).synchronized_()) {
+        if (!members.get(memberId).isSynchronized()) {
             return ErrorCode.REBALANCE_IN_PROGRESS;
         }
         return ErrorCode.NO_ERROR;
     }
 
+    public void markSynchronized(String memberId) {
+        Optional.ofNullable(members.get(memberId))
+            .ifPresent(Member::synchronize);
+    }
+
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
         return members.values().stream()
-            .filter(Member::synchronized_)
+            .filter(Member::isSynchronized)
             .map(Member::assignedPartitions)
             .flatMap(Collection::stream)
             .filter(partition -> topicName.equals(partition.topic().name()))

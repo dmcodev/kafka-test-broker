@@ -31,7 +31,7 @@ public class Member {
     private final String id;
 
     @Getter
-    private boolean synchronized_;
+    private boolean isSynchronized;
 
     public void subscribe(Collection<String> topicNames) {
         topicNames.forEach(topic -> assignedPartitions.putIfAbsent(topic, new HashSet<>()));
@@ -62,10 +62,10 @@ public class Member {
     }
 
     public void invalidate() {
-        synchronized_ = false;
+        isSynchronized = false;
     }
 
     public void synchronize() {
-        synchronized_ = true;
+        isSynchronized = true;
     }
 }

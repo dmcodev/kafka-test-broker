@@ -45,7 +45,7 @@ public class FetchResponse implements ResponseMessage {
 
         short errorCode;
 
-        long highWatermark;
+        long headOffset;
 
         Records records;
     }

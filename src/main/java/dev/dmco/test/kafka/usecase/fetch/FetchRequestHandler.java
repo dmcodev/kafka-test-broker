@@ -14,7 +14,6 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
 
     @Override
     public FetchResponse handle(FetchRequest request, BrokerState state) {
-
         return FetchResponse.builder()
             .topics(
                 request.topics().stream()
@@ -40,7 +39,7 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
         List<Record> records = partition.fetch(requestPartition.fetchOffset(), requestPartition.maxBytes());
         return FetchResponse.Partition.builder()
             .partitionId(partition.id())
-            .highWatermark(partition.head())
+            .headOffset(partition.head())
             .records(
                 Records.builder()
                     .entries(records)
