@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Getter
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 public class BrokerState {
@@ -25,6 +24,7 @@ public class BrokerState {
     private final Map<String, Topic> topics = new HashMap<>();
     private final Map<String, ConsumerGroup> consumerGroups = new HashMap<>();
 
+    @Getter
     private final BrokerConfig config;
 
     public RequestHandler<RequestMessage , ResponseMessage> selectRequestHandler(RequestMessage request) {

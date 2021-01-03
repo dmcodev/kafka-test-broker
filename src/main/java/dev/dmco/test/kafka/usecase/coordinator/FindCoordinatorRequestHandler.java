@@ -8,11 +8,9 @@ public class FindCoordinatorRequestHandler implements RequestHandler<FindCoordin
     @Override
     public FindCoordinatorResponse handle(FindCoordinatorRequest request, BrokerState state) {
         return FindCoordinatorResponse.builder()
-            .errorCode((short) 0)
-            .host("localhost")
-            .nodeId(0)
-            .port(9092)
-            .throttleTimeMs(0)
+            .host(state.config().host())
+            .nodeId(BrokerState.NODE_ID)
+            .port(state.config().port())
             .build();
     }
 }

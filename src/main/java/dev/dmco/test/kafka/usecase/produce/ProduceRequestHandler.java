@@ -1,12 +1,10 @@
 package dev.dmco.test.kafka.usecase.produce;
 
 import dev.dmco.test.kafka.messages.ErrorCode;
-import dev.dmco.test.kafka.messages.Record;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.Partition.AppendResult;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class ProduceRequestHandler implements RequestHandler<ProduceRequest, ProduceResponse> {
@@ -38,10 +36,9 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
         ProduceRequest.Partition targetPartition,
         BrokerState state
     ) {
-        Collection<Record> records = targetPartition.records().entries();
         AppendResult result = state.getTopic(targetTopic.name())
             .getPartition(targetPartition.id())
-            .append(records);
+            .append(targetPartition.records());
         return ProduceResponse.Partition.builder()
             .id(targetPartition.id())
             .errorCode(ErrorCode.NO_ERROR)

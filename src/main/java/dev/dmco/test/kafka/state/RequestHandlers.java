@@ -1,7 +1,5 @@
 package dev.dmco.test.kafka.state;
 
-import dev.dmco.test.kafka.error.BrokerException;
-import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.usecase.RequestHandler;
@@ -24,7 +22,7 @@ public class RequestHandlers {
     }
 
     private RuntimeException onMissingHandler(RequestMessage request) {
-        throw new BrokerException("No matching handler found for request message of type " + request.getClass(), ErrorCode.INVALID_REQUEST);
+        throw new IllegalStateException("No matching handler found for request message of type " + request.getClass());
     }
 
     @SuppressWarnings("unchecked")

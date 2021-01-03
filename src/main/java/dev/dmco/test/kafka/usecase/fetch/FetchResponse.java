@@ -1,6 +1,6 @@
 package dev.dmco.test.kafka.usecase.fetch;
 
-import dev.dmco.test.kafka.messages.Records;
+import dev.dmco.test.kafka.messages.Record;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
@@ -10,6 +10,7 @@ import lombok.Singular;
 import lombok.With;
 import lombok.experimental.Accessors;
 
+import java.util.Collection;
 import java.util.List;
 
 @lombok.Value
@@ -47,6 +48,6 @@ public class FetchResponse implements ResponseMessage {
 
         long headOffset;
 
-        Records records;
+        Collection<Record> records;
     }
 }

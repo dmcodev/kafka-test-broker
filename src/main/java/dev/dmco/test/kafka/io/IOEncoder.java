@@ -9,11 +9,10 @@ import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 public class IOEncoder {
 
-    public List<ByteBuffer> encode(ResponseMessage response, RequestHeader requestHeader) {
+    public ByteBuffer encode(ResponseMessage response, RequestHeader requestHeader) {
         int apiVersion = requestHeader.apiVersion();
         ResponseBuffer buffer = new ResponseBuffer();
         ResponseHeader responseHeader = ResponseHeader.builder()
@@ -23,6 +22,6 @@ public class IOEncoder {
         CodecContext codecContext = new CodecContext()
             .set(ContextProperty.VERSION, apiVersion);
         ObjectCodec.encode(responseWithHeader, buffer, codecContext);
-        return buffer.collect();
+        return buffer.toByteBuffer();
     }
 }

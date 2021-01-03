@@ -1,7 +1,6 @@
 package dev.dmco.test.kafka.usecase.fetch;
 
 import dev.dmco.test.kafka.messages.Record;
-import dev.dmco.test.kafka.messages.Records;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.usecase.RequestHandler;
@@ -40,11 +39,7 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
         return FetchResponse.Partition.builder()
             .partitionId(partition.id())
             .headOffset(partition.head())
-            .records(
-                Records.builder()
-                    .entries(records)
-                    .build()
-            )
+            .records(records)
             .build();
     }
 }

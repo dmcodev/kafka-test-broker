@@ -5,8 +5,6 @@ import dev.dmco.test.kafka.io.IOEventLoop;
 import dev.dmco.test.kafka.state.BrokerState;
 import lombok.RequiredArgsConstructor;
 
-import java.net.InetSocketAddress;
-
 @RequiredArgsConstructor
 public class TestKafkaBroker implements AutoCloseable {
 
@@ -18,9 +16,8 @@ public class TestKafkaBroker implements AutoCloseable {
     }
 
     public TestKafkaBroker(BrokerConfig config) {
-        InetSocketAddress bindAddress = new InetSocketAddress(config.host(), config.port());
         state = new BrokerState(config);
-        eventLoop = new IOEventLoop(bindAddress, state);
+        eventLoop = new IOEventLoop(state);
     }
 
     @Override

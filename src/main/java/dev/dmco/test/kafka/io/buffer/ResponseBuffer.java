@@ -4,9 +4,7 @@ import lombok.SneakyThrows;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ResponseBuffer extends ByteArrayOutputStream {
@@ -68,9 +66,12 @@ public class ResponseBuffer extends ByteArrayOutputStream {
         return count;
     }
 
-    public List<ByteBuffer> collect() {
+    public ByteBuffer toByteBuffer() {
         slots.forEach((key, value) -> materializeSlot(key, value, buf));
-        return Collections.singletonList(ByteBuffer.wrap(buf));
+        ByteBuffer buffer = ByteBuffer.wrap(buf);
+        buf = new byte[0];
+        reset();
+        return buffer;
     }
 
     private ByteBuffer putSlot(int size) {

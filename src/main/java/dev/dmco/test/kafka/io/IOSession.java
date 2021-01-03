@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
@@ -45,10 +44,10 @@ class IOSession {
         return requests;
     }
 
-    public void enqueueResponse(List<ByteBuffer> responseBuffers) {
-        responseBuffers.forEach(Buffer::rewind);
-        writeQueue.addLast(encodeResponseSize(responseBuffers));
-        responseBuffers.forEach(writeQueue::addLast);
+    public void enqueueResponse(ByteBuffer responseBuffer) {
+        responseBuffer.rewind();
+        writeQueue.addLast(encodeResponseSize(responseBuffer));
+        writeQueue.addLast(responseBuffer);
     }
 
     @SneakyThrows
@@ -77,12 +76,9 @@ class IOSession {
         return false;
     }
 
-    private ByteBuffer encodeResponseSize(List<ByteBuffer> responseBuffers) {
-        int size = responseBuffers.stream()
-            .mapToInt(Buffer::remaining)
-            .sum();
+    private ByteBuffer encodeResponseSize(ByteBuffer responseBuffer) {
         ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
-        buffer.putInt(size);
+        buffer.putInt(responseBuffer.remaining());
         buffer.rewind();
         return buffer;
     }

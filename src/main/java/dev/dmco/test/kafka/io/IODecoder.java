@@ -1,10 +1,8 @@
 package dev.dmco.test.kafka.io;
 
-import dev.dmco.test.kafka.error.BrokerException;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
-import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.metadata.Request;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.usecase.RequestHandler;
@@ -36,6 +34,6 @@ public class IODecoder {
 
     private Class<?> getRequestType(int apiKey) {
         return Optional.ofNullable(requestTypes.get(apiKey))
-            .orElseThrow(() -> new BrokerException("API key not supported: " + apiKey, ErrorCode.INVALID_REQUEST));
+            .orElseThrow(() -> new IllegalStateException("API key not supported: " + apiKey));
     }
 }
