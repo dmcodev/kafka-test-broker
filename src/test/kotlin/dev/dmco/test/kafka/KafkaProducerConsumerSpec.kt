@@ -18,6 +18,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.errors.RebalanceInProgressException
 import java.time.Duration
 import java.util.Properties
 import java.util.concurrent.Executors
@@ -67,7 +68,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             }
             val afterCommitRecords = KafkaConsumer<String, String>(clientProperties).run {
                 subscribe(listOf(TEST_TOPIC))
-                poll(Duration.ofSeconds(5)).also { close(Duration.ZERO) }
+                poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
             }
             preCommitRecords.verify(row(TEST_TOPIC, 0, 0, "key1", "value1"))
             afterCommitRecords.verify(row(TEST_TOPIC, 0, 1, "key2", "value2"))
@@ -100,7 +101,13 @@ class KafkaProducerConsumerSpec : StringSpec() {
                     val consumer = KafkaConsumer<String, String>(clientProperties)
                     consumer.subscribe(listOf(TEST_TOPIC))
                     while (consumedRecords.size != testMessages.size) {
-                        consumer.poll(Duration.ofSeconds(1)).forEach(consumedRecords::addLast)
+                        val records = consumer.poll(Duration.ofMillis(250))
+                        try {
+                            consumer.commitSync()
+                        } catch (ex: RebalanceInProgressException) {
+                            continue
+                        }
+                        records.forEach(consumedRecords::addLast)
                     }
                     consumer.close(Duration.ZERO)
                 }

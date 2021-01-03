@@ -57,16 +57,18 @@ public class Member {
         return new HashSet<>(protocols);
     }
 
-    public void setProtocols(Set<String> newProtocols) {
+    public Member setProtocols(Set<String> newProtocols) {
         protocols.clear();
         protocols.addAll(newProtocols);
+        return this;
     }
 
     public void invalidate() {
         isSynchronized = false;
     }
 
-    public void synchronize() {
+    public Member synchronize() {
         isSynchronized = true;
+        return this;
     }
 }

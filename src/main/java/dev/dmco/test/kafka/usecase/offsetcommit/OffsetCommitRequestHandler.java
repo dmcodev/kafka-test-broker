@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.offsetcommit;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.state.Partition;
@@ -13,10 +14,11 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
     @Override
     public OffsetCommitResponse handle(OffsetCommitRequest request, BrokerState state) {
         ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
+        ErrorCode memberError = consumerGroup.checkMemberSynchronization(request.memberId());
         return OffsetCommitResponse.builder()
             .topics(
                 request.topics().stream()
-                    .map(requestTopic -> createResponseTopic(requestTopic, state, consumerGroup))
+                    .map(requestTopic -> createResponseTopic(requestTopic, state, consumerGroup, memberError))
                     .collect(Collectors.toList())
             )
             .build();
@@ -25,14 +27,15 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
     private OffsetCommitResponse.Topic createResponseTopic(
         OffsetCommitRequest.Topic requestTopic,
         BrokerState state,
-        ConsumerGroup consumerGroup
+        ConsumerGroup consumerGroup,
+        ErrorCode memberError
     ) {
         Topic topic = state.getTopic(requestTopic.name());
         return OffsetCommitResponse.Topic.builder()
             .name(requestTopic.name())
             .partitions(
                 requestTopic.partitions().stream()
-                    .map(requestPartition -> createResponsePartition(requestPartition, topic, consumerGroup))
+                    .map(requestPartition -> createResponsePartition(requestPartition, topic, consumerGroup, memberError))
                     .collect(Collectors.toList())
             )
             .build();
@@ -41,12 +44,16 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
     private OffsetCommitResponse.Partition createResponsePartition(
         OffsetCommitRequest.Partition requestPartition,
         Topic topic,
-        ConsumerGroup consumerGroup
+        ConsumerGroup consumerGroup,
+        ErrorCode memberError
     ) {
-        Partition partition = topic.getPartition(requestPartition.id());
-        consumerGroup.commit(partition, requestPartition.committedOffset());
+        if (memberError == ErrorCode.NO_ERROR) {
+            Partition partition = topic.getPartition(requestPartition.id());
+            consumerGroup.commit(partition, requestPartition.committedOffset());
+        }
         return OffsetCommitResponse.Partition.builder()
             .id(requestPartition.id())
+            .errorCode(memberError)
             .build();
     }
 }

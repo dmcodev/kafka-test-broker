@@ -1,14 +1,11 @@
 package dev.dmco.test.kafka.state;
 
 import dev.dmco.test.kafka.messages.ErrorCode;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,28 +33,28 @@ public class ConsumerGroup {
 
     private int nextMemberId;
 
-    public AddMemberResult addMember(String memberId, Set<String> proposedProtocols) {
-        boolean rejoin = members.containsKey(memberId);
-        Member member = rejoin ? members.get(memberId) : new Member(generateMemberId());
-        String selectedProtocol = selectProtocol(proposedProtocols);
-        if (selectedProtocol == null) {
-            removeMember(member.id());
-            return AddMemberResult.builder().protocolMatched(false).build();
-        }
+    public String findMatchingProtocol(Set<String> candidateProtocols) {
+        Set<String> candidates = new HashSet<>(candidateProtocols);
+        members.values().stream().map(Member::protocols).forEach(candidates::retainAll);
+        return candidates.stream().findFirst().orElse(null);
+    }
+
+    public boolean hasMember(String memberId) {
+        return members.containsKey(memberId);
+    }
+
+    public Member joinMember() {
+        Member member = new Member(generateMemberId());
         if (noLeaderSelected()) {
             leaderId = member.id();
         }
         members.put(member.id(), member);
-        if (!rejoin) {
-            nextGeneration();
-        }
-        protocol = selectedProtocol;
-        member.setProtocols(proposedProtocols);
-        member.synchronize();
-        return AddMemberResult.builder()
-            .protocolMatched(true)
-            .member(member)
-            .build();
+        nextGeneration();
+        return member;
+    }
+
+    public Member getMember(String memberId) {
+        return members.get(memberId);
     }
 
     public void removeMember(String memberId) {
@@ -67,6 +64,10 @@ public class ConsumerGroup {
             }
             nextGeneration();
         }
+    }
+
+    public boolean isLeader(Member member) {
+        return member.id().equals(leaderId);
     }
 
     public void assignPartitions(Map<String, List<Partition>> assignedPartitions) {
@@ -95,20 +96,16 @@ public class ConsumerGroup {
     }
 
     public void markSynchronized(String memberId) {
-        Optional.ofNullable(members.get(memberId))
-            .ifPresent(Member::synchronize);
+        members.get(memberId).synchronize();
     }
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
-        return members.values().stream()
-            .filter(Member::isSynchronized)
-            .map(Member::assignedPartitions)
-            .flatMap(Collection::stream)
-            .filter(partition -> topicName.equals(partition.topic().name()))
+        return offsets.entrySet().stream()
+            .filter(entry -> topicName.equals(entry.getKey().topic().name()))
             .collect(
                 Collectors.toMap(
-                    Partition::id,
-                    partition -> offsets.computeIfAbsent(partition, it -> 0L)
+                    entry -> entry.getKey().id(),
+                    entry -> offsets.computeIfAbsent(entry.getKey(), it -> 0L)
                 )
             );
     }
@@ -117,10 +114,8 @@ public class ConsumerGroup {
         offsets.put(partition, offset);
     }
 
-    private String selectProtocol(Set<String> candidateProtocols) {
-        Set<String> candidates = new HashSet<>(candidateProtocols);
-        members.values().stream().map(Member::protocols).forEach(candidates::retainAll);
-        return candidates.stream().findFirst().orElse(null);
+    public void setProtocol(String selectedProtocol) {
+        protocol = selectedProtocol;
     }
 
     private void assignMemberPartitions(String memberId, List<Partition> partitions) {
@@ -143,13 +138,5 @@ public class ConsumerGroup {
 
     private String generateMemberId() {
         return Member.NAME_PREFIX + "-" + (nextMemberId++);
-    }
-
-    @Value
-    @Builder
-    @Accessors(fluent = true)
-    public static class AddMemberResult {
-        boolean protocolMatched;
-        Member member;
     }
 }

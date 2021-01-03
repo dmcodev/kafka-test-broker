@@ -4,7 +4,6 @@ import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.consumer.Subscription;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
-import dev.dmco.test.kafka.state.ConsumerGroup.AddMemberResult;
 import dev.dmco.test.kafka.state.Member;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 import dev.dmco.test.kafka.usecase.joingroup.JoinGroupResponse.JoinGroupResponseBuilder;
@@ -21,15 +20,21 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
     @Override
     public JoinGroupResponse handle(JoinGroupRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        AddMemberResult result = group.addMember(request.memberId(), extractProtocolNames(request));
-        if (!result.protocolMatched()) {
+        Set<String> memberProtocols = extractProtocolNames(request);
+        String selectedProtocol = group.findMatchingProtocol(memberProtocols);
+        if (selectedProtocol == null) {
             return PROTOCOL_MISMATCH_RESPONSE;
         }
-        Subscription subscription = extractSubscription(request, group.protocol());
-        result.member().subscribe(subscription.topics());
-        String memberId = result.member().id();
-        JoinGroupResponseBuilder responseBuilder = createResponseBuilder(memberId, group);
-        if (memberId.equals(group.leaderId())) {
+        Member member = group.hasMember(request.memberId())
+            ? group.getMember(request.memberId())
+            : group.joinMember();
+        group.setProtocol(selectedProtocol);
+        Subscription subscription = extractSubscription(request, selectedProtocol);
+        member.setProtocols(memberProtocols)
+            .synchronize()
+            .subscribe(subscription.topics());
+        JoinGroupResponseBuilder responseBuilder = createResponseBuilder(member.id(), group);
+        if (group.isLeader(member)) {
             addMemberInfo(subscription, group, responseBuilder);
         }
         return responseBuilder.build();
@@ -68,11 +73,11 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
             .build();
     }
 
-    private JoinGroupResponseBuilder createResponseBuilder(String assignedMemberId, ConsumerGroup group) {
+    private JoinGroupResponseBuilder createResponseBuilder(String memberId, ConsumerGroup group) {
         return JoinGroupResponse.builder()
             .generationId(group.generationId())
             .protocolName(group.protocol())
             .leader(group.leaderId())
-            .memberId(assignedMemberId);
+            .memberId(memberId);
     }
 }

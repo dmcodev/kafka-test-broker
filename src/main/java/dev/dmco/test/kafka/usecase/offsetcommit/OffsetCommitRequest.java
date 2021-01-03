@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka.usecase.offsetcommit;
 
 import dev.dmco.test.kafka.messages.metadata.Request;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
@@ -10,7 +11,7 @@ import lombok.experimental.Accessors;
 import java.util.List;
 import java.util.Optional;
 
-@Request(key = 8)
+@Request(key = 8, maxVersion = 1)
 @lombok.Value
 @Accessors(fluent = true)
 public class OffsetCommitRequest implements RequestMessage {
@@ -20,6 +21,12 @@ public class OffsetCommitRequest implements RequestMessage {
     RequestHeader header;
 
     String groupId;
+
+    @SinceVersion(1)
+    int generationId;
+
+    @SinceVersion(1)
+    String memberId;
 
     List<Topic> topics;
 
@@ -41,6 +48,9 @@ public class OffsetCommitRequest implements RequestMessage {
         int id;
 
         long committedOffset;
+
+        @SinceVersion(1)
+        long commitTimestamp;
 
         Optional<String> metadata;
     }
