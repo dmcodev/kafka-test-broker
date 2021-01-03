@@ -2,12 +2,19 @@ package dev.dmco.test.kafka
 
 import dev.dmco.test.kafka.config.BrokerConfig
 import dev.dmco.test.kafka.config.TopicConfig
+import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.data.Row5
+import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -15,78 +22,144 @@ import java.time.Duration
 import java.util.Properties
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.atomic.AtomicInteger
 
 
-class KafkaProducerConsumerSpec : StringSpec({
+class KafkaProducerConsumerSpec : StringSpec() {
 
-    "Should send message to topic" {
-        val topicName = "test-topic"
-        val producersCount = 2
-        val consumersCount = 6
+    private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
 
-        val brokerConfig = BrokerConfig.builder()
-            .topic(TopicConfig.create(topicName, 10))
-            .build()
-        val broker = TestKafkaBroker(brokerConfig)
+    lateinit var broker: TestKafkaBroker
 
-        val clientProperties = Properties()
-        clientProperties["bootstrap.servers"] = "${brokerConfig.host()}:${brokerConfig.port()}"
-        clientProperties["key.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
-        clientProperties["value.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
-        clientProperties["key.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
-        clientProperties["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
-        clientProperties["compression.type"] = "none"
-        clientProperties["group.id"] = "test-consumer-group"
-        clientProperties["heartbeat.interval.ms"] = "1000"
-        clientProperties["auto.commit.interval.ms"] = "3000"
-        clientProperties["enable.auto.commit"] = "false"
-
-
-        val testData = (1 .. 50000).asSequence().map { "key$it" to "value$it" }.toList()
-
-        val producerRecords = LinkedBlockingDeque(testData.map { ProducerRecord(topicName, it.first, it.second) })
-        val dispatcher = Executors.newFixedThreadPool(producersCount + consumersCount).asCoroutineDispatcher()
-        val closedConsumersCount = AtomicInteger(0)
-
-        repeat(producersCount) {
-            launch(dispatcher) {
-                val producer = KafkaProducer<String, String>(clientProperties)
-                while (producerRecords.isNotEmpty()) {
-                    val record = producerRecords.pollFirst() ?: break
-                    producer.send(record)
-                }
-                producer.close()
+    init {
+        "Should produce and consume messages" {
+            broker = TestKafkaBroker()
+            val clientProperties = clientProperties()
+            KafkaProducer<String, String>(clientProperties).apply {
+                send(ProducerRecord(TEST_TOPIC, "key1", "value1"))
+                send(ProducerRecord(TEST_TOPIC, "key2", "value2"))
+                close()
             }
+            KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC))
+                poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
+            }.verify(
+                row(TEST_TOPIC, 0, 0, "key1", "value1"),
+                row(TEST_TOPIC, 0, 1, "key2", "value2")
+            )
         }
 
-        val consumedRecords = LinkedBlockingDeque<ConsumerRecord<String, String>>()
-        val consumerCounts = mutableMapOf<Int, Long>()
-
-        repeat(consumersCount) {
-            val consumerId = it
-            launch(dispatcher) {
-                val consumer = KafkaConsumer<String, String>(clientProperties)
-                consumer.subscribe(listOf(topicName))
-                while (consumedRecords.size != testData.size) {
-                    val records = consumer.poll(Duration.ofSeconds(1))
-                    consumerCounts[consumerId] = (consumerCounts[consumerId] ?: 0L) + records.count()
-                    records.forEach(consumedRecords::addLast)
-                }
-                closedConsumersCount.incrementAndGet()
-                consumer.close()
+        "Should commit and resume consuming from last commited offset" {
+            broker = TestKafkaBroker()
+            val clientProperties = clientProperties()
+            val producer = KafkaProducer<String, String>(clientProperties).apply {
+                send(ProducerRecord(TEST_TOPIC, "key1", "value1")).get()
             }
+            val preCommitRecords = KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC))
+                poll(Duration.ofSeconds(1)).also {
+                    commitSync()
+                    close()
+                }
+            }
+            producer.apply {
+                send(ProducerRecord(TEST_TOPIC, "key2", "value2"))
+                close()
+            }
+            val afterCommitRecords = KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC))
+                poll(Duration.ofSeconds(5)).also { close(Duration.ZERO) }
+            }
+            preCommitRecords.verify(row(TEST_TOPIC, 0, 0, "key1", "value1"))
+            afterCommitRecords.verify(row(TEST_TOPIC, 0, 1, "key2", "value2"))
         }
 
-        while (closedConsumersCount.get() != consumersCount) {
-            delay(100)
+        "Should produce and consume with many producers and consumers" {
+            val producersCount = 2
+            val consumersCount = 4
+            val messagesCount = 1000
+            val brokerConfig = BrokerConfig.builder()
+                .topic(TopicConfig.create(TEST_TOPIC, 10))
+                .build()
+            val clientProperties = clientProperties(brokerConfig)
+            val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
+            val producerRecords = LinkedBlockingDeque(testMessages.map { ProducerRecord(TEST_TOPIC, it.first, it.second) })
+            broker = TestKafkaBroker(brokerConfig)
+            repeat(producersCount) {
+                launch(dispatcher) {
+                    val producer = KafkaProducer<String, String>(clientProperties)
+                    while (producerRecords.isNotEmpty()) {
+                        val record = producerRecords.pollFirst() ?: break
+                        producer.send(record)
+                    }
+                    producer.close()
+                }
+            }
+            val consumedRecords = LinkedBlockingDeque<ConsumerRecord<String, String>>()
+            repeat(consumersCount) {
+                launch(dispatcher) {
+                    val consumer = KafkaConsumer<String, String>(clientProperties)
+                    consumer.subscribe(listOf(TEST_TOPIC))
+                    while (consumedRecords.size != testMessages.size) {
+                        consumer.poll(Duration.ofSeconds(1)).forEach(consumedRecords::addLast)
+                    }
+                    consumer.close(Duration.ZERO)
+                }
+            }
+            await { consumedRecords.size == testMessages.size }
+            val consumedData = consumedRecords.map { it.key()!! to it.value()!! }
+            consumedData.toSet() shouldBe testMessages.toSet()
         }
-
-        val consumedData = consumedRecords.map { it.key()!! to it.value()!! }
-
-        consumedData.toSet() shouldBe testData.toSet()
-
-        dispatcher.close()
-        broker.close()
     }
-})
+
+    override fun afterEach(testCase: TestCase, result: TestResult) {
+        if (this::broker.isInitialized) {
+            broker.close()
+        }
+    }
+
+    override fun afterSpec(spec: Spec) {
+        dispatcher.close()
+    }
+
+    private fun clientProperties(
+        config: BrokerConfig = BrokerConfig.createDefault()
+    ): Properties =
+        Properties().also {
+            it["bootstrap.servers"] = "${config.host()}:${config.port()}"
+            it["key.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
+            it["value.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
+            it["key.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
+            it["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
+            it["compression.type"] = "none"
+            it["group.id"] = TEST_CONSUMER_GROUP
+            it["heartbeat.interval.ms"] = "500"
+            it["enable.auto.commit"] = "false"
+        }
+
+    private suspend fun await(timeoutMs: Long = 5000, condition: () -> Boolean) {
+        withTimeout(timeoutMs) {
+            while (!condition()) {
+                delay(25)
+            }
+        }
+    }
+
+    private fun ConsumerRecords<*, *>.verify(vararg records: Row5<String, Int, Int, String, String>) {
+        count() shouldBe records.size
+        forEachIndexed { index, record ->
+            val expected = records[index]
+            record.apply {
+                topic() shouldBe expected.a
+                partition() shouldBe expected.b
+                offset() shouldBe expected.c
+                key() shouldBe expected.d
+                value() shouldBe expected.e
+            }
+        }
+    }
+
+    companion object {
+        private const val TEST_TOPIC = "test-topic"
+        private const val TEST_CONSUMER_GROUP = "test-consumer-group"
+    }
+}

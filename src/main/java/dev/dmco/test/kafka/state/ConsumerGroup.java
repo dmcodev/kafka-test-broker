@@ -62,6 +62,9 @@ public class ConsumerGroup {
 
     public void removeMember(String memberId) {
         if (members.remove(memberId) != null) {
+            if (memberId.equals(leaderId)) {
+                leaderId = null;
+            }
             nextGeneration();
         }
     }
@@ -108,6 +111,10 @@ public class ConsumerGroup {
                     partition -> offsets.computeIfAbsent(partition, it -> 0L)
                 )
             );
+    }
+
+    public void commit(Partition partition, long offset) {
+        offsets.put(partition, offset);
     }
 
     private String selectProtocol(Set<String> candidateProtocols) {

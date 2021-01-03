@@ -28,6 +28,7 @@ public class Member {
 
     @Getter
     @ToString.Include
+    @EqualsAndHashCode.Include
     private final String id;
 
     @Getter
