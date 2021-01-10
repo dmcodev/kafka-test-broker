@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
@@ -34,11 +35,13 @@ public class Member {
     }
 
     public void subscribe(Collection<String> topicNames) {
-        topicNames.forEach(subscriptions::getOrCreate);
+        topicNames.forEach(subscriptions::createIfAbsent);
     }
 
     public void assignPartitions(List<Partition> partitions) {
-        partitions.forEach(partition -> subscriptions.getOrCreate(partition.topic().name()).addPartition(partition));
+        partitions.stream()
+            .collect(Collectors.groupingBy(topic -> topic.topic().name()))
+            .forEach((topicName, topicPartitions) -> subscriptions.get(topicName).setPartitions(topicPartitions));
     }
 
     public Collection<String> subscribedTopicNames() {

@@ -19,6 +19,7 @@ def jacksonVersion = '2.11.3'
 def springTestKafkaVersion = '2.6.4'
 
 dependencies {
+    compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation "io.kotest:kotest-runner-junit5:$kotestVersion"
     testImplementation "io.kotest:kotest-assertions-core:$kotestVersion"

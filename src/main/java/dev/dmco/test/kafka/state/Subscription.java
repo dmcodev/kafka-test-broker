@@ -2,6 +2,7 @@ package dev.dmco.test.kafka.state;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,7 +15,8 @@ public class Subscription {
         return new HashSet<>(partitions);
     }
 
-    public void addPartition(Partition partition) {
-        partitions.add(partition);
+    public void setPartitions(Collection<Partition> partitions) {
+        this.partitions.clear();
+        this.partitions.addAll(partitions);
     }
 }

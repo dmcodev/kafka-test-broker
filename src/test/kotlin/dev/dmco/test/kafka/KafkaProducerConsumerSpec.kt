@@ -27,7 +27,8 @@ import java.util.concurrent.LinkedBlockingDeque
 
 class KafkaProducerConsumerSpec : StringSpec() {
 
-    private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
+    private val executor = Executors.newCachedThreadPool()
+    private val dispatcher = executor.asCoroutineDispatcher()
 
     lateinit var broker: TestKafkaBroker
 
@@ -36,16 +37,18 @@ class KafkaProducerConsumerSpec : StringSpec() {
             broker = TestKafkaBroker()
             val clientProperties = clientProperties()
             KafkaProducer<String, String>(clientProperties).apply {
-                send(ProducerRecord(TEST_TOPIC, "key1", "value1"))
-                send(ProducerRecord(TEST_TOPIC, "key2", "value2"))
+                send(ProducerRecord(TEST_TOPIC_1, "key1", "value1"))
+                send(ProducerRecord(TEST_TOPIC_1, "key2", "value2"))
+                send(ProducerRecord(TEST_TOPIC_2, "key3", "value3"))
                 close()
             }
             KafkaConsumer<String, String>(clientProperties).run {
-                subscribe(listOf(TEST_TOPIC))
+                subscribe(listOf(TEST_TOPIC_1, TEST_TOPIC_2))
                 poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
             }.verify(
-                row(TEST_TOPIC, 0, 0, "key1", "value1"),
-                row(TEST_TOPIC, 0, 1, "key2", "value2")
+                row(TEST_TOPIC_1, 0, 0, "key1", "value1"),
+                row(TEST_TOPIC_1, 0, 1, "key2", "value2"),
+                row(TEST_TOPIC_2, 0, 0, "key3", "value3")
             )
         }
 
@@ -53,25 +56,33 @@ class KafkaProducerConsumerSpec : StringSpec() {
             broker = TestKafkaBroker()
             val clientProperties = clientProperties()
             val producer = KafkaProducer<String, String>(clientProperties).apply {
-                send(ProducerRecord(TEST_TOPIC, "key1", "value1")).get()
+                send(ProducerRecord(TEST_TOPIC_1, "key1", "value1")).get()
+                send(ProducerRecord(TEST_TOPIC_2, "key2", "value2")).get()
             }
             val preCommitRecords = KafkaConsumer<String, String>(clientProperties).run {
-                subscribe(listOf(TEST_TOPIC))
+                subscribe(listOf(TEST_TOPIC_1, TEST_TOPIC_2))
                 poll(Duration.ofSeconds(1)).also {
                     commitSync()
                     close()
                 }
             }
             producer.apply {
-                send(ProducerRecord(TEST_TOPIC, "key2", "value2"))
+                send(ProducerRecord(TEST_TOPIC_1, "key3", "value3"))
+                send(ProducerRecord(TEST_TOPIC_2, "key4", "value4"))
                 close()
             }
             val afterCommitRecords = KafkaConsumer<String, String>(clientProperties).run {
-                subscribe(listOf(TEST_TOPIC))
+                subscribe(listOf(TEST_TOPIC_1, TEST_TOPIC_2))
                 poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
             }
-            preCommitRecords.verify(row(TEST_TOPIC, 0, 0, "key1", "value1"))
-            afterCommitRecords.verify(row(TEST_TOPIC, 0, 1, "key2", "value2"))
+            preCommitRecords.verify(
+                row(TEST_TOPIC_1, 0, 0, "key1", "value1"),
+                row(TEST_TOPIC_2, 0, 0, "key2", "value2")
+            )
+            afterCommitRecords.verify(
+                row(TEST_TOPIC_1, 0, 1, "key3", "value3"),
+                row(TEST_TOPIC_2, 0, 1, "key4", "value4")
+            )
         }
 
         "Should produce and consume with many producers and consumers" {
@@ -79,11 +90,11 @@ class KafkaProducerConsumerSpec : StringSpec() {
             val consumersCount = 4
             val messagesCount = 1000
             val brokerConfig = BrokerConfig.builder()
-                .topic(TopicConfig.create(TEST_TOPIC, 10))
+                .topic(TopicConfig.create(TEST_TOPIC_1, 10))
                 .build()
             val clientProperties = clientProperties(brokerConfig)
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
-            val producerRecords = LinkedBlockingDeque(testMessages.map { ProducerRecord(TEST_TOPIC, it.first, it.second) })
+            val producerRecords = LinkedBlockingDeque(testMessages.map { ProducerRecord(TEST_TOPIC_1, it.first, it.second) })
             broker = TestKafkaBroker(brokerConfig)
             repeat(producersCount) {
                 launch(dispatcher) {
@@ -96,15 +107,17 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 }
             }
             val consumedRecords = LinkedBlockingDeque<ConsumerRecord<String, String>>()
+            var commitErrors = 0
             repeat(consumersCount) {
                 launch(dispatcher) {
                     val consumer = KafkaConsumer<String, String>(clientProperties)
-                    consumer.subscribe(listOf(TEST_TOPIC))
-                    while (consumedRecords.size != testMessages.size) {
+                    consumer.subscribe(listOf(TEST_TOPIC_1))
+                    while (consumedRecords.size < testMessages.size) {
                         val records = consumer.poll(Duration.ofMillis(250))
                         try {
                             consumer.commitSync()
                         } catch (ex: RebalanceInProgressException) {
+                            commitErrors++
                             continue
                         }
                         records.forEach(consumedRecords::addLast)
@@ -112,9 +125,11 @@ class KafkaProducerConsumerSpec : StringSpec() {
                     consumer.close(Duration.ZERO)
                 }
             }
-            await { consumedRecords.size == testMessages.size }
+            await { consumedRecords.size >= testMessages.size }
+            consumedRecords.size shouldBe  testMessages.size
             val consumedData = consumedRecords.map { it.key()!! to it.value()!! }
             consumedData.toSet() shouldBe testMessages.toSet()
+            println(commitErrors)
         }
     }
 
@@ -126,6 +141,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
 
     override fun afterSpec(spec: Spec) {
         dispatcher.close()
+        executor.shutdownNow()
     }
 
     private fun clientProperties(
@@ -153,20 +169,20 @@ class KafkaProducerConsumerSpec : StringSpec() {
 
     private fun ConsumerRecords<*, *>.verify(vararg records: Row5<String, Int, Int, String, String>) {
         count() shouldBe records.size
-        forEachIndexed { index, record ->
-            val expected = records[index]
-            record.apply {
-                topic() shouldBe expected.a
-                partition() shouldBe expected.b
-                offset() shouldBe expected.c
-                key() shouldBe expected.d
-                value() shouldBe expected.e
-            }
+        records.forEach { expected ->
+            any {
+                it.topic() == expected.a
+                    && it.partition() == expected.b
+                    && it.offset() == expected.c.toLong()
+                    && it.key() == expected.d
+                    && it.value() == expected.e
+            } shouldBe true
         }
     }
 
     companion object {
-        private const val TEST_TOPIC = "test-topic"
+        private const val TEST_TOPIC_1 = "test-topic-1"
+        private const val TEST_TOPIC_2 = "test-topic-2"
         private const val TEST_CONSUMER_GROUP = "test-consumer-group"
     }
 }

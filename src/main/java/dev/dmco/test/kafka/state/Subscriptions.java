@@ -9,7 +9,11 @@ public class Subscriptions {
 
     private final Map<String, Subscription> subscriptions = new HashMap<>();
 
-    public Subscription getOrCreate(String topicName) {
+    public void createIfAbsent(String topicName) {
+        subscriptions.computeIfAbsent(topicName, it -> new Subscription());
+    }
+
+    public Subscription get(String topicName) {
         return subscriptions.computeIfAbsent(topicName, key -> new Subscription());
     }
 

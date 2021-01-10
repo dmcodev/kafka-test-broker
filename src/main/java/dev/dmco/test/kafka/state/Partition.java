@@ -49,11 +49,10 @@ public class Partition {
         long offset = startOffset;
         int resultSize = 0;
         do {
-            Record record = records.get(offset);
+            Record record = records.get(offset++);
             result.add(record);
             resultSize += record.key().length;
             resultSize += record.value().length;
-            offset++;
         } while (resultSize < maxFetchSizeInBytes && records.containsKey(offset));
         return result;
     }
