@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.state;
 
+import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 public class ConsumerGroup {
+
+    private static final Logger LOG = Logger.create(ConsumerGroup.class);
 
     private final Map<String, Member> members = new HashMap<>();
     private final Map<Partition, Long> offsets = new HashMap<>();
@@ -79,8 +82,9 @@ public class ConsumerGroup {
     }
 
     public void assignPartitions(Map<String, List<Partition>> assignedPartitions) {
-        assignedPartitions.forEach(this::assignPartitions);
+        LOG.info("Partitions assignment: {}", assignedPartitions);
         desynchronizeMembers();
+        assignedPartitions.forEach(this::assignPartitions);
     }
 
     public List<Member> getMembers() {

@@ -21,10 +21,14 @@ public class Subscriptions {
         return subscriptions.keySet();
     }
 
-    public Collection<Partition> assignedPartitions() {
+    public Collection<Partition> partitions() {
         return subscriptions.values().stream()
             .map(Subscription::getPartitions)
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
+    }
+
+    public void clear() {
+        subscriptions.clear();
     }
 }

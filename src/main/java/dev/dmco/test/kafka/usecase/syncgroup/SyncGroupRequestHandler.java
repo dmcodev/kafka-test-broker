@@ -1,6 +1,5 @@
 package dev.dmco.test.kafka.usecase.syncgroup;
 
-import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.consumer.Assignment;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
@@ -17,17 +16,12 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
     @Override
     public SyncGroupResponse handle(SyncGroupRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        ErrorCode memberError = group.validateMember(request.memberId());
-        if (memberError != ErrorCode.NO_ERROR) {
-            return SyncGroupResponse.builder().errorCode(memberError).build();
-        }
         Map<String, List<Partition>> partitionAssignments = extractPartitionAssignments(request, state);
         if (!partitionAssignments.isEmpty()) {
             group.assignPartitions(partitionAssignments);
         }
         Collection<Partition> memberPartitions = group.getMember(request.memberId())
-            .synchronize()
-            .assignedPartitions();
+            .synchronize();
         return SyncGroupResponse.builder()
             .assignment(createResponseAssignment(memberPartitions))
             .build();

@@ -10,7 +10,7 @@ class Slf4jLogger implements Logger {
         Class<?> slf4jLoggerClass = null;
         try {
             slf4jLoggerClass = Class.forName("org.slf4j.Logger");
-        } catch (Exception ex) {}
+        } catch (ClassNotFoundException ex) {}
         SLF4J_AVAILABLE = slf4jLoggerClass != null;
     }
 
@@ -18,5 +18,10 @@ class Slf4jLogger implements Logger {
 
     Slf4jLogger(String name) {
         logger = LoggerFactory.getLogger(name);
+    }
+
+    @Override
+    public void info(String format, Object... arguments) {
+        logger.info(format, arguments);
     }
 }

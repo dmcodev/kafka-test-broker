@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -17,18 +18,21 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
+@ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Partition {
 
     private final Map<Long, Record> records = new HashMap<>();
 
     @Getter
-    @EqualsAndHashCode.Include
-    private final Topic topic;
-
-    @Getter
+    @ToString.Include
     @EqualsAndHashCode.Include
     private final int id;
+
+    @Getter
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    private final Topic topic;
 
     @Getter
     private long head = 0;

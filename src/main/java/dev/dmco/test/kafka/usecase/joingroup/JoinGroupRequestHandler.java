@@ -31,7 +31,6 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
         group.setProtocol(selectedProtocol);
         Subscription subscription = extractSubscription(request, selectedProtocol);
         member.setProtocolNames(memberProtocols)
-            .synchronize()
             .subscribe(subscription.topics());
         JoinGroupResponseBuilder responseBuilder = createResponseBuilder(member.id(), group);
         if (group.isLeader(member)) {

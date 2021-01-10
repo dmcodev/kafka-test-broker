@@ -48,10 +48,6 @@ public class Member {
         return subscriptions.topicNames();
     }
 
-    public Collection<Partition> assignedPartitions() {
-        return subscriptions.assignedPartitions();
-    }
-
     public Collection<String> protocolNames() {
         return protocolSet.protocolNames();
     }
@@ -63,11 +59,12 @@ public class Member {
 
     public void desynchronize() {
         isSynchronized = false;
+        subscriptions.clear();
     }
 
-    public Member synchronize() {
+    public Collection<Partition> synchronize() {
         isSynchronized = true;
-        return this;
+        return subscriptions.partitions();
     }
 
     public ErrorCode validate() {

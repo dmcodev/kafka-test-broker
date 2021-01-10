@@ -2,6 +2,8 @@ package dev.dmco.test.kafka.logging;
 
 public interface Logger {
 
+    void info(String format, Object... arguments);
+
     static Logger create(Class<?> type) {
         return create(type.getName());
     }
