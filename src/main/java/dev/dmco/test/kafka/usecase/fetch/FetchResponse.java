@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.fetch;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.Record;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
@@ -44,7 +45,7 @@ public class FetchResponse implements ResponseMessage {
 
         int partitionId;
 
-        short errorCode;
+        ErrorCode errorCode;
 
         long headOffset;
 

@@ -49,7 +49,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             )
         }
 
-        "Should commit and resume consuming from last commited offset" {
+        "Should commit and resume consuming from last committed offset" {
             broker = TestKafkaBroker()
             val clientProperties = clientProperties()
             val producer = KafkaProducer<String, String>(clientProperties).apply {

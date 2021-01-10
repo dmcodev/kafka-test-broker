@@ -6,9 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,23 +31,26 @@ public class ConsumerGroup {
 
     private int nextMemberId;
 
-    public String findMatchingProtocol(Set<String> candidateProtocols) {
-        Set<String> candidates = new HashSet<>(candidateProtocols);
-        members.values().stream().map(Member::protocols).forEach(candidates::retainAll);
-        return candidates.stream().findFirst().orElse(null);
+    public String findMatchingProtocolName(Set<String> protocolNames) {
+        return members.values().stream()
+            .map(Member::protocolNames)
+            .map(ProtocolSet::new)
+            .reduce(ProtocolSet::merge)
+            .orElseGet(() -> new ProtocolSet(protocolNames))
+            .findMatchingProtocolName(new ProtocolSet(protocolNames));
     }
 
-    public boolean hasMember(String memberId) {
+    public boolean containsMember(String memberId) {
         return members.containsKey(memberId);
     }
 
     public Member joinMember() {
-        Member member = new Member(generateMemberId());
+        Member member = new Member(nextMemberId++);
         if (noLeaderSelected()) {
             leaderId = member.id();
         }
         members.put(member.id(), member);
-        nextGeneration();
+        advanceGeneration();
         return member;
     }
 
@@ -62,8 +63,15 @@ public class ConsumerGroup {
             if (memberId.equals(leaderId)) {
                 leaderId = null;
             }
-            nextGeneration();
+            advanceGeneration();
         }
+    }
+
+    public ErrorCode validateMember(String memberId) {
+        if (!members.containsKey(memberId)) {
+            return ErrorCode.UNKNOWN_MEMBER_ID;
+        }
+        return members.get(memberId).validate();
     }
 
     public boolean isLeader(Member member) {
@@ -71,32 +79,12 @@ public class ConsumerGroup {
     }
 
     public void assignPartitions(Map<String, List<Partition>> assignedPartitions) {
-        assignedPartitions.forEach(this::assignMemberPartitions);
-        invalidateMembers();
-    }
-
-    public List<Partition> getAssignedPartitions(String memberId) {
-        return Optional.ofNullable(members.get(memberId))
-            .map(Member::assignedPartitions)
-            .orElseGet(Collections::emptyList);
+        assignedPartitions.forEach(this::assignPartitions);
+        desynchronizeMembers();
     }
 
     public List<Member> getMembers() {
         return new ArrayList<>(members.values());
-    }
-
-    public ErrorCode checkMemberSynchronization(String memberId) {
-        if (!members.containsKey(memberId)) {
-            return ErrorCode.UNKNOWN_MEMBER_ID;
-        }
-        if (!members.get(memberId).isSynchronized()) {
-            return ErrorCode.REBALANCE_IN_PROGRESS;
-        }
-        return ErrorCode.NO_ERROR;
-    }
-
-    public void markSynchronized(String memberId) {
-        members.get(memberId).synchronize();
     }
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
@@ -118,25 +106,21 @@ public class ConsumerGroup {
         protocol = selectedProtocol;
     }
 
-    private void assignMemberPartitions(String memberId, List<Partition> partitions) {
+    private void assignPartitions(String memberId, List<Partition> partitions) {
         Optional.ofNullable(members.get(memberId))
             .ifPresent(member -> member.assignPartitions(partitions));
     }
 
-    private void nextGeneration() {
+    private void advanceGeneration() {
         generationId++;
-        invalidateMembers();
+        desynchronizeMembers();
     }
 
-    private void invalidateMembers() {
-        members.values().forEach(Member::invalidate);
+    private void desynchronizeMembers() {
+        members.values().forEach(Member::desynchronize);
     }
 
     private boolean noLeaderSelected() {
         return leaderId == null;
-    }
-
-    private String generateMemberId() {
-        return Member.NAME_PREFIX + "-" + (nextMemberId++);
     }
 }

@@ -7,6 +7,7 @@ import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
     @Override
     public SyncGroupResponse handle(SyncGroupRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        ErrorCode memberError = group.checkMemberSynchronization(request.memberId());
+        ErrorCode memberError = group.validateMember(request.memberId());
         if (memberError != ErrorCode.NO_ERROR) {
             return SyncGroupResponse.builder().errorCode(memberError).build();
         }
@@ -24,10 +25,11 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
         if (!partitionAssignments.isEmpty()) {
             group.assignPartitions(partitionAssignments);
         }
-        group.markSynchronized(request.memberId());
-        List<Partition> assignedPartitions = group.getAssignedPartitions(request.memberId());
+        Collection<Partition> memberPartitions = group.getMember(request.memberId())
+            .synchronize()
+            .assignedPartitions();
         return SyncGroupResponse.builder()
-            .assignment(createResponseAssignment(assignedPartitions))
+            .assignment(createResponseAssignment(memberPartitions))
             .build();
     }
 
@@ -46,7 +48,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
             );
     }
 
-    private Assignment createResponseAssignment(List<Partition> memberAssignedPartitions) {
+    private Assignment createResponseAssignment(Collection<Partition> memberAssignedPartitions) {
         Map<String, List<Partition>> partitionsGrouped = memberAssignedPartitions.stream()
             .collect(Collectors.groupingBy(partition -> partition.topic().name()));
         return Assignment.builder()

@@ -21,16 +21,16 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
     public JoinGroupResponse handle(JoinGroupRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
         Set<String> memberProtocols = extractProtocolNames(request);
-        String selectedProtocol = group.findMatchingProtocol(memberProtocols);
+        String selectedProtocol = group.findMatchingProtocolName(memberProtocols);
         if (selectedProtocol == null) {
             return PROTOCOL_MISMATCH_RESPONSE;
         }
-        Member member = group.hasMember(request.memberId())
+        Member member = group.containsMember(request.memberId())
             ? group.getMember(request.memberId())
             : group.joinMember();
         group.setProtocol(selectedProtocol);
         Subscription subscription = extractSubscription(request, selectedProtocol);
-        member.setProtocols(memberProtocols)
+        member.setProtocolNames(memberProtocols)
             .synchronize()
             .subscribe(subscription.topics());
         JoinGroupResponseBuilder responseBuilder = createResponseBuilder(member.id(), group);
@@ -67,7 +67,7 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
             .subscription(
                 Subscription.builder()
                     .version(protocolVersion)
-                    .topics(member.subscribedTopics())
+                    .topics(member.subscribedTopicNames())
                     .build()
             )
             .build();

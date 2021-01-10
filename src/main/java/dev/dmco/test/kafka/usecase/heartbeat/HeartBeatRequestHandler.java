@@ -10,7 +10,7 @@ public class HeartBeatRequestHandler implements RequestHandler<HeartBeatRequest,
     @Override
     public HeartBeatResponse handle(HeartBeatRequest request, BrokerState state) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        ErrorCode memberError = group.checkMemberSynchronization(request.memberId());
+        ErrorCode memberError = group.validateMember(request.memberId());
         return HeartBeatResponse.builder()
             .errorCode(memberError)
             .build();

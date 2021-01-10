@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Singular;
 import lombok.experimental.Accessors;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +18,7 @@ public class Subscription implements ConsumerMessage {
 
     short version;
 
-    List<String> topics;
+    Collection<String> topics;
 
     Optional<byte[]> userData;
 

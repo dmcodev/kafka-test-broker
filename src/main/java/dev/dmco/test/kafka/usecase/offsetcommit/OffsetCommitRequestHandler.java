@@ -14,7 +14,7 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
     @Override
     public OffsetCommitResponse handle(OffsetCommitRequest request, BrokerState state) {
         ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
-        ErrorCode memberError = consumerGroup.checkMemberSynchronization(request.memberId());
+        ErrorCode memberError = consumerGroup.validateMember(request.memberId());
         return OffsetCommitResponse.builder()
             .topics(
                 request.topics().stream()

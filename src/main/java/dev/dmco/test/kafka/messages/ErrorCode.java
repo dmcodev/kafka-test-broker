@@ -21,7 +21,8 @@ public enum ErrorCode {
     REBALANCE_IN_PROGRESS(27),
     UNSUPPORTED_VERSION(35),
     INVALID_REQUEST(42),
-    UNSUPPORTED_FOR_MESSAGE_FORMAT(43);
+    UNSUPPORTED_FOR_MESSAGE_FORMAT(43),
+    OFFSET_NOT_AVAILABLE(78);
 
     private static final Map<Short, ErrorCode> MAPPING = Arrays.stream(ErrorCode.values())
         .collect(Collectors.toMap(ErrorCode::value, Function.identity()));

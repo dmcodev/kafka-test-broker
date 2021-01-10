@@ -16,6 +16,7 @@ def kotestVersion = '4.3.1'
 def kafkaClientsVersion = '2.6.0'
 def slf4jVersion = '1.7.30'
 def jacksonVersion = '2.11.3'
+def springTestKafkaVersion = '2.6.4'
 
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
@@ -25,6 +26,8 @@ dependencies {
     testImplementation "org.apache.kafka:kafka-clients:$kafkaClientsVersion"
     testImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
     testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
+    testImplementation "org.springframework.kafka:spring-kafka-test:$springTestKafkaVersion"
+
 }
 
 compileKotlin {

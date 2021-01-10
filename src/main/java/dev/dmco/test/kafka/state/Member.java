@@ -1,19 +1,15 @@
 package dev.dmco.test.kafka.state;
 
+import dev.dmco.test.kafka.messages.ErrorCode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
@@ -23,52 +19,58 @@ public class Member {
 
     static final String NAME_PREFIX = "member";
 
-    private final Set<String> protocols = new HashSet<>();
-    private final Map<String, Set<Partition>> assignedPartitions = new HashMap<>();
+    private final ProtocolSet protocolSet = new ProtocolSet();
+    private final Subscriptions subscriptions = new Subscriptions();
 
     @Getter
     @ToString.Include
     @EqualsAndHashCode.Include
     private final String id;
 
-    @Getter
     private boolean isSynchronized;
 
+    public Member(int sequenceNumber) {
+        id = NAME_PREFIX + "-" + sequenceNumber;
+    }
+
     public void subscribe(Collection<String> topicNames) {
-        topicNames.forEach(topic -> assignedPartitions.putIfAbsent(topic, new HashSet<>()));
+        topicNames.forEach(subscriptions::getOrCreate);
     }
 
     public void assignPartitions(List<Partition> partitions) {
-        assignedPartitions.values().forEach(Set::clear);
-        partitions.forEach(partition -> assignedPartitions.get(partition.topic().name()).add(partition));
+        partitions.forEach(partition -> subscriptions.getOrCreate(partition.topic().name()).addPartition(partition));
     }
 
-    public List<String> subscribedTopics() {
-        return new ArrayList<>(assignedPartitions.keySet());
+    public Collection<String> subscribedTopicNames() {
+        return subscriptions.topicNames();
     }
 
-    public List<Partition> assignedPartitions() {
-        return assignedPartitions.values().stream()
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
+    public Collection<Partition> assignedPartitions() {
+        return subscriptions.assignedPartitions();
     }
 
-    public Set<String> protocols() {
-        return new HashSet<>(protocols);
+    public Collection<String> protocolNames() {
+        return protocolSet.protocolNames();
     }
 
-    public Member setProtocols(Set<String> newProtocols) {
-        protocols.clear();
-        protocols.addAll(newProtocols);
+    public Member setProtocolNames(Set<String> protocolNames) {
+        protocolSet.setProtocolNames(protocolNames);
         return this;
     }
 
-    public void invalidate() {
+    public void desynchronize() {
         isSynchronized = false;
     }
 
     public Member synchronize() {
         isSynchronized = true;
         return this;
+    }
+
+    public ErrorCode validate() {
+        if (!isSynchronized) {
+            return ErrorCode.REBALANCE_IN_PROGRESS;
+        }
+        return ErrorCode.NO_ERROR;
     }
 }
