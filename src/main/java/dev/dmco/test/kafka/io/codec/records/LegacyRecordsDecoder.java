@@ -1,11 +1,12 @@
 package dev.dmco.test.kafka.io.codec.records;
 
-import dev.dmco.test.kafka.io.codec.bytes.BytesCodec;
 import dev.dmco.test.kafka.messages.Record;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeBytes;
 
 class LegacyRecordsDecoder {
 
@@ -32,8 +33,8 @@ class LegacyRecordsDecoder {
             }
             Record record = Record.builder()
                 .offset(offset)
-                .key(BytesCodec.decode(buffer))
-                .value(BytesCodec.decode(buffer))
+                .key(decodeBytes(buffer))
+                .value(decodeBytes(buffer))
                 .build();
             records.add(record);
         }
@@ -46,7 +47,7 @@ class LegacyRecordsDecoder {
             buffer.getLong();
         }
         buffer.getInt();
-        byte[] compressedRecordsBytes = BytesCodec.decode(buffer);
+        byte[] compressedRecordsBytes = decodeBytes(buffer);
         ByteBuffer decompressedRecords = ByteBuffer.wrap(compression.decompress(compressedRecordsBytes));
         return decodePlain(decompressedRecords, version, decompressedRecords.remaining());
     }

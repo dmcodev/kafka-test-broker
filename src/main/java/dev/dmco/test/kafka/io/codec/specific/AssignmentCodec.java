@@ -1,4 +1,4 @@
-package dev.dmco.test.kafka.io.codec.consumer;
+package dev.dmco.test.kafka.io.codec.specific;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;

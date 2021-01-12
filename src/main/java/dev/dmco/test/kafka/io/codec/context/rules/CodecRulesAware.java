@@ -13,7 +13,7 @@ public interface CodecRulesAware {
             .reduce(
                 initialContext,
                 (context, codecRule) -> codecRule.applies(context) ? codecRule.apply(context) : context,
-                CodecContext::merge
+                (first, second) -> { throw new IllegalStateException("Merging two codec contexts not supported"); }
             );
     }
 }

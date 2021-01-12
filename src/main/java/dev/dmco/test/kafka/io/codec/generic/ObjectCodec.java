@@ -3,7 +3,6 @@ package dev.dmco.test.kafka.io.codec.generic;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRule;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRulesAware;
 import dev.dmco.test.kafka.io.codec.context.rules.binding.CodecRuleBindings;
@@ -137,7 +136,7 @@ public class ObjectCodec implements Codec {
         }
 
         private boolean isIncluded(CodecContext context) {
-            return !context.getOrDefault(ContextProperty.VERSION_MISMATCH, false);
+            return !context.skipProperty();
         }
 
         private Object produceEmptyValue() {

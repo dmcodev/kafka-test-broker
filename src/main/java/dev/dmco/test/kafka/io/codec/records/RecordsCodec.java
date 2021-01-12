@@ -3,7 +3,6 @@ package dev.dmco.test.kafka.io.codec.records;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.registry.Type;
 import dev.dmco.test.kafka.messages.Record;
 
@@ -39,7 +38,7 @@ public class RecordsCodec implements Codec {
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Collection<Record> records = (Collection<Record>) value;
-        int version = context.get(ContextProperty.VERSION);
+        int version = context.version();
         if (version == 0 || version == 1) {
             LegacyRecordsEncoder.encode(records, buffer, version);
         } else {

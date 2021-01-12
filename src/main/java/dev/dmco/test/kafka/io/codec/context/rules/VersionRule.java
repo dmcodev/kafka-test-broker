@@ -4,9 +4,6 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.RequiredArgsConstructor;
 
-import static dev.dmco.test.kafka.io.codec.context.ContextProperty.VERSION;
-import static dev.dmco.test.kafka.io.codec.context.ContextProperty.VERSION_MISMATCH;
-
 @RequiredArgsConstructor
 public class VersionRule implements CodecRule {
 
@@ -18,11 +15,11 @@ public class VersionRule implements CodecRule {
 
     @Override
     public boolean applies(CodecContext context) {
-        return context.get(VERSION) < min;
+        return context.version() < min;
     }
 
     @Override
     public CodecContext apply(CodecContext context) {
-        return context.set(VERSION_MISMATCH, true);
+        return context.withSkipProperty(true);
     }
 }

@@ -9,8 +9,8 @@ dev.dmco.test.kafka.io.codec.strings.StringCodec
 dev.dmco.test.kafka.io.codec.strings.NullableStringCodec
 dev.dmco.test.kafka.io.codec.generic.CollectionCodec
 dev.dmco.test.kafka.io.codec.generic.ObjectCodec
-dev.dmco.test.kafka.io.codec.TagsCodec
+dev.dmco.test.kafka.io.codec.specific.TagsCodec
 dev.dmco.test.kafka.io.codec.records.RecordsCodec
-dev.dmco.test.kafka.io.codec.consumer.SubscriptionCodec
-dev.dmco.test.kafka.io.codec.consumer.AssignmentCodec
-dev.dmco.test.kafka.io.codec.ErrorCodeCodec
+dev.dmco.test.kafka.io.codec.specific.SubscriptionCodec
+dev.dmco.test.kafka.io.codec.specific.AssignmentCodec
+dev.dmco.test.kafka.io.codec.specific.ErrorCodeCodec

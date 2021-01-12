@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka.io;
 
 import dev.dmco.test.kafka.config.BrokerConfig;
+import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.state.BrokerState;
@@ -21,8 +22,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class IOEventLoop implements AutoCloseable {
+public class EventLoop implements AutoCloseable {
 
+    private static final Logger LOG = Logger.create(EventLoop.class);
     private static final int SELECT_TIMEOUT = 1000;
 
     private final Selector selector;
@@ -30,14 +32,15 @@ public class IOEventLoop implements AutoCloseable {
     private final ExecutorService executorService;
 
     private final BrokerState state;
+    private final RequestDecoder decoder;
 
     private final AtomicBoolean stopped = new AtomicBoolean();
-    private final IOEncoder encoder = new IOEncoder();
-    private final IODecoder decoder = new IODecoder();
+    private final ResponseEncoder encoder = new ResponseEncoder();
 
     @SneakyThrows
-    public IOEventLoop(BrokerState state) {
+    public EventLoop(BrokerState state) {
         this.state = state;
+        decoder = new RequestDecoder(state.requestHandlers());
         try {
             selector = Selector.open();
             serverChannel = openServerChannel();
@@ -49,26 +52,23 @@ public class IOEventLoop implements AutoCloseable {
     }
 
     private void eventLoop() {
-        while (!stopped.get()) {
-            int numberOfSelectedKeys;
-            try {
-                numberOfSelectedKeys = selector.select(SELECT_TIMEOUT);
-            } catch (Exception error) {
-                System.err.println("Selector error");
-                error.printStackTrace();
-                close();
-                break;
-            }
-            if (numberOfSelectedKeys > 0 && !stopped.get()) {
-                Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
-                while (selectedKeys.hasNext()) {
-                    SelectionKey selectionKey = selectedKeys.next();
-                    if (selectionKey.isValid()) {
-                        handleSelectionKey(selectionKey);
+        try {
+            while (!stopped.get()) {
+                int numberOfSelectedKeys = selector.select(SELECT_TIMEOUT);
+                if (numberOfSelectedKeys > 0 && !stopped.get()) {
+                    Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
+                    while (selectedKeys.hasNext()) {
+                        SelectionKey selectionKey = selectedKeys.next();
+                        if (selectionKey.isValid()) {
+                            handleSelectionKey(selectionKey);
+                        }
+                        selectedKeys.remove();
                     }
-                    selectedKeys.remove();
                 }
             }
+        } catch (Exception error) {
+            LOG.error("Uncaught error, closing broker", error);
+            close();
         }
     }
 
@@ -86,8 +86,7 @@ public class IOEventLoop implements AutoCloseable {
         } catch (ClosedChannelException closedChannelException) {
             closeSelectionKey(selectionKey);
         } catch (Exception error) {
-            System.err.println("Connection error");
-            error.printStackTrace();
+            LOG.error("Uncaught error, closing connection", error);
             closeSelectionKey(selectionKey);
         }
     }
@@ -95,16 +94,16 @@ public class IOEventLoop implements AutoCloseable {
     private void onClientConnectionInitializing() throws IOException {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
-        IOSession ioSession = new IOSession(clientChannel);
-        clientChannel.register(selector, SelectionKey.OP_READ, ioSession);
+        Connection connection = new Connection(clientChannel);
+        clientChannel.register(selector, SelectionKey.OP_READ, connection);
     }
 
     private void onClientConnectionReadable(SelectionKey selectionKey) throws IOException {
-        IOSession ioSession = (IOSession) selectionKey.attachment();
-        ioSession.readRequests()
+        Connection connection = (Connection) selectionKey.attachment();
+        connection.readRequests()
             .stream()
             .map(decoder::decode)
-            .forEach(request -> handleRequest(request, ioSession, selectionKey));
+            .forEach(request -> handleRequest(request, connection, selectionKey));
     }
 
     private void onClientConnectionWritable(SelectionKey selectionKey) {
@@ -112,17 +111,18 @@ public class IOEventLoop implements AutoCloseable {
         writeResponses(selectionKey);
     }
 
-    private void handleRequest(RequestMessage request, IOSession ioSession, SelectionKey selectionKey) {
-        ResponseMessage response = state.selectRequestHandler(request)
+    private void handleRequest(RequestMessage request, Connection connection, SelectionKey selectionKey) {
+        ResponseMessage response = state.requestHandlers()
+            .select(request)
             .handle(request, state);
         ByteBuffer responseBuffer = encoder.encode(response, request.header());
-        ioSession.enqueueResponse(responseBuffer);
+        connection.enqueueResponse(responseBuffer);
         writeResponses(selectionKey);
     }
 
     private void writeResponses(SelectionKey selectionKey) {
-        IOSession ioSession = (IOSession) selectionKey.attachment();
-        if (!ioSession.writeResponses()) {
+        Connection connection = (Connection) selectionKey.attachment();
+        if (!connection.writeResponses()) {
             selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
         }
     }
@@ -159,8 +159,7 @@ public class IOEventLoop implements AutoCloseable {
                     .forEach(this::closeSelectionKey);
                 selector.close();
             } catch (Exception error) {
-                System.err.println("Error while closing selector");
-                error.printStackTrace();
+                LOG.warn("Error while closing selector", error);
             }
         }
     }
@@ -174,8 +173,7 @@ public class IOEventLoop implements AutoCloseable {
         try {
             closingChannel.close();
         } catch (Exception error) {
-            System.err.println("Error while closing channel");
-            error.printStackTrace();
+            LOG.warn("Error while closing socket channel", error);
         }
     }
 
@@ -183,7 +181,9 @@ public class IOEventLoop implements AutoCloseable {
     private void stopExecutorService() {
         if (executorService != null) {
             executorService.shutdown();
-            executorService.awaitTermination(1, TimeUnit.MINUTES);
+            if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                LOG.warn("Timeout while waiting for closing of broker event loop executor");
+            }
         }
     }
 }

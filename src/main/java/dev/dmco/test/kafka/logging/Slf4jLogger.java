@@ -24,4 +24,19 @@ class Slf4jLogger implements Logger {
     public void info(String format, Object... arguments) {
         logger.info(format, arguments);
     }
+
+    @Override
+    public void warn(String message) {
+        logger.warn(message);
+    }
+
+    @Override
+    public void warn(String message, Throwable throwable) {
+        logger.warn(message, throwable);
+    }
+
+    @Override
+    public void error(String message, Throwable throwable) {
+        logger.error(message, throwable);
+    }
 }

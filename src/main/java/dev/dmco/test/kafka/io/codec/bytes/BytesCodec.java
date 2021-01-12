@@ -8,6 +8,9 @@ import dev.dmco.test.kafka.io.codec.registry.Type;
 import java.nio.ByteBuffer;
 import java.util.stream.Stream;
 
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeBytes;
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeBytes;
+
 public class BytesCodec implements Codec {
 
     @Override
@@ -17,29 +20,16 @@ public class BytesCodec implements Codec {
 
     @Override
     public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
-       return decode(buffer);
+       return decodeBytes(buffer);
     }
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        encode(value, buffer);
+        encodeBytes((byte[]) value, buffer);
     }
 
     @Override
     public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
-        encode(new byte[0], buffer);
-    }
-
-    public static byte[] decode(ByteBuffer buffer) {
-        int length = buffer.getInt();
-        byte[] bytes = new byte[length];
-        buffer.get(bytes);
-        return bytes;
-    }
-
-    public static void encode(Object value, ResponseBuffer buffer) {
-        byte[] bytes = (byte[]) value;
-        buffer.putInt(bytes.length)
-            .putBytes(bytes);
+        encodeBytes(new byte[0], buffer);
     }
 }

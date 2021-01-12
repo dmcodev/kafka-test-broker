@@ -1,12 +1,13 @@
 package dev.dmco.test.kafka.io.codec.records;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
-import dev.dmco.test.kafka.io.codec.bytes.BytesCodec;
 import dev.dmco.test.kafka.messages.Record;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.zip.CRC32;
+
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeBytes;
 
 class LegacyRecordsEncoder {
 
@@ -31,8 +32,8 @@ class LegacyRecordsEncoder {
         if (version == 1) {
             buffer.putLong(System.currentTimeMillis());
         }
-        BytesCodec.encode(record.key(), buffer);
-        BytesCodec.encode(record.value(), buffer);
+        encodeBytes(record.key(), buffer);
+        encodeBytes(record.value(), buffer);
         int recordEndOffset = buffer.position();
         byte[] checksumInput = buffer.read(checksumInputStartOffset, recordEndOffset - checksumInputStartOffset);
         int checksum = computeChecksum(checksumInput);

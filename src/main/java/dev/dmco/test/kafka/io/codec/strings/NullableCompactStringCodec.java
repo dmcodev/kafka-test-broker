@@ -3,12 +3,16 @@ package dev.dmco.test.kafka.io.codec.strings;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.primitives.VarUInt;
 import dev.dmco.test.kafka.io.codec.registry.Type;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeCompactString;
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeVarUInt;
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeCompactString;
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeVarUInt;
 
 // TODO: compaction
 public class NullableCompactStringCodec implements Codec {
@@ -21,10 +25,10 @@ public class NullableCompactStringCodec implements Codec {
     @Override
     public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
         buffer.mark();
-        int length = VarUInt.decode(buffer);
+        int length = decodeVarUInt(buffer);
         if (length > 0) {
             buffer.reset();
-            return Optional.of(CompactStringCodec.decode(buffer));
+            return Optional.of(decodeCompactString(buffer));
         }
         return Optional.empty();
     }
@@ -33,9 +37,9 @@ public class NullableCompactStringCodec implements Codec {
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Optional<String> string = (Optional<String>) value;
         if (string.isPresent()) {
-            CompactStringCodec.encode(string.get(), buffer);
+            encodeCompactString(string.get(), buffer);
         } else {
-            VarUInt.encode(0, buffer);
+            encodeVarUInt(0, buffer);
         }
     }
 

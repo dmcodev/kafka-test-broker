@@ -1,5 +1,7 @@
-#### Kafka Test Broker for the JVM
+## Kafka Test Broker for the JVM
 
-This is work in progress...
+This is a work in progress...
 
-I'm just playing with the Kafka protocol here, but the final goal is to create a test broker that will support Consumer / Producer API and can be used in integration tests instead of embedded Kafka.
+This project is a result of me studying Kafka and its protocol. I wanted to write a zero-dependency mini Kafka broker in Java that would support basic consume / produce API.
+
+In the future I'd like to be able to use this broker as a replacement for embedded Kafka in integration tests that use it.

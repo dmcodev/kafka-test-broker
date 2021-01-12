@@ -1,16 +1,16 @@
-package dev.dmco.test.kafka.io.codec.primitives;
+package dev.dmco.test.kafka.io.protocol;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 
 import java.nio.ByteBuffer;
 
-public class VarUInt {
+class VarUInt {
 
     private static final int LOW_WORD_MASK = 0b01111111;
     private static final int NEXT_BYTE_PRESENT_MASK = 0b10000000;
     private static final int SHIFT_SIZE = 7;
 
-    public static int decode(ByteBuffer buffer) {
+    static int decode(ByteBuffer buffer) {
         int result = 0;
         int shift = 0;
         int word;
@@ -22,7 +22,7 @@ public class VarUInt {
         return result;
     }
 
-    public static void encode(int value, ResponseBuffer buffer) {
+    static void encode(int value, ResponseBuffer buffer) {
         while (true) {
             int word = value & LOW_WORD_MASK;
             value = value >>> SHIFT_SIZE;

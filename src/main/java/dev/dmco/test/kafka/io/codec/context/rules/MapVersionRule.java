@@ -4,8 +4,6 @@ import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import lombok.RequiredArgsConstructor;
 
-import static dev.dmco.test.kafka.io.codec.context.ContextProperty.VERSION;
-
 @RequiredArgsConstructor
 public class MapVersionRule implements CodecRule {
 
@@ -18,11 +16,11 @@ public class MapVersionRule implements CodecRule {
 
     @Override
     public boolean applies(CodecContext context) {
-        return context.get(VERSION) >= sinceVersion;
+        return context.version() >= sinceVersion;
     }
 
     @Override
     public CodecContext apply(CodecContext context) {
-        return context.set(VERSION, version);
+        return context.withVersion(version);
     }
 }

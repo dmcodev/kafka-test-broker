@@ -4,6 +4,7 @@ import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -16,9 +17,13 @@ public class RequestHandlers {
         RequestHandler.loadAll().forEach(this::register);
     }
 
-    public RequestHandler<RequestMessage, ResponseMessage> selectHandler(RequestMessage request) {
+    public RequestHandler<RequestMessage, ResponseMessage> select(RequestMessage request) {
         return Optional.ofNullable(handlers.get(request.getClass()))
             .orElseThrow(() -> onMissingHandler(request));
+    }
+
+    public Collection<Class<?>> handledRequestTypes() {
+        return handlers.keySet();
     }
 
     private RuntimeException onMissingHandler(RequestMessage request) {

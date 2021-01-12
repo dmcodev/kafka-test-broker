@@ -1,9 +1,8 @@
-package dev.dmco.test.kafka.io.codec.consumer;
+package dev.dmco.test.kafka.io.codec.specific;
 
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
-import dev.dmco.test.kafka.io.codec.context.ContextProperty;
 import dev.dmco.test.kafka.io.codec.generic.ObjectCodec;
 import dev.dmco.test.kafka.io.codec.registry.Type;
 import dev.dmco.test.kafka.messages.consumer.ConsumerMessage;
@@ -28,14 +27,14 @@ abstract class ConsumerMessageCodec implements Codec {
         buffer.mark();
         int version = buffer.getShort();
         buffer.reset();
-        CodecContext objectContext = context.set(ContextProperty.VERSION, version);
+        CodecContext objectContext = context.withVersion(version);
         return ObjectCodec.decode(buffer, type, objectContext);
     }
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         ConsumerMessage versioned = (ConsumerMessage) value;
-        CodecContext objectContext = context.set(ContextProperty.VERSION, (int) versioned.version());
+        CodecContext objectContext = context.withVersion(versioned.version());
         ByteBuffer sizeSlot = buffer.putIntSlot();
         int startPosition = buffer.position();
         ObjectCodec.encode(value, buffer, objectContext);

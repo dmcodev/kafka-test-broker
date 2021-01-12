@@ -9,6 +9,9 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeString;
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeString;
+
 public class NullableStringCodec implements Codec {
 
     @Override
@@ -22,7 +25,7 @@ public class NullableStringCodec implements Codec {
         int length = buffer.getShort();
         if (length >= 0) {
             buffer.reset();
-            return Optional.of(StringCodec.decode(buffer));
+            return Optional.of(decodeString(buffer));
         }
         return Optional.empty();
     }
@@ -31,7 +34,7 @@ public class NullableStringCodec implements Codec {
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
         Optional<String> string = (Optional<String>) value;
         if (string.isPresent()) {
-            StringCodec.encode(string.get(), buffer);
+            encodeString(string.get(), buffer);
         } else {
             buffer.putShort((short) -1);
         }
