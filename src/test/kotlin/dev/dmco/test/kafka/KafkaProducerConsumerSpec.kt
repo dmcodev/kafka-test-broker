@@ -24,6 +24,7 @@ import java.util.Properties
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.random.Random
 
 
 class KafkaProducerConsumerSpec : StringSpec() {
@@ -110,18 +111,16 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 }
             }
             val consumedRecords = LinkedBlockingDeque<ConsumerRecord<String, String>>()
-            var commitErrors = 0
             repeat(consumersCount) {
                 launch(dispatcher) {
                     startBarrier.await()
                     val consumer = KafkaConsumer<String, String>(clientProperties)
                     consumer.subscribe(listOf(TEST_TOPIC_1))
                     while (consumedRecords.size < testMessages.size) {
-                        val records = consumer.poll(Duration.ofMillis(1250))
+                        val records = consumer.poll(Duration.ofMillis(250))
                         try {
                             consumer.commitSync()
                         } catch (ex: RebalanceInProgressException) {
-                            commitErrors++
                             continue
                         }
                         records.forEach(consumedRecords::addLast)
@@ -131,12 +130,65 @@ class KafkaProducerConsumerSpec : StringSpec() {
             }
             startBarrier.await()
             await { consumedRecords.size >= testMessages.size }
-            consumedRecords.size shouldBe  testMessages.size
+            consumedRecords.size shouldBe testMessages.size
             val consumedData = consumedRecords.map { it.key()!! to it.value()!! }
             consumedData.toSet() shouldBe testMessages.toSet()
-            println(commitErrors)
+        }
+
+        "Should handle consumer randomly joining, leaving, subscribing and unsubscribing" {
+            val consumersActors = 10
+            val messagesCount = 10000
+            val brokerConfig = BrokerConfig.builder()
+                .topic(TopicConfig.create(TEST_TOPIC_1, 10))
+                .build()
+            val clientProperties = clientProperties(brokerConfig)
+            clientProperties["max.partition.fetch.bytes"] = 512
+            val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
+            val startBarrier = CyclicBarrier(consumersActors + 2)
+            broker = TestKafkaBroker(brokerConfig)
+            launch(dispatcher) {
+                startBarrier.await()
+                val producer = KafkaProducer<String, String>(clientProperties)
+                testMessages.forEach {
+                    producer.send(ProducerRecord(TEST_TOPIC_1, it.first, it.second))
+                }
+                producer.close()
+            }
+            val consumedRecords = LinkedBlockingDeque<ConsumerRecord<String, String>>()
+            repeat(consumersActors) {
+                launch(dispatcher) {
+                    startBarrier.await()
+                    var consumer = KafkaConsumer<String, String>(clientProperties)
+                    consumer.subscribe(listOf(TEST_TOPIC_1))
+                    while (consumedRecords.size < messagesCount) {
+                        if (Random.nextInt(5) == 0) {
+                            consumer.close()
+                            consumer = KafkaConsumer(clientProperties)
+                            consumer.subscribe(listOf(TEST_TOPIC_1))
+                        }
+                        if (Random.nextInt(5) == 0) {
+                            consumer.unsubscribe()
+                            consumer.subscribe(listOf(TEST_TOPIC_1))
+                        }
+                        val records = consumer.poll(Duration.ofMillis(250))
+                        try {
+                            consumer.commitSync()
+                        } catch (ex: RebalanceInProgressException) {
+                            continue
+                        }
+                        records.forEach(consumedRecords::addLast)
+                    }
+                    consumer.close()
+                }
+            }
+            startBarrier.await()
+            await { consumedRecords.size >= messagesCount }
+            consumedRecords.size shouldBe messagesCount
+            val consumedData = consumedRecords.map { it.key()!! to it.value()!! }
+            consumedData.toSet() shouldBe testMessages.toSet()
         }
     }
+
 
     override fun afterEach(testCase: TestCase, result: TestResult) {
         if (this::broker.isInitialized) {

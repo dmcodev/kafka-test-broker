@@ -54,10 +54,13 @@ public class Partition {
         int resultSize = 0;
         do {
             Record record = records.get(offset++);
+            int recordSize = record.key().length + record.value().length;
+            if (result.size() > 0 && resultSize + recordSize > maxFetchSizeInBytes) {
+                break;
+            }
             result.add(record);
-            resultSize += record.key().length;
-            resultSize += record.value().length;
-        } while (resultSize < maxFetchSizeInBytes && records.containsKey(offset));
+            resultSize += recordSize;
+        } while (records.containsKey(offset));
         return result;
     }
 

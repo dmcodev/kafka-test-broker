@@ -3,7 +3,6 @@ package dev.dmco.test.kafka.messages.consumer;
 import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Singular;
 import lombok.experimental.Accessors;
 
 import java.util.Collection;
@@ -23,10 +22,8 @@ public class Subscription implements ConsumerMessage {
     Optional<byte[]> userData;
 
     @SinceVersion(1)
-    @Singular
     List<PartitionAssignments> partitionAssignments;
 
-    @Builder
     @lombok.Value
     @AllArgsConstructor
     @Accessors(fluent = true)
