@@ -2,6 +2,8 @@ package dev.dmco.test.kafka.logging;
 
 public interface Logger {
 
+    void debug(String message);
+
     void info(String format, Object... arguments);
 
     void warn(String message);

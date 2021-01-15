@@ -20,6 +20,11 @@ public class TestKafkaBroker implements AutoCloseable {
         eventLoop = new EventLoop(state);
     }
 
+    public void reset() {
+        eventLoop.execute(state::reset);
+        eventLoop.reset();
+    }
+
     @Override
     public void close() {
         eventLoop.close();

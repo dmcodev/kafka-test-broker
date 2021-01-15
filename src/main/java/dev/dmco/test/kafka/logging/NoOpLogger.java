@@ -3,6 +3,9 @@ package dev.dmco.test.kafka.logging;
 public class NoOpLogger implements Logger {
 
     @Override
+    public void debug(String message) {}
+
+    @Override
     public void info(String format, Object... arguments) {}
 
     @Override

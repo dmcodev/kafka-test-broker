@@ -2,6 +2,8 @@ package dev.dmco.test.kafka.state;
 
 import dev.dmco.test.kafka.config.BrokerConfig;
 import dev.dmco.test.kafka.config.TopicConfig;
+import dev.dmco.test.kafka.io.EventLoop;
+import dev.dmco.test.kafka.logging.Logger;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -16,6 +18,8 @@ import java.util.Optional;
 public class BrokerState {
 
     public static final int NODE_ID = 1;
+
+    private static final Logger LOG = Logger.create(EventLoop.class);
 
     @Getter
     private final RequestHandlers requestHandlers = new RequestHandlers();
@@ -40,5 +44,11 @@ public class BrokerState {
             .findFirst()
             .orElseGet(() -> TopicConfig.createDefault(name));
         return new Topic(name, topicConfig.partitionsNumber());
+    }
+
+    public void reset() {
+        topics.clear();
+        consumerGroups.clear();
+        LOG.debug("Broker state cleared");
     }
 }

@@ -21,6 +21,11 @@ class Slf4jLogger implements Logger {
     }
 
     @Override
+    public void debug(String message) {
+        logger.debug(message);
+    }
+
+    @Override
     public void info(String format, Object... arguments) {
         logger.info(format, arguments);
     }

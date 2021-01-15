@@ -11,31 +11,42 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 public class EventLoop implements AutoCloseable {
 
     private static final Logger LOG = Logger.create(EventLoop.class);
+    private static final AtomicInteger THREAD_ID_SEQUENCE = new AtomicInteger();
     private static final int SELECT_TIMEOUT = 1000;
+
+    private final AtomicBoolean closed = new AtomicBoolean();
+    private final ResponseEncoder encoder = new ResponseEncoder();
+    private final BlockingQueue<EventLoopAction<?>> actions = new ArrayBlockingQueue<>(1, true);
 
     private final Selector selector;
     private final ServerSocketChannel serverChannel;
+    private final SelectionKey serverSelectionKey;
     private final ExecutorService executorService;
 
     private final BrokerState state;
     private final RequestDecoder decoder;
-
-    private final AtomicBoolean stopped = new AtomicBoolean();
-    private final ResponseEncoder encoder = new ResponseEncoder();
 
     @SneakyThrows
     public EventLoop(BrokerState state) {
@@ -43,36 +54,83 @@ public class EventLoop implements AutoCloseable {
         decoder = new RequestDecoder(state.requestHandlers());
         try {
             selector = Selector.open();
-            serverChannel = openServerChannel();
+            serverChannel = createServerChannel();
+            serverSelectionKey = serverChannel.register(selector, SelectionKey.OP_ACCEPT);
             executorService = startExecutor();
+            bindServerChannel();
         } catch (Exception error) {
             close();
             throw error;
         }
     }
 
+    public void execute(Runnable action) {
+        execute(Executors.callable(action));
+    }
+
+    @SneakyThrows
+    public <T> T execute(Callable<T> action) {
+        EventLoopAction<T> eventLoopAction = new EventLoopAction<>(action);
+        if (closed.get()) {
+            return eventLoopAction.close().getResult();
+        }
+        actions.put(eventLoopAction);
+        if (closed.get()) {
+            actions.remove(eventLoopAction);
+            eventLoopAction.close();
+        } else {
+            selector.wakeup();
+        }
+        return eventLoopAction.getResult();
+    }
+
+    public void reset() {
+        execute(this::closeClientConnections);
+    }
+
     private void eventLoop() {
         try {
-            while (!stopped.get()) {
-                int numberOfSelectedKeys = selector.select(SELECT_TIMEOUT);
-                if (numberOfSelectedKeys > 0 && !stopped.get()) {
-                    Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
-                    while (selectedKeys.hasNext()) {
-                        SelectionKey selectionKey = selectedKeys.next();
-                        if (selectionKey.isValid()) {
-                            handleSelectionKey(selectionKey);
-                        }
-                        selectedKeys.remove();
-                    }
-                }
+            while (!closed.get()) {
+                processActions();
+                processSelector();
             }
         } catch (Exception error) {
             LOG.error("Uncaught error, closing broker", error);
             close();
+        } finally {
+            closeActions();
         }
     }
 
-    private void handleSelectionKey(SelectionKey selectionKey) {
+    private void processActions() {
+        getScheduledActions().forEach(EventLoopAction::run);
+    }
+
+    private void closeActions() {
+        getScheduledActions().forEach(EventLoopAction::close);
+    }
+
+    private List<EventLoopAction<?>> getScheduledActions() {
+        List<EventLoopAction<?>> scheduledActions = new ArrayList<>(actions.size());
+        actions.drainTo(scheduledActions);
+        return scheduledActions;
+    }
+
+    private void processSelector() throws IOException {
+        int numberOfSelectedKeys = selector.select(SELECT_TIMEOUT);
+        if (numberOfSelectedKeys > 0 && !closed.get()) {
+            Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
+            while (selectedKeys.hasNext()) {
+                SelectionKey selectionKey = selectedKeys.next();
+                if (selectionKey.isValid()) {
+                    processSelectionKey(selectionKey);
+                }
+                selectedKeys.remove();
+            }
+        }
+    }
+
+    private void processSelectionKey(SelectionKey selectionKey) {
         try {
             if (selectionKey.isAcceptable()) {
                 onClientConnectionInitializing();
@@ -127,25 +185,27 @@ public class EventLoop implements AutoCloseable {
         }
     }
 
-    private ServerSocketChannel openServerChannel() throws IOException {
-        BrokerConfig config = state.config();
-        InetSocketAddress bindAddress = new InetSocketAddress(config.host(), config.port());
+    private ServerSocketChannel createServerChannel() throws IOException {
         ServerSocketChannel channel = ServerSocketChannel.open();
         channel.configureBlocking(false);
-        channel.register(selector, SelectionKey.OP_ACCEPT);
-        channel.bind(bindAddress);
         return channel;
     }
 
+    private void bindServerChannel() throws IOException {
+        BrokerConfig config = state.config();
+        InetSocketAddress bindAddress = new InetSocketAddress(config.host(), config.port());
+        serverChannel.bind(bindAddress);
+    }
+
     private ExecutorService startExecutor() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor(EventLoop::createEventLoopThread);
         executor.execute(this::eventLoop);
         return executor;
     }
 
     @Override
     public void close() {
-        if (stopped.compareAndSet(false, true)) {
+        if (closed.compareAndSet(false, true)) {
             closeSelector();
             stopExecutorService();
         }
@@ -153,14 +213,31 @@ public class EventLoop implements AutoCloseable {
 
     private void closeSelector() {
         if (selector != null) {
+            selector.wakeup();
+            closeAllConnections();
             try {
-                selector.wakeup();
-                selector.keys()
-                    .forEach(this::closeSelectionKey);
                 selector.close();
             } catch (Exception error) {
                 LOG.warn("Error while closing selector", error);
             }
+        }
+    }
+
+    private void closeAllConnections() {
+        closeConnections(key -> true);
+    }
+
+    private void closeClientConnections() {
+        closeConnections(key -> !key.equals(serverSelectionKey));
+    }
+
+    private void closeConnections(Predicate<SelectionKey> predicate) {
+        try {
+            selector.keys().stream()
+                .filter(predicate)
+                .forEach(this::closeSelectionKey);
+        } catch (ClosedSelectorException closedSelectorException) {
+            LOG.warn("Could not close selection keys, selector already closed");
         }
     }
 
@@ -185,5 +262,11 @@ public class EventLoop implements AutoCloseable {
                 LOG.warn("Timeout while waiting for closing of broker event loop executor");
             }
         }
+    }
+
+    public static Thread createEventLoopThread(Runnable runnable) {
+        Thread thread = new Thread(runnable);
+        thread.setName("KafkaTestBroker-" + THREAD_ID_SEQUENCE.incrementAndGet());
+        return thread;
     }
 }

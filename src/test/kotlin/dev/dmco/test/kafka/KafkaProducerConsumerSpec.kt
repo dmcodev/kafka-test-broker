@@ -90,7 +90,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         "Should produce and consume with many producers and consumers" {
             val producersCount = 2
             val consumersCount = 4
-            val messagesCount = 1000
+            val messagesCount = 10000
             val brokerConfig = BrokerConfig.builder()
                 .topic(TopicConfig.create(TEST_TOPIC_1, 10))
                 .build()
@@ -187,11 +187,32 @@ class KafkaProducerConsumerSpec : StringSpec() {
             val consumedData = consumedRecords.map { it.key()!! to it.value()!! }
             consumedData.toSet() shouldBe testMessages.toSet()
         }
-    }
 
+        "Should reset broker state" {
+            broker = TestKafkaBroker()
+            val clientProperties = clientProperties()
+            repeat(5) {
+                KafkaProducer<String, String>(clientProperties).apply {
+                    send(ProducerRecord(TEST_TOPIC_1, "key1", "value1"))
+                    close()
+                }
+                KafkaConsumer<String, String>(clientProperties).run {
+                    subscribe(listOf(TEST_TOPIC_1))
+                    poll(Duration.ofSeconds(1)).also {
+                        commitSync()
+                        close()
+                    }
+                }.verify(
+                    row(TEST_TOPIC_1, 0, 0, "key1", "value1")
+                )
+                broker.reset()
+            }
+        }
+    }
 
     override fun afterEach(testCase: TestCase, result: TestResult) {
         if (this::broker.isInitialized) {
+            broker.reset()
             broker.close()
         }
     }
