@@ -11,5 +11,7 @@ public @interface Request {
 
     int key();
 
+    int minVersion() default 0;
+
     int maxVersion() default 0;
 }

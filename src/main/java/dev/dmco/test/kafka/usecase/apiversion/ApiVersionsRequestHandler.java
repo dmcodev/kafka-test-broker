@@ -12,22 +12,19 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
     @Override
     public ApiVersionsResponse handle(ApiVersionsRequest request, BrokerState state) {
         return ApiVersionsResponse.builder()
-            .errorCode((short) 0)
             .apiKeys(
-                RequestHandler.loadAll().stream()
-                    .map(RequestHandler::getHandledRequestType)
-                    .filter(type -> type.isAnnotationPresent(Request.class))
+                state.requestHandlers().handledRequestTypes().stream()
+                    .map(type -> type.getAnnotation(Request.class))
                     .map(this::createApiKey)
                     .collect(Collectors.toList())
             )
             .build();
     }
 
-    private ApiKey createApiKey(Class<?> requestType) {
-        Request metadata = requestType.getAnnotation(Request.class);
+    private ApiKey createApiKey(Request metadata) {
         return ApiKey.builder()
             .apiKey((short) metadata.key())
-            .minVersion((short) 0)
+            .minVersion((short) metadata.minVersion())
             .maxVersion((short) metadata.maxVersion())
             .build();
     }

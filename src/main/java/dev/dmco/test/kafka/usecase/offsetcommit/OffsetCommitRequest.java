@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 import java.util.List;
 import java.util.Optional;
 
-@Request(key = 8, maxVersion = 1)
+@Request(key = 8, minVersion = 1, maxVersion = 1)
 @lombok.Value
 @Accessors(fluent = true)
 public class OffsetCommitRequest implements RequestMessage {

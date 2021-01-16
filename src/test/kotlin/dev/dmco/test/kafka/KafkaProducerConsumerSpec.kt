@@ -20,7 +20,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.errors.RebalanceInProgressException
 import java.time.Duration
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
