@@ -9,8 +9,8 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static dev.dmco.test.kafka.io.protocol.Protocol.decodeBytes;
-import static dev.dmco.test.kafka.io.protocol.Protocol.encodeBytes;
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeNullableBytes;
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeNullableBytes;
 
 public class NullableBytesCodec implements Codec {
 
@@ -20,23 +20,17 @@ public class NullableBytesCodec implements Codec {
     }
 
     @Override
-    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
-        buffer.mark();
-        int length = buffer.getInt();
-        if (length > -1) {
-            buffer.reset();
-            return decodeBytes(buffer);
-        }
-        return null;
+    public Optional<byte[]> decode(ByteBuffer buffer, Type targetType, CodecContext context) {
+        return decodeNullableBytes(buffer);
     }
 
     @Override
     public void encode(Object value, Type valueType, ResponseBuffer buffer, CodecContext context) {
-        encodeBytes((byte[]) value, buffer);
+        encodeNullableBytes((Optional<byte[]>) value, buffer);
     }
 
     @Override
     public void encodeNull(Type valueType, ResponseBuffer buffer, CodecContext context) {
-        buffer.putInt(-1);
+        encodeNullableBytes(Optional.empty(), buffer);
     }
 }

@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.io.protocol;
 import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 public class Protocol {
 
@@ -36,5 +37,13 @@ public class Protocol {
 
     public static void encodeBytes(byte[] value, ResponseBuffer buffer) {
         Bytes.encode(value, buffer);
+    }
+
+    public static Optional<byte[]> decodeNullableBytes(ByteBuffer buffer) {
+        return NullableBytes.decode(buffer);
+    }
+
+    public static void encodeNullableBytes(Optional<byte[]> value, ResponseBuffer buffer) {
+        NullableBytes.encode(value, buffer);
     }
 }

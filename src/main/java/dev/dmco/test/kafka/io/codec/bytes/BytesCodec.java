@@ -19,7 +19,7 @@ public class BytesCodec implements Codec {
     }
 
     @Override
-    public Object decode(ByteBuffer buffer, Type targetType, CodecContext context) {
+    public byte[] decode(ByteBuffer buffer, Type targetType, CodecContext context) {
        return decodeBytes(buffer);
     }
 

@@ -54,7 +54,8 @@ public class Partition {
         int resultSize = 0;
         do {
             Record record = records.get(offset++);
-            int recordSize = record.key().length + record.value().length;
+            int recordSize = record.key().map(key -> key.length).orElse(0)
+                + record.value().length;
             if (result.size() > 0 && resultSize + recordSize > maxFetchSizeInBytes) {
                 break;
             }

@@ -20,23 +20,19 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.errors.RebalanceInProgressException
 import java.time.Duration
-import java.util.Properties
+import java.util.*
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
-
 class KafkaProducerConsumerSpec : StringSpec() {
 
-    private val executor = Executors.newCachedThreadPool()
-    private val dispatcher = executor.asCoroutineDispatcher()
-
-    lateinit var broker: TestKafkaBroker
+    private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
 
     init {
         "Should produce and consume messages" {
-            broker = TestKafkaBroker()
+            createBroker { TestKafkaBroker() }
             val clientProperties = clientProperties()
             KafkaProducer<String, String>(clientProperties).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key1", "value1"))
@@ -54,8 +50,23 @@ class KafkaProducerConsumerSpec : StringSpec() {
             )
         }
 
+        "Should produce and consume messages with null key" {
+            createBroker { TestKafkaBroker() }
+            val clientProperties = clientProperties()
+            KafkaProducer<String, String>(clientProperties).apply {
+                send(ProducerRecord(TEST_TOPIC_1, null, "value"))
+                close()
+            }
+            KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC_1))
+                poll(Duration.ofSeconds(1)).also { close() }
+            }.verify(
+                row(TEST_TOPIC_1, 0, 0, null, "value")
+            )
+        }
+
         "Should commit and resume consuming from last committed offset" {
-            broker = TestKafkaBroker()
+            createBroker { TestKafkaBroker() }
             val clientProperties = clientProperties()
             val producer = KafkaProducer<String, String>(clientProperties).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key1", "value1")).get()
@@ -98,7 +109,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val producerRecords = LinkedBlockingDeque(testMessages.map { ProducerRecord(TEST_TOPIC_1, it.first, it.second) })
             val startBarrier = CyclicBarrier(producersCount + consumersCount + 1)
-            broker = TestKafkaBroker(brokerConfig)
+            createBroker { TestKafkaBroker(brokerConfig) }
             repeat(producersCount) {
                 launch(dispatcher) {
                     startBarrier.await()
@@ -145,7 +156,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             clientProperties["max.partition.fetch.bytes"] = 512
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val startBarrier = CyclicBarrier(consumersActors + 2)
-            broker = TestKafkaBroker(brokerConfig)
+            createBroker { TestKafkaBroker(brokerConfig) }
             launch(dispatcher) {
                 startBarrier.await()
                 val producer = KafkaProducer<String, String>(clientProperties)
@@ -189,7 +200,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
 
         "Should reset broker state" {
-            broker = TestKafkaBroker()
+            val broker = createBroker { TestKafkaBroker() }
             val clientProperties = clientProperties()
             repeat(5) {
                 KafkaProducer<String, String>(clientProperties).apply {
@@ -210,17 +221,19 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
     }
 
+    private val createdBrokers = mutableListOf<TestKafkaBroker>()
+
     override fun afterEach(testCase: TestCase, result: TestResult) {
-        if (this::broker.isInitialized) {
-            broker.reset()
-            broker.close()
-        }
+        createdBrokers.forEach { it.close() }
+        createdBrokers.clear()
     }
 
     override fun afterSpec(spec: Spec) {
         dispatcher.close()
-        executor.shutdownNow()
     }
+
+    private fun createBroker(supplier: () -> TestKafkaBroker): TestKafkaBroker =
+        supplier().also { createdBrokers.add(it) }
 
     private fun clientProperties(
         config: BrokerConfig = BrokerConfig.createDefault()
@@ -245,7 +258,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
     }
 
-    private fun ConsumerRecords<*, *>.verify(vararg records: Row5<String, Int, Int, String, String>) {
+    private fun ConsumerRecords<*, *>.verify(vararg records: Row5<String, Int, Int, String?, String>) {
         count() shouldBe records.size
         records.forEach { expected ->
             any {

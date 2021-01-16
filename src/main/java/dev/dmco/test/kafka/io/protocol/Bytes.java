@@ -13,9 +13,7 @@ class Bytes {
         return bytes;
     }
 
-    static void encode(Object value, ResponseBuffer buffer) {
-        byte[] bytes = (byte[]) value;
-        buffer.putInt(bytes.length)
-            .putBytes(bytes);
+    static void encode(byte[] value, ResponseBuffer buffer) {
+        buffer.putInt(value.length).putBytes(value);
     }
 }

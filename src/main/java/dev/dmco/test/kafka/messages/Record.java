@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.With;
 import lombok.experimental.Accessors;
 
+import java.util.Optional;
+
 @lombok.Value
 @Builder
 @With
@@ -14,7 +16,7 @@ public class Record {
 
     long offset;
 
-    byte[] key;
+    Optional<byte[]> key;
 
     byte[] value;
 }

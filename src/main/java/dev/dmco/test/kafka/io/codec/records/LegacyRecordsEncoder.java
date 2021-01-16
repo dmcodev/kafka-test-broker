@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.zip.CRC32;
 
 import static dev.dmco.test.kafka.io.protocol.Protocol.encodeBytes;
+import static dev.dmco.test.kafka.io.protocol.Protocol.encodeNullableBytes;
 
 class LegacyRecordsEncoder {
 
@@ -32,7 +33,7 @@ class LegacyRecordsEncoder {
         if (version == 1) {
             buffer.putLong(System.currentTimeMillis());
         }
-        encodeBytes(record.key(), buffer);
+        encodeNullableBytes(record.key(), buffer);
         encodeBytes(record.value(), buffer);
         int recordEndOffset = buffer.position();
         byte[] checksumInput = buffer.read(checksumInputStartOffset, recordEndOffset - checksumInputStartOffset);

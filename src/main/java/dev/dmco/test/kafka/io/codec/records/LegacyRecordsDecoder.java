@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dev.dmco.test.kafka.io.protocol.Protocol.decodeBytes;
+import static dev.dmco.test.kafka.io.protocol.Protocol.decodeNullableBytes;
 
 class LegacyRecordsDecoder {
 
@@ -33,7 +34,7 @@ class LegacyRecordsDecoder {
             }
             Record record = Record.builder()
                 .offset(offset)
-                .key(decodeBytes(buffer))
+                .key(decodeNullableBytes(buffer))
                 .value(decodeBytes(buffer))
                 .build();
             records.add(record);

@@ -42,3 +42,7 @@ compileTestKotlin {
 test {
     useJUnitPlatform()
 }
+
+install.repositories.mavenInstaller.pom*.whenConfigured { pom ->
+    pom.dependencies = Collections.emptyList()
+}
