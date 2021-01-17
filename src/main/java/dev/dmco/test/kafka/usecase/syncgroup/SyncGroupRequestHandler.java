@@ -5,6 +5,7 @@ import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.usecase.RequestHandler;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest, SyncGroupResponse> {
 
     @Override
-    public SyncGroupResponse handle(SyncGroupRequest request, BrokerState state) {
+    public void handle(SyncGroupRequest request, BrokerState state, ResponseScheduler<SyncGroupResponse> scheduler) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
         Map<String, List<Partition>> partitionAssignments = extractPartitionAssignments(request, state);
         if (!partitionAssignments.isEmpty()) {
@@ -22,9 +23,11 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
         }
         Collection<Partition> memberPartitions = group.getMember(request.memberId())
             .synchronize();
-        return SyncGroupResponse.builder()
-            .assignment(createResponseAssignment(memberPartitions))
-            .build();
+        scheduler.scheduleResponse(
+            SyncGroupResponse.builder()
+                .assignment(createResponseAssignment(memberPartitions))
+                .build()
+        );
     }
 
     private Map<String, List<Partition>> extractPartitionAssignments(SyncGroupRequest request, BrokerState state) {

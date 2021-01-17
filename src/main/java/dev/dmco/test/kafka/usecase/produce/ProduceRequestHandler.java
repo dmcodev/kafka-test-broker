@@ -4,20 +4,23 @@ import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.Partition.AppendResult;
 import dev.dmco.test.kafka.usecase.RequestHandler;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
 import java.util.stream.Collectors;
 
 public class ProduceRequestHandler implements RequestHandler<ProduceRequest, ProduceResponse> {
 
     @Override
-    public ProduceResponse handle(ProduceRequest request, BrokerState state) {
-        return ProduceResponse.builder()
-            .topics(
-                request.topics().stream()
-                    .map(targetTopic -> appendToTopic(targetTopic, state))
-                    .collect(Collectors.toList())
-            )
-            .build();
+    public void handle(ProduceRequest request, BrokerState state, ResponseScheduler<ProduceResponse> scheduler) {
+        scheduler.scheduleResponse(
+            ProduceResponse.builder()
+                .topics(
+                    request.topics().stream()
+                        .map(targetTopic -> appendToTopic(targetTopic, state))
+                        .collect(Collectors.toList())
+                )
+                .build()
+        );
     }
 
     private ProduceResponse.Topic appendToTopic(ProduceRequest.Topic targetTopic, BrokerState state) {

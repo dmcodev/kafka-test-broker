@@ -5,6 +5,8 @@ import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.state.BrokerState;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
@@ -17,7 +19,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -29,16 +30,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class EventLoop implements AutoCloseable {
 
     private static final Logger LOG = Logger.create(EventLoop.class);
     private static final AtomicInteger THREAD_ID_SEQUENCE = new AtomicInteger();
-    private static final int SELECT_TIMEOUT = 1000;
+    private static final int SELECT_TIMEOUT = 10;
 
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ResponseEncoder encoder = new ResponseEncoder();
-    private final BlockingQueue<EventLoopAction<?>> actions = new ArrayBlockingQueue<>(1, true);
+    private final BlockingQueue<EventLoopAction<?>> actions = new ArrayBlockingQueue<>(256, true);
 
     private final Selector selector;
     private final ServerSocketChannel serverChannel;
@@ -91,8 +93,8 @@ public class EventLoop implements AutoCloseable {
     private void eventLoop() {
         try {
             while (!closed.get()) {
-                processActions();
                 processSelector();
+                processActions();
             }
         } catch (Exception error) {
             LOG.error("Uncaught error, closing broker", error);
@@ -111,8 +113,10 @@ public class EventLoop implements AutoCloseable {
     }
 
     private List<EventLoopAction<?>> getScheduledActions() {
-        List<EventLoopAction<?>> scheduledActions = new ArrayList<>(actions.size());
-        actions.drainTo(scheduledActions);
+        List<EventLoopAction<?>> scheduledActions = actions.stream()
+            .filter(EventLoopAction::scheduledForNow)
+            .collect(Collectors.toList());
+        scheduledActions.forEach(actions::remove);
         return scheduledActions;
     }
 
@@ -161,7 +165,7 @@ public class EventLoop implements AutoCloseable {
         connection.readRequests()
             .stream()
             .map(decoder::decode)
-            .forEach(request -> handleRequest(request, connection, selectionKey));
+            .forEach(request -> handleRequest(request, selectionKey));
     }
 
     private void onClientConnectionWritable(SelectionKey selectionKey) {
@@ -169,10 +173,15 @@ public class EventLoop implements AutoCloseable {
         writeResponses(selectionKey);
     }
 
-    private void handleRequest(RequestMessage request, Connection connection, SelectionKey selectionKey) {
-        ResponseMessage response = state.requestHandlers()
+    private void handleRequest(RequestMessage request, SelectionKey selectionKey) {
+        ResponseScheduler<ResponseMessage> responseScheduler = new EventLoopResponseScheduler(request, selectionKey);
+        state.requestHandlers()
             .select(request)
-            .handle(request, state);
+            .handle(request, state, responseScheduler);
+    }
+
+    private void enqueueResponse(RequestMessage request, ResponseMessage response, SelectionKey selectionKey) {
+        Connection connection = (Connection) selectionKey.attachment();
         ByteBuffer responseBuffer = encoder.encode(response, request.header());
         connection.enqueueResponse(responseBuffer);
         writeResponses(selectionKey);
@@ -268,5 +277,32 @@ public class EventLoop implements AutoCloseable {
         Thread thread = new Thread(runnable);
         thread.setName("KafkaTestBroker-" + THREAD_ID_SEQUENCE.incrementAndGet());
         return thread;
+    }
+
+    @RequiredArgsConstructor
+    private class EventLoopResponseScheduler implements ResponseScheduler<ResponseMessage> {
+
+        final RequestMessage request;
+        final SelectionKey selectionKey;
+
+        @Override
+        public void scheduleResponse(ResponseMessage response) {
+            enqueueResponse(request, response, selectionKey);
+        }
+
+        @Override
+        public void scheduleResponse(long delay, ResponseMessage response) {
+            schedule(delay, () -> enqueueResponse(request, response, selectionKey));
+        }
+
+        @Override
+        @SneakyThrows
+        public void schedule(long delay, Runnable runnable) {
+            Callable<?> callable = Executors.callable(runnable);
+            long runAfter = System.currentTimeMillis() + delay;
+            EventLoopAction<?> action = new EventLoopAction<>(callable, runAfter);
+            actions.put(action);
+            selector.wakeup();
+        }
     }
 }

@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.usecase.metadata;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.Topic;
 import dev.dmco.test.kafka.usecase.RequestHandler;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,11 +13,13 @@ import java.util.stream.IntStream;
 public class MetadataRequestHandler implements RequestHandler<MetadataRequest, MetadataResponse> {
 
     @Override
-    public MetadataResponse handle(MetadataRequest request, BrokerState state) {
-        return MetadataResponse.builder()
-            .broker(createBrokerMetadata(state))
-            .topics(createResponseTopics(request.topicNames(), state))
-            .build();
+    public void handle(MetadataRequest request, BrokerState state, ResponseScheduler<MetadataResponse> scheduler) {
+        scheduler.scheduleResponse(
+            MetadataResponse.builder()
+                .broker(createBrokerMetadata(state))
+                .topics(createResponseTopics(request.topicNames(), state))
+                .build()
+        );
     }
 
     private Collection<MetadataResponse.Topic> createResponseTopics(List<String> topicNames, BrokerState state) {

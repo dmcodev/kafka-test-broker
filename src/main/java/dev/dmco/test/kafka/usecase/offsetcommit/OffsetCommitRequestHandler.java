@@ -6,22 +6,25 @@ import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.state.Topic;
 import dev.dmco.test.kafka.usecase.RequestHandler;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
 import java.util.stream.Collectors;
 
 public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRequest, OffsetCommitResponse> {
 
     @Override
-    public OffsetCommitResponse handle(OffsetCommitRequest request, BrokerState state) {
+    public void handle(OffsetCommitRequest request, BrokerState state, ResponseScheduler<OffsetCommitResponse> scheduler) {
         ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
         ErrorCode memberError = consumerGroup.validateMember(request.memberId());
-        return OffsetCommitResponse.builder()
-            .topics(
-                request.topics().stream()
-                    .map(requestTopic -> createResponseTopic(requestTopic, state, consumerGroup, memberError))
-                    .collect(Collectors.toList())
-            )
-            .build();
+        scheduler.scheduleResponse(
+            OffsetCommitResponse.builder()
+                .topics(
+                    request.topics().stream()
+                        .map(requestTopic -> createResponseTopic(requestTopic, state, consumerGroup, memberError))
+                        .collect(Collectors.toList())
+                )
+                .build()
+        );
     }
 
     private OffsetCommitResponse.Topic createResponseTopic(

@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.usecase.offsetfetch;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.usecase.RequestHandler;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,15 +15,17 @@ import java.util.stream.Stream;
 public class OffsetFetchRequestHandler implements RequestHandler<OffsetFetchRequest, OffsetFetchResponse> {
 
     @Override
-    public OffsetFetchResponse handle(OffsetFetchRequest request, BrokerState state) {
+    public void handle(OffsetFetchRequest request, BrokerState state, ResponseScheduler<OffsetFetchResponse> scheduler) {
         ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
-        return OffsetFetchResponse.builder()
-            .topics(
-                request.topics().stream()
-                    .map(requestTopic -> createResponseTopic(requestTopic, consumerGroup))
-                    .collect(Collectors.toList())
-            )
-            .build();
+        scheduler.scheduleResponse(
+            OffsetFetchResponse.builder()
+                .topics(
+                    request.topics().stream()
+                        .map(requestTopic -> createResponseTopic(requestTopic, consumerGroup))
+                        .collect(Collectors.toList())
+                )
+                .build()
+        );
     }
 
     private OffsetFetchResponse.Topic createResponseTopic(OffsetFetchRequest.Topic requestTopic, ConsumerGroup consumerGroup) {

@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.io;
 
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -8,11 +9,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @Value
+@RequiredArgsConstructor
 @Accessors(fluent = true)
 public class EventLoopAction<T> {
 
     CompletableFuture<T> future = new CompletableFuture<>();
     Callable<T> action;
+    long runAfterTimestamp;
+
+    public EventLoopAction(Callable<T> action) {
+        this(action, System.currentTimeMillis());
+    }
+
+    public boolean scheduledForNow() {
+        return System.currentTimeMillis() >= runAfterTimestamp;
+    }
 
     public void run() {
         try {

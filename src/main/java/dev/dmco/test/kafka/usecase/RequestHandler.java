@@ -13,7 +13,7 @@ import java.util.stream.StreamSupport;
 
 public interface RequestHandler<IN extends RequestMessage, OUT extends ResponseMessage> {
 
-    OUT handle(IN request, BrokerState state);
+    void handle(IN request, BrokerState state, ResponseScheduler<OUT> scheduler);
 
     static Collection<RequestHandler<?, ?>> loadAll() {
         return StreamSupport.stream(ServiceLoader.load(RequestHandler.class).spliterator(), false)

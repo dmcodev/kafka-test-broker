@@ -6,6 +6,7 @@ import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.state.Member;
 import dev.dmco.test.kafka.usecase.RequestHandler;
+import dev.dmco.test.kafka.usecase.ResponseScheduler;
 import dev.dmco.test.kafka.usecase.joingroup.JoinGroupResponse.JoinGroupResponseBuilder;
 
 import java.util.Set;
@@ -18,12 +19,13 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
         .build();
 
     @Override
-    public JoinGroupResponse handle(JoinGroupRequest request, BrokerState state) {
+    public void handle(JoinGroupRequest request, BrokerState state, ResponseScheduler<JoinGroupResponse> scheduler) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
         Set<String> memberProtocols = extractProtocolNames(request);
         String selectedProtocol = group.findMatchingProtocolName(memberProtocols);
         if (selectedProtocol == null) {
-            return PROTOCOL_MISMATCH_RESPONSE;
+            scheduler.scheduleResponse(PROTOCOL_MISMATCH_RESPONSE);
+            return;
         }
         Member member = group.containsMember(request.memberId())
             ? group.getMember(request.memberId())
@@ -36,7 +38,7 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
         if (group.isLeader(member)) {
             addMemberInfo(subscription, group, responseBuilder);
         }
-        return responseBuilder.build();
+        scheduler.scheduleResponse(responseBuilder.build());
     }
 
     private Set<String> extractProtocolNames(JoinGroupRequest request) {
