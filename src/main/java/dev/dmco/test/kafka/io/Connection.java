@@ -9,8 +9,12 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 @RequiredArgsConstructor
 class Connection {
@@ -18,6 +22,8 @@ class Connection {
     private static final int MESSAGE_SIZE_BYTES = 4;
 
     private final ByteBuffer sizeBuffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
+    private final HashMap<Integer, ByteBuffer> responseBuffers = new HashMap<>();
+    private final NavigableSet<Integer> correlationIds = new TreeSet<>();
     private final Deque<ByteBuffer> writeQueue = new LinkedList<>();
 
     private final SocketChannel channel;
@@ -44,17 +50,27 @@ class Connection {
         return requests;
     }
 
-    public void enqueueResponse(ByteBuffer responseBuffer) {
-        responseBuffer.rewind();
-        writeQueue.addLast(encodeResponseSize(responseBuffer));
-        writeQueue.addLast(responseBuffer);
+    public void addRequestCorrelationId(int correlationId) {
+        correlationIds.add(correlationId);
+    }
+
+    public void enqueueResponse(int correlationId, ByteBuffer responseBuffer) {
+        responseBuffers.put(correlationId, responseBuffer);
+        HashSet<Integer> completedCorrelationIds = new HashSet<>();
+        for (int id = correlationIds.first(); id <= correlationIds.last() && responseBuffers.containsKey(id); id++) {
+            ByteBuffer readyResponseBuffer = responseBuffers.remove(id);
+            writeQueue.addLast(encodeResponseSize(readyResponseBuffer));
+            writeQueue.addLast(readyResponseBuffer);
+            completedCorrelationIds.add(id);
+        }
+        correlationIds.removeAll(completedCorrelationIds);
     }
 
     @SneakyThrows
     public boolean writeResponses() {
         ByteBuffer buffer;
         while ((buffer = writeQueue.peekFirst()) != null) {
-            if (buffer.limit() > 0 && channel.write(buffer) == 0) {
+            if (buffer.hasRemaining() && channel.write(buffer) == 0) {
                 return false;
             }
             if (!buffer.hasRemaining()) {

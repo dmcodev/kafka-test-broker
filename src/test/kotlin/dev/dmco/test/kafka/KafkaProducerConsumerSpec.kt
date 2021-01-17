@@ -148,7 +148,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
 
         "Should handle consumer randomly joining, leaving, subscribing and unsubscribing" {
             val consumersActors = 10
-            val messagesCount = 10000
+            val messagesCount = 1000
             val brokerConfig = BrokerConfig.builder()
                 .topic(TopicConfig.create(TEST_TOPIC_1, 10))
                 .build()
@@ -181,7 +181,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
                             consumer.unsubscribe()
                             consumer.subscribe(listOf(TEST_TOPIC_1))
                         }
-                        val records = consumer.poll(Duration.ofMillis(250))
+                        val records = consumer.poll(Duration.ofSeconds(1))
                         try {
                             consumer.commitSync()
                         } catch (ex: RebalanceInProgressException) {

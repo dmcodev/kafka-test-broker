@@ -174,6 +174,8 @@ public class EventLoop implements AutoCloseable {
     }
 
     private void handleRequest(RequestMessage request, SelectionKey selectionKey) {
+        Connection connection = (Connection) selectionKey.attachment();
+        connection.addRequestCorrelationId(request.header().correlationId());
         ResponseScheduler<ResponseMessage> responseScheduler = new EventLoopResponseScheduler(request, selectionKey);
         state.requestHandlers()
             .select(request)
@@ -183,7 +185,7 @@ public class EventLoop implements AutoCloseable {
     private void enqueueResponse(RequestMessage request, ResponseMessage response, SelectionKey selectionKey) {
         Connection connection = (Connection) selectionKey.attachment();
         ByteBuffer responseBuffer = encoder.encode(response, request.header());
-        connection.enqueueResponse(responseBuffer);
+        connection.enqueueResponse(request.header().correlationId(), responseBuffer);
         writeResponses(selectionKey);
     }
 
