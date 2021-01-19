@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
+import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.consumer.Subscription;
 import dev.dmco.test.kafka.state.BrokerState;
@@ -14,6 +15,8 @@ import java.util.stream.Collectors;
 
 public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest, JoinGroupResponse> {
 
+    private static final Logger LOG = Logger.create(JoinGroupRequestHandler.class);
+
     private static final JoinGroupResponse PROTOCOL_MISMATCH_RESPONSE = JoinGroupResponse.builder()
         .errorCode(ErrorCode.INCONSISTENT_GROUP_PROTOCOL)
         .build();
@@ -27,9 +30,9 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
             scheduler.scheduleResponse(PROTOCOL_MISMATCH_RESPONSE);
             return;
         }
-        Member member = group.containsMember(request.memberId())
-            ? group.getMember(request.memberId())
-            : group.joinMember();
+        boolean rejoin = group.containsMember(request.memberId());
+        Member member = rejoin ? group.getMember(request.memberId()) : group.joinMember();
+        LOG.debug("{}-{} {} consumer group", request.groupId(), member.id(), rejoin ? "rejoined" : "joined");
         group.setProtocol(selectedProtocol);
         Subscription subscription = extractSubscription(request, selectedProtocol);
         member.setProtocolNames(memberProtocols)

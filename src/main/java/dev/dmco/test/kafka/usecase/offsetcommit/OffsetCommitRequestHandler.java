@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.offsetcommit;
 
+import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
@@ -12,10 +13,15 @@ import java.util.stream.Collectors;
 
 public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRequest, OffsetCommitResponse> {
 
+    private static final Logger LOG = Logger.create(OffsetCommitRequestHandler.class);
+
     @Override
     public void handle(OffsetCommitRequest request, BrokerState state, ResponseScheduler<OffsetCommitResponse> scheduler) {
         ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
         ErrorCode memberError = consumerGroup.validateMember(request.memberId());
+        if (memberError != ErrorCode.NO_ERROR) {
+            LOG.debug("{}-{} commit error: {}", request.groupId(), request.memberId(), memberError);
+        }
         scheduler.scheduleResponse(
             OffsetCommitResponse.builder()
                 .topics(

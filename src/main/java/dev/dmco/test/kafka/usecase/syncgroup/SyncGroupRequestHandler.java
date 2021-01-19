@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.syncgroup;
 
+import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.consumer.Assignment;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.ConsumerGroup;
@@ -14,20 +15,23 @@ import java.util.stream.Collectors;
 
 public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest, SyncGroupResponse> {
 
+    private static final Logger LOG = Logger.create(SyncGroupRequestHandler.class);
+
     @Override
     public void handle(SyncGroupRequest request, BrokerState state, ResponseScheduler<SyncGroupResponse> scheduler) {
         ConsumerGroup group = state.getConsumerGroup(request.groupId());
         Map<String, List<Partition>> partitionAssignments = extractPartitionAssignments(request, state);
         if (!partitionAssignments.isEmpty()) {
+            LOG.debug("{}-{} performing assignments: {}", request.groupId(), request.memberId(), partitionAssignments);
             group.assignPartitions(partitionAssignments);
         }
         Collection<Partition> memberPartitions = group.getMember(request.memberId())
             .synchronize();
-        scheduler.scheduleResponse(
-            SyncGroupResponse.builder()
-                .assignment(createResponseAssignment(memberPartitions))
-                .build()
-        );
+        LOG.debug("{}-{} synchronized", request.groupId(), request.memberId());
+        SyncGroupResponse response = SyncGroupResponse.builder()
+            .assignment(createResponseAssignment(memberPartitions))
+            .build();
+        scheduler.scheduleResponse(response);
     }
 
     private Map<String, List<Partition>> extractPartitionAssignments(SyncGroupRequest request, BrokerState state) {

@@ -6,14 +6,8 @@ public class NoOpLogger implements Logger {
     public void debug(String message) {}
 
     @Override
-    public void info(String format, Object... arguments) {}
+    public void debug(String format, Object... arguments) {}
 
     @Override
-    public void warn(String message) {}
-
-    @Override
-    public void warn(String message, Throwable throwable) {}
-
-    @Override
-    public void error(String message, Throwable throwable) {}
+    public void debug(String message, Throwable throwable) {}
 }

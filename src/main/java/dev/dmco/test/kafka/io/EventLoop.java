@@ -97,7 +97,7 @@ public class EventLoop implements AutoCloseable {
                 processActions();
             }
         } catch (Exception error) {
-            LOG.error("Uncaught error, closing broker", error);
+            LOG.debug("Uncaught error, closing broker", error);
             close();
         } finally {
             closeActions();
@@ -148,7 +148,7 @@ public class EventLoop implements AutoCloseable {
         } catch (ClosedChannelException closedChannelException) {
             closeSelectionKey(selectionKey);
         } catch (Exception error) {
-            LOG.error("Uncaught error, closing connection", error);
+            LOG.debug("Uncaught error, closing connection", error);
             closeSelectionKey(selectionKey);
         }
     }
@@ -229,7 +229,7 @@ public class EventLoop implements AutoCloseable {
             try {
                 selector.close();
             } catch (Exception error) {
-                LOG.warn("Error while closing selector", error);
+                LOG.debug("Error while closing selector", error);
             }
         }
     }
@@ -248,7 +248,7 @@ public class EventLoop implements AutoCloseable {
                 .filter(predicate)
                 .forEach(this::closeSelectionKey);
         } catch (ClosedSelectorException closedSelectorException) {
-            LOG.warn("Could not close selection keys, selector already closed");
+            LOG.debug("Could not close selection keys, selector already closed");
         }
     }
 
@@ -261,7 +261,7 @@ public class EventLoop implements AutoCloseable {
         try {
             closingChannel.close();
         } catch (Exception error) {
-            LOG.warn("Error while closing socket channel", error);
+            LOG.debug("Error while closing socket channel", error);
         }
     }
 
@@ -270,7 +270,7 @@ public class EventLoop implements AutoCloseable {
         if (executorService != null) {
             executorService.shutdown();
             if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                LOG.warn("Timeout while waiting for closing of broker event loop executor");
+                LOG.debug("Timeout while waiting for closing of broker event loop executor");
             }
         }
     }
@@ -304,7 +304,6 @@ public class EventLoop implements AutoCloseable {
             long runAfter = System.currentTimeMillis() + delay;
             EventLoopAction<?> action = new EventLoopAction<>(callable, runAfter);
             actions.put(action);
-            selector.wakeup();
         }
     }
 }

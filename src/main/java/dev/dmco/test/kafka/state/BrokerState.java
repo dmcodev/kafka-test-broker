@@ -31,7 +31,7 @@ public class BrokerState {
     private final BrokerConfig config;
 
     public ConsumerGroup getConsumerGroup(String name) {
-        return consumerGroups.computeIfAbsent(name, it -> new ConsumerGroup());
+        return consumerGroups.computeIfAbsent(name, ConsumerGroup::new);
     }
 
     public Topic getTopic(String name) {

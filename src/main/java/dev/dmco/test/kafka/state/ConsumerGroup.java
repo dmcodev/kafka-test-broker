@@ -23,6 +23,8 @@ public class ConsumerGroup {
     private final Map<String, Member> members = new HashMap<>();
     private final Map<Partition, Long> offsets = new HashMap<>();
 
+    private final String name;
+
     @Getter
     private int generationId = -1;
 
@@ -50,6 +52,7 @@ public class ConsumerGroup {
     public Member joinMember() {
         Member member = new Member(nextMemberId++);
         if (noLeaderSelected()) {
+            LOG.debug("{}-{} Set as consumer group leader", name, member.id());
             leaderId = member.id();
         }
         members.put(member.id(), member);
@@ -82,7 +85,6 @@ public class ConsumerGroup {
     }
 
     public void assignPartitions(Map<String, List<Partition>> assignedPartitions) {
-        LOG.info("Partitions assignment: {}", assignedPartitions);
         desynchronizeMembers();
         assignedPartitions.forEach(this::assignPartitions);
     }
@@ -110,7 +112,12 @@ public class ConsumerGroup {
         protocol = selectedProtocol;
     }
 
+    public boolean noLeaderSelected() {
+        return leaderId == null;
+    }
+
     private void assignPartitions(String memberId, List<Partition> partitions) {
+        LOG.debug("{}-{} partitions assigned: {}", name, memberId, partitions);
         Optional.ofNullable(members.get(memberId))
             .ifPresent(member -> member.assignPartitions(partitions));
     }
@@ -121,10 +128,7 @@ public class ConsumerGroup {
     }
 
     private void desynchronizeMembers() {
+        LOG.debug("{} desynchronizing members", name);
         members.values().forEach(Member::desynchronize);
-    }
-
-    private boolean noLeaderSelected() {
-        return leaderId == null;
     }
 }

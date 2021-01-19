@@ -4,13 +4,9 @@ public interface Logger {
 
     void debug(String message);
 
-    void info(String format, Object... arguments);
+    void debug(String format, Object... arguments);
 
-    void warn(String message);
-
-    void warn(String message, Throwable throwable);
-
-    void error(String message, Throwable throwable);
+    void debug(String message, Throwable throwable);
 
     static Logger create(Class<?> type) {
         return create(type.getName());
