@@ -69,6 +69,7 @@ public class ResponseBuffer extends ByteArrayOutputStream {
     public ByteBuffer toByteBuffer() {
         slots.forEach((key, value) -> materializeSlot(key, value, buf));
         ByteBuffer buffer = ByteBuffer.wrap(buf);
+        buffer.limit(count);
         buf = new byte[0];
         reset();
         return buffer;

@@ -36,7 +36,7 @@ public class EventLoop implements AutoCloseable {
 
     private static final Logger LOG = Logger.create(EventLoop.class);
     private static final AtomicInteger THREAD_ID_SEQUENCE = new AtomicInteger();
-    private static final int SELECT_TIMEOUT = 10;
+    private static final int SELECT_TIMEOUT = 100;
 
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ResponseEncoder encoder = new ResponseEncoder();

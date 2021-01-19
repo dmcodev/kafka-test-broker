@@ -8,9 +8,9 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
@@ -20,8 +20,9 @@ public class Member {
 
     static final String NAME_PREFIX = "member";
 
+    private final Set<String> subscribedTopics = new HashSet<>();
+    private final Set<Partition> assignedPartitions = new HashSet<>();
     private final ProtocolSet protocolSet = new ProtocolSet();
-    private final Subscriptions subscriptions = new Subscriptions();
 
     @Getter
     @ToString.Include
@@ -35,17 +36,17 @@ public class Member {
     }
 
     public void subscribe(Collection<String> topicNames) {
-        topicNames.forEach(subscriptions::createIfAbsent);
+        subscribedTopics.clear();
+        subscribedTopics.addAll(topicNames);
     }
 
     public void assignPartitions(List<Partition> partitions) {
-        partitions.stream()
-            .collect(Collectors.groupingBy(topic -> topic.topic().name()))
-            .forEach((topicName, topicPartitions) -> subscriptions.get(topicName).setPartitions(topicPartitions));
+        assignedPartitions.clear();
+        assignedPartitions.addAll(partitions);
     }
 
     public Collection<String> subscribedTopicNames() {
-        return subscriptions.topicNames();
+        return new HashSet<>(subscribedTopics);
     }
 
     public Collection<String> protocolNames() {
@@ -59,12 +60,12 @@ public class Member {
 
     public void desynchronize() {
         isSynchronized = false;
-        subscriptions.clear();
+        assignedPartitions.clear();
     }
 
     public Collection<Partition> synchronize() {
         isSynchronized = true;
-        return subscriptions.partitions();
+        return new HashSet<>(assignedPartitions);
     }
 
     public ErrorCode validate() {
