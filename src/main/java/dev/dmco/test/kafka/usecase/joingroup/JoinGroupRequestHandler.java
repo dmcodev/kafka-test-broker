@@ -1,6 +1,5 @@
 package dev.dmco.test.kafka.usecase.joingroup;
 
-import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.consumer.Subscription;
 import dev.dmco.test.kafka.state.BrokerState;
@@ -10,12 +9,11 @@ import dev.dmco.test.kafka.usecase.RequestHandler;
 import dev.dmco.test.kafka.usecase.ResponseScheduler;
 import dev.dmco.test.kafka.usecase.joingroup.JoinGroupResponse.JoinGroupResponseBuilder;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest, JoinGroupResponse> {
-
-    private static final Logger LOG = Logger.create(JoinGroupRequestHandler.class);
 
     private static final JoinGroupResponse PROTOCOL_MISMATCH_RESPONSE = JoinGroupResponse.builder()
         .errorCode(ErrorCode.INCONSISTENT_GROUP_PROTOCOL)
@@ -23,28 +21,30 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
 
     @Override
     public void handle(JoinGroupRequest request, BrokerState state, ResponseScheduler<JoinGroupResponse> scheduler) {
-        ConsumerGroup group = state.getConsumerGroup(request.groupId());
-        Set<String> memberProtocols = extractProtocolNames(request);
-        String selectedProtocol = group.findMatchingProtocolName(memberProtocols);
+        String groupId = request.groupId();
+        ConsumerGroup group = state.getConsumerGroup(groupId);
+        Set<String> memberProtocols = extractMembersProtocols(request);
+        String selectedProtocol = group.findMatchingProtocol(memberProtocols);
         if (selectedProtocol == null) {
             scheduler.scheduleResponse(PROTOCOL_MISMATCH_RESPONSE);
             return;
         }
-        boolean rejoin = group.containsMember(request.memberId());
-        Member member = rejoin ? group.getMember(request.memberId()) : group.joinMember();
-        LOG.debug("{}-{} {} consumer group", request.groupId(), member.id(), rejoin ? "rejoined" : "joined");
-        group.setProtocol(selectedProtocol);
-        Subscription subscription = extractSubscription(request, selectedProtocol);
-        member.setProtocolNames(memberProtocols)
-            .subscribe(subscription.topics());
-        JoinGroupResponseBuilder responseBuilder = createResponseBuilder(member.id(), group);
-        if (group.isLeader(member)) {
-            addMemberInfo(subscription, group, responseBuilder);
+        Member member;
+        if (group.containsMember(request.memberId())) {
+            member = group.rejoinMember(request.memberId());
+        } else {
+            member = group.addMember();
         }
-        scheduler.scheduleResponse(responseBuilder.build());
+        group.setProtocol(selectedProtocol);
+        member.assignProtocols(memberProtocols);
+        member.setJoinGenerationId(group.generationId());
+        Subscription subscription = extractSubscription(request, selectedProtocol);
+        member.subscribe(subscription.topics());
+        JoinGroupResponse response = buildGroupInfo(member, group, subscription);
+        scheduler.scheduleResponse(response);
     }
 
-    private Set<String> extractProtocolNames(JoinGroupRequest request) {
+    private Set<String> extractMembersProtocols(JoinGroupRequest request) {
         return request.protocols().stream()
             .map(JoinGroupRequest.Protocol::name)
             .collect(Collectors.toSet());
@@ -58,30 +58,34 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
             .orElseThrow(() -> new IllegalArgumentException("Could not find matching subscription"));
     }
 
-    private void addMemberInfo(Subscription subscription, ConsumerGroup group, JoinGroupResponseBuilder responseBuilder) {
-        short protocolVersion = subscription.version();
-        group.getMembers().stream()
-            .map(member -> createResponseMember(member, protocolVersion))
-            .forEach(responseBuilder::member);
+    private JoinGroupResponse buildGroupInfo(Member member, ConsumerGroup group, Subscription subscription) {
+        JoinGroupResponseBuilder responseBuilder = JoinGroupResponse.builder()
+            .generationId(group.generationId())
+            .protocolName(group.protocol())
+            .leader(group.leaderId())
+            .memberId(member.id());
+        if (member.isLeader()) {
+            responseBuilder.members(buildMembersInfo(subscription, group));
+        }
+        return responseBuilder.build();
     }
 
-    private JoinGroupResponse.Member createResponseMember(Member member, short protocolVersion) {
+    private List<JoinGroupResponse.Member> buildMembersInfo(Subscription subscription, ConsumerGroup group) {
+        short protocolVersion = subscription.version();
+        return group.getMembers().stream()
+            .map(member -> buildMemberInfo(member, protocolVersion))
+            .collect(Collectors.toList());
+    }
+
+    private JoinGroupResponse.Member buildMemberInfo(Member member, short protocolVersion) {
         return JoinGroupResponse.Member.builder()
             .memberId(member.id())
             .subscription(
                 Subscription.builder()
                     .version(protocolVersion)
-                    .topics(member.subscribedTopicNames())
+                    .topics(member.subscribedTopics())
                     .build()
             )
             .build();
-    }
-
-    private JoinGroupResponseBuilder createResponseBuilder(String memberId, ConsumerGroup group) {
-        return JoinGroupResponse.builder()
-            .generationId(group.generationId())
-            .protocolName(group.protocol())
-            .leader(group.leaderId())
-            .memberId(memberId);
     }
 }

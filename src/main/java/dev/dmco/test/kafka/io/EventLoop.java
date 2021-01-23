@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -36,8 +36,9 @@ public class EventLoop implements AutoCloseable {
 
     private static final Logger LOG = Logger.create(EventLoop.class);
     private static final AtomicInteger THREAD_ID_SEQUENCE = new AtomicInteger();
-    private static final int SELECT_TIMEOUT = 100;
+    private static final int SELECT_TIMEOUT = 10;
 
+    private final CountDownLatch stopped = new CountDownLatch(1);
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ResponseEncoder encoder = new ResponseEncoder();
     private final BlockingQueue<EventLoopAction<?>> actions = new ArrayBlockingQueue<>(256, true);
@@ -97,19 +98,15 @@ public class EventLoop implements AutoCloseable {
                 processActions();
             }
         } catch (Exception error) {
-            LOG.debug("Uncaught error, closing broker", error);
-            close();
+            LOG.debug("Event loop error, closing broker", error);
         } finally {
-            closeActions();
+            stopped.countDown();
+            close();
         }
     }
 
     private void processActions() {
         getScheduledActions().forEach(EventLoopAction::run);
-    }
-
-    private void closeActions() {
-        getScheduledActions().forEach(EventLoopAction::close);
     }
 
     private List<EventLoopAction<?>> getScheduledActions() {
@@ -215,27 +212,29 @@ public class EventLoop implements AutoCloseable {
     }
 
     @Override
+    @SneakyThrows
     public void close() {
         if (closed.compareAndSet(false, true)) {
+            awaitStop();
+            closeAllConnections();
             closeSelector();
-            stopExecutorService();
+            closeActions();
+            closeExecutorService();
         }
     }
 
-    private void closeSelector() {
-        if (selector != null) {
-            selector.wakeup();
-            closeAllConnections();
-            try {
-                selector.close();
-            } catch (Exception error) {
-                LOG.debug("Error while closing selector", error);
-            }
+    @SneakyThrows
+    private void awaitStop() {
+        if (executorService != null) {
+            stopped.await();
         }
     }
 
     private void closeAllConnections() {
-        closeConnections(key -> true);
+        closeClientConnections();
+        if (serverChannel != null && serverChannel.isOpen()) {
+            closeChannel(serverChannel);
+        }
     }
 
     private void closeClientConnections() {
@@ -265,13 +264,24 @@ public class EventLoop implements AutoCloseable {
         }
     }
 
+    private void closeSelector() {
+        if (selector != null) {
+            try {
+                selector.close();
+            } catch (Exception error) {
+                LOG.debug("Error while closing selector", error);
+            }
+        }
+    }
+
+    private void closeActions() {
+        getScheduledActions().forEach(EventLoopAction::close);
+    }
+
     @SneakyThrows
-    private void stopExecutorService() {
+    private void closeExecutorService() {
         if (executorService != null) {
             executorService.shutdown();
-            if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                LOG.debug("Timeout while waiting for closing of broker event loop executor");
-            }
         }
     }
 
@@ -301,8 +311,8 @@ public class EventLoop implements AutoCloseable {
         @SneakyThrows
         public void schedule(long delay, Runnable runnable) {
             Callable<?> callable = Executors.callable(runnable);
-            long runAfter = System.currentTimeMillis() + delay;
-            EventLoopAction<?> action = new EventLoopAction<>(callable, runAfter);
+            long scheduleTimestamp = System.currentTimeMillis() + delay;
+            EventLoopAction<?> action = new EventLoopAction<>(callable, scheduleTimestamp);
             actions.put(action);
         }
     }

@@ -148,12 +148,12 @@ class KafkaProducerConsumerSpec : StringSpec() {
 
         "Should handle consumer randomly joining, leaving, subscribing and unsubscribing" {
             val consumersActors = 10
-            val messagesCount = 1000
+            val messagesCount = 5000
             val brokerConfig = BrokerConfig.builder()
                 .topic(TopicConfig.create(TEST_TOPIC_1, 10))
                 .build()
             val clientProperties = clientProperties(brokerConfig)
-            clientProperties["max.partition.fetch.bytes"] = 512
+            clientProperties["max.partition.fetch.bytes"] = 1024
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val startBarrier = CyclicBarrier(consumersActors + 2)
             createBroker { TestKafkaBroker(brokerConfig) }
@@ -246,11 +246,11 @@ class KafkaProducerConsumerSpec : StringSpec() {
             it["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
             it["compression.type"] = "none"
             it["group.id"] = TEST_CONSUMER_GROUP
-            it["heartbeat.interval.ms"] = "500"
+            it["heartbeat.interval.ms"] = "100"
             it["enable.auto.commit"] = "false"
         }
 
-    private suspend fun await(timeoutMs: Long = 5000, condition: () -> Boolean) {
+    private suspend fun await(timeoutMs: Long = 60_000, condition: () -> Boolean) {
         withTimeout(timeoutMs) {
             while (!condition()) {
                 delay(25)

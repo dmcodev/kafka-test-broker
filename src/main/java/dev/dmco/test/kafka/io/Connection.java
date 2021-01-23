@@ -10,11 +10,9 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NavigableSet;
-import java.util.TreeSet;
 
 @RequiredArgsConstructor
 class Connection {
@@ -23,7 +21,7 @@ class Connection {
 
     private final ByteBuffer sizeBuffer = ByteBuffer.allocate(MESSAGE_SIZE_BYTES);
     private final HashMap<Integer, ByteBuffer> responseBuffers = new HashMap<>();
-    private final NavigableSet<Integer> correlationIds = new TreeSet<>();
+    private final Deque<Integer> correlationIds = new LinkedList<>();
     private final Deque<ByteBuffer> writeQueue = new LinkedList<>();
 
     private final SocketChannel channel;
@@ -51,19 +49,12 @@ class Connection {
     }
 
     public void addRequestCorrelationId(int correlationId) {
-        correlationIds.add(correlationId);
+        correlationIds.addLast(correlationId);
     }
 
     public void enqueueResponse(int correlationId, ByteBuffer responseBuffer) {
         responseBuffers.put(correlationId, responseBuffer);
-        HashSet<Integer> completedCorrelationIds = new HashSet<>();
-        for (int id = correlationIds.first(); id <= correlationIds.last() && responseBuffers.containsKey(id); id++) {
-            ByteBuffer readyResponseBuffer = responseBuffers.remove(id);
-            writeQueue.addLast(encodeResponseSize(readyResponseBuffer));
-            writeQueue.addLast(readyResponseBuffer);
-            completedCorrelationIds.add(id);
-        }
-        correlationIds.removeAll(completedCorrelationIds);
+        moveCompletedResponsesToWriteQueue();
     }
 
     @SneakyThrows
@@ -90,6 +81,20 @@ class Connection {
         }
         targetBuffer.rewind();
         return false;
+    }
+
+    private void moveCompletedResponsesToWriteQueue() {
+        Iterator<Integer> correlationIdIterator = correlationIds.iterator();
+        while (correlationIdIterator.hasNext()) {
+            Integer correlationId = correlationIdIterator.next();
+            if (!responseBuffers.containsKey(correlationId)) {
+                break;
+            }
+            ByteBuffer responseBuffer = responseBuffers.remove(correlationId);
+            writeQueue.addLast(encodeResponseSize(responseBuffer));
+            writeQueue.addLast(responseBuffer);
+            correlationIdIterator.remove();
+        }
     }
 
     private ByteBuffer encodeResponseSize(ByteBuffer responseBuffer) {

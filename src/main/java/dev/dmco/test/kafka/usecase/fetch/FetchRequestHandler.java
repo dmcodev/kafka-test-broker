@@ -6,35 +6,15 @@ import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchResponse> {
 
-    private static final long MIN_FETCH_LOOP_INTERVAL_MS = 10;
-
     @Override
     public void handle(FetchRequest request, BrokerState state, ResponseScheduler<FetchResponse> scheduler) {
-        int maxWaitTime = request.maxWaitTime();
-        long timeoutTimestamp = System.currentTimeMillis() + maxWaitTime;
-        long fetchInterval = Math.max(MIN_FETCH_LOOP_INTERVAL_MS, maxWaitTime / 10);
-        fetchLoop(request, state, scheduler, timeoutTimestamp, fetchInterval);
-    }
-
-    private void fetchLoop(
-        FetchRequest request,
-        BrokerState state,
-        ResponseScheduler<FetchResponse> scheduler,
-        long timeoutTimestamp,
-        long fetchInterval
-    ) {
         FetchResponse response = fetch(request, state);
-        if (hasNoRecords(response) && fetchInterval > 0 && System.currentTimeMillis() < timeoutTimestamp) {
-            scheduler.schedule(fetchInterval, () -> fetchLoop(request, state, scheduler, timeoutTimestamp, fetchInterval));
-        } else {
-            scheduler.scheduleResponse(response);
-        }
+        scheduler.scheduleResponse(response);
     }
 
     private FetchResponse fetch(FetchRequest request, BrokerState state) {
@@ -66,15 +46,5 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
             .headOffset(partition.head())
             .records(records)
             .build();
-    }
-
-    private boolean hasNoRecords(FetchResponse response) {
-        return !response.topics().stream()
-            .map(FetchResponse.Topic::partitions)
-            .flatMap(Collection::stream)
-            .map(FetchResponse.Partition::records)
-            .flatMap(Collection::stream)
-            .findAny()
-            .isPresent();
     }
 }

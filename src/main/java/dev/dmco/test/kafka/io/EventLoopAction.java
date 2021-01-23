@@ -15,14 +15,14 @@ public class EventLoopAction<T> {
 
     CompletableFuture<T> future = new CompletableFuture<>();
     Callable<T> action;
-    long runAfterTimestamp;
+    long scheduleTimestamp;
 
     public EventLoopAction(Callable<T> action) {
         this(action, System.currentTimeMillis());
     }
 
     public boolean scheduledForNow() {
-        return System.currentTimeMillis() >= runAfterTimestamp;
+        return System.currentTimeMillis() >= scheduleTimestamp;
     }
 
     public void run() {

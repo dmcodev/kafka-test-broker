@@ -1,10 +1,9 @@
 package dev.dmco.test.kafka.state;
 
-import dev.dmco.test.kafka.messages.ErrorCode;
+import dev.dmco.test.kafka.logging.Logger;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.Collection;
@@ -14,25 +13,54 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
-@ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Member {
+
+    private static final Logger LOG = Logger.create(Member.class);
 
     static final String NAME_PREFIX = "member";
 
     private final Set<String> subscribedTopics = new HashSet<>();
     private final Set<Partition> assignedPartitions = new HashSet<>();
-    private final ProtocolSet protocolSet = new ProtocolSet();
+    private final Set<String> supportedProtocols = new HashSet<>();
+
+    @EqualsAndHashCode.Include
+    private final ConsumerGroup group;
 
     @Getter
-    @ToString.Include
     @EqualsAndHashCode.Include
     private final String id;
 
-    private boolean isSynchronized;
+    @Getter
+    private boolean partitionsSynced;
 
-    public Member(int sequenceNumber) {
+    @Getter
+    private boolean isLeader;
+
+    @Getter
+    private int joinGenerationId;
+
+    Member(ConsumerGroup consumerGroup, int sequenceNumber) {
+        group = consumerGroup;
         id = NAME_PREFIX + "-" + sequenceNumber;
+        partitionsSynced = true;
+    }
+
+    public void setAsLeader() {
+        isLeader = true;
+    }
+
+    public Set<String> supportedProtocols() {
+        return new HashSet<>(supportedProtocols);
+    }
+
+    public void assignProtocols(Set<String> protocols) {
+        supportedProtocols.clear();
+        supportedProtocols.addAll(protocols);
+    }
+
+    public Collection<String> subscribedTopics() {
+        return new HashSet<>(subscribedTopics);
     }
 
     public void subscribe(Collection<String> topicNames) {
@@ -40,38 +68,28 @@ public class Member {
         subscribedTopics.addAll(topicNames);
     }
 
+    public void revokePartitions() {
+        assignedPartitions.clear();
+        partitionsSynced = false;
+    }
+
     public void assignPartitions(List<Partition> partitions) {
-        assignedPartitions.clear();
         assignedPartitions.addAll(partitions);
-    }
-
-    public Collection<String> subscribedTopicNames() {
-        return new HashSet<>(subscribedTopics);
-    }
-
-    public Collection<String> protocolNames() {
-        return protocolSet.protocolNames();
-    }
-
-    public Member setProtocolNames(Set<String> protocolNames) {
-        protocolSet.setProtocolNames(protocolNames);
-        return this;
-    }
-
-    public void desynchronize() {
-        isSynchronized = false;
-        assignedPartitions.clear();
+        LOG.debug("{} assigned partitions: {}", this, partitions);
     }
 
     public Collection<Partition> synchronize() {
-        isSynchronized = true;
+        partitionsSynced = true;
+        LOG.debug("{} synchronized", this);
         return new HashSet<>(assignedPartitions);
     }
 
-    public ErrorCode validate() {
-        if (!isSynchronized) {
-            return ErrorCode.REBALANCE_IN_PROGRESS;
-        }
-        return ErrorCode.NO_ERROR;
+    public void setJoinGenerationId(int generationId) {
+        joinGenerationId = generationId;
+    }
+
+    @Override
+    public String toString() {
+        return group.name() + ":" + id;
     }
 }
