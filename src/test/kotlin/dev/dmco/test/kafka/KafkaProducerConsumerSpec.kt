@@ -149,8 +149,10 @@ class KafkaProducerConsumerSpec : StringSpec() {
         "Should handle consumer randomly joining, leaving, subscribing and unsubscribing" {
             val consumersActors = 10
             val messagesCount = 5000
+            val topics = listOf(TEST_TOPIC_1, TEST_TOPIC_2)
             val brokerConfig = BrokerConfig.builder()
-                .topic(TopicConfig.create(TEST_TOPIC_1, 10))
+                .topic(TopicConfig.create(TEST_TOPIC_1, 5))
+                .topic(TopicConfig.create(TEST_TOPIC_2, 5))
                 .build()
             val clientProperties = clientProperties(brokerConfig)
             clientProperties["max.partition.fetch.bytes"] = 1024
@@ -161,7 +163,8 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 startBarrier.await()
                 val producer = KafkaProducer<String, String>(clientProperties)
                 testMessages.forEach {
-                    producer.send(ProducerRecord(TEST_TOPIC_1, it.first, it.second))
+                    val topic = topics.random()
+                    producer.send(ProducerRecord(topic, it.first, it.second))
                 }
                 producer.close()
             }
@@ -170,16 +173,16 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 launch(dispatcher) {
                     startBarrier.await()
                     var consumer = KafkaConsumer<String, String>(clientProperties)
-                    consumer.subscribe(listOf(TEST_TOPIC_1))
+                    consumer.subscribe(topics)
                     while (consumedRecords.size < messagesCount) {
                         if (Random.nextInt(5) == 0) {
                             consumer.close()
                             consumer = KafkaConsumer(clientProperties)
-                            consumer.subscribe(listOf(TEST_TOPIC_1))
+                            consumer.subscribe(topics)
                         }
                         if (Random.nextInt(5) == 0) {
                             consumer.unsubscribe()
-                            consumer.subscribe(listOf(TEST_TOPIC_1))
+                            consumer.subscribe(topics)
                         }
                         val records = consumer.poll(Duration.ofSeconds(1))
                         try {
@@ -218,6 +221,22 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 )
                 broker.reset()
             }
+        }
+
+        "Should produce and consume using GZIP compression" {
+            createBroker { TestKafkaBroker() }
+            val clientProperties = clientProperties()
+            clientProperties["compression.type"] = "gzip"
+            KafkaProducer<String, String>(clientProperties).apply {
+                send(ProducerRecord(TEST_TOPIC_1, "key", "value"))
+                close()
+            }
+            KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC_1))
+                poll(Duration.ofSeconds(1)).also { close() }
+            }.verify(
+                row(TEST_TOPIC_1, 0, 0, "key", "value")
+            )
         }
     }
 

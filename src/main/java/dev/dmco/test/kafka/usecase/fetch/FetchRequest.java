@@ -1,6 +1,7 @@
 package dev.dmco.test.kafka.usecase.fetch;
 
 import dev.dmco.test.kafka.messages.metadata.Request;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.request.RequestHeader;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
@@ -10,7 +11,7 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
-@Request(key = 1)
+@Request(key = 1, maxVersion = 3)
 @lombok.Value
 @Accessors(fluent = true)
 public class FetchRequest implements RequestMessage {
@@ -23,6 +24,9 @@ public class FetchRequest implements RequestMessage {
     int maxWaitTime;
 
     int minBytes;
+
+    @SinceVersion(3)
+    int maxBytes;
 
     List<Topic> topics;
 

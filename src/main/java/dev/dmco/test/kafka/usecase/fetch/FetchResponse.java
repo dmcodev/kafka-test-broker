@@ -2,6 +2,7 @@ package dev.dmco.test.kafka.usecase.fetch;
 
 import dev.dmco.test.kafka.messages.ErrorCode;
 import dev.dmco.test.kafka.messages.Record;
+import dev.dmco.test.kafka.messages.metadata.SinceVersion;
 import dev.dmco.test.kafka.messages.metadata.VersionMapping;
 import dev.dmco.test.kafka.messages.response.ResponseHeader;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
@@ -24,6 +25,9 @@ public class FetchResponse implements ResponseMessage {
     @VersionMapping(value = 0, sinceVersion = 0)
     ResponseHeader header;
 
+    @SinceVersion(1)
+    int throttleTimeMs;
+
     @Singular
     List<Topic> topics;
 
@@ -43,12 +47,13 @@ public class FetchResponse implements ResponseMessage {
     @AllArgsConstructor
     public static class Partition {
 
-        int partitionId;
+        int id;
 
         ErrorCode errorCode;
 
         long headOffset;
 
+        @VersionMapping(value = 0, sinceVersion = 0)
         Collection<Record> records;
     }
 }

@@ -9,11 +9,12 @@ public interface CodecRulesAware {
     Collection<CodecRule> codecRules();
 
     default CodecContext createContextFromRules(CodecContext initialContext) {
-        return codecRules().stream()
-            .reduce(
-                initialContext,
-                (context, codecRule) -> codecRule.applies(context) ? codecRule.apply(context) : context,
-                (first, second) -> { throw new IllegalStateException("Merging two codec contexts not supported"); }
-            );
+        CodecContext context = initialContext;
+        for (CodecRule rule : codecRules()) {
+            if (rule.applies(context)) {
+                context = rule.apply(context);
+            }
+        }
+        return context;
     }
 }

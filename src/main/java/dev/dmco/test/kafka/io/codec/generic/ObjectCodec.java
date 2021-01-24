@@ -4,8 +4,8 @@ import dev.dmco.test.kafka.io.buffer.ResponseBuffer;
 import dev.dmco.test.kafka.io.codec.Codec;
 import dev.dmco.test.kafka.io.codec.context.CodecContext;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRule;
+import dev.dmco.test.kafka.io.codec.context.rules.CodecRuleBindings;
 import dev.dmco.test.kafka.io.codec.context.rules.CodecRulesAware;
-import dev.dmco.test.kafka.io.codec.context.rules.binding.CodecRuleBindings;
 import dev.dmco.test.kafka.io.codec.registry.CodecRegistry;
 import dev.dmco.test.kafka.io.codec.registry.Type;
 import lombok.Getter;
@@ -84,10 +84,7 @@ public class ObjectCodec implements Codec {
                 .map(TypeProperty::new)
                 .collect(Collectors.toList());
             constructor = type.getConstructors()[0];
-            codecRules = Arrays.stream(type.getAnnotations())
-                .map(CodecRuleBindings::createRules)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+            codecRules = CodecRuleBindings.createRules(type.getAnnotations());
         }
     }
 
@@ -105,10 +102,7 @@ public class ObjectCodec implements Codec {
             getter = field;
             rawType = field.getType();
             type = Type.of(field);
-            codecRules = Arrays.stream(field.getAnnotations())
-                .map(CodecRuleBindings::createRules)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+            codecRules =  CodecRuleBindings.createRules(field.getAnnotations());
         }
 
         Object decode(ByteBuffer buffer, CodecContext objectContext) {
