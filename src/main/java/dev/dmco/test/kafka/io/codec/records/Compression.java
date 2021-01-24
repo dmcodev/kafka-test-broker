@@ -36,7 +36,7 @@ enum Compression {
 
     abstract byte[] decompress(byte[] bytes);
 
-    static Compression from(byte attributes) {
+    static Compression from(int attributes) {
         switch (attributes & 0b111) {
             case 0:
                 return NONE;

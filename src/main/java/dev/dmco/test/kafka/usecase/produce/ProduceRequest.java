@@ -12,8 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-// TODO: magic version 2 starts from api version 3
-@Request(key = 0, maxVersion = 2)
+@Request(key = 0, maxVersion = 3)
 @lombok.Value
 @Accessors(fluent = true)
 public class ProduceRequest implements RequestMessage {
@@ -45,6 +44,9 @@ public class ProduceRequest implements RequestMessage {
 
         int id;
 
+        @VersionMapping(value = 0, sinceVersion = 0)
+        @VersionMapping(value = 1, sinceVersion = 2)
+        @VersionMapping(value = 2, sinceVersion = 3)
         Collection<Record> records;
     }
 }

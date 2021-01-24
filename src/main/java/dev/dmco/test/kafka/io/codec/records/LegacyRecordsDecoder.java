@@ -35,7 +35,7 @@ class LegacyRecordsDecoder {
             Record record = Record.builder()
                 .offset(offset)
                 .key(decodeNullableBytes(buffer))
-                .value(decodeBytes(buffer))
+                .value(decodeNullableBytes(buffer))
                 .build();
             records.add(record);
         }

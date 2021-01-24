@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.With;
 import lombok.experimental.Accessors;
 
+import java.util.Collection;
 import java.util.Optional;
 
 @lombok.Value
@@ -18,5 +19,18 @@ public class Record {
 
     Optional<byte[]> key;
 
-    byte[] value;
+    Optional<byte[]> value;
+
+    Collection<Header> headers;
+
+    @lombok.Value
+    @Builder
+    @AllArgsConstructor
+    @Accessors(fluent = true)
+    public static class Header {
+
+        String key;
+
+        Optional<byte[]> value;
+    }
 }

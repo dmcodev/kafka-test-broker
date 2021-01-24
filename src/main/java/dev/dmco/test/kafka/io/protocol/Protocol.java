@@ -15,6 +15,11 @@ public class Protocol {
         VarUInt.encode(value, buffer);
     }
 
+    public static int decodeVarInt(ByteBuffer buffer) {
+        int value = decodeVarUInt(buffer);
+        return (value >>> 1) ^ (-(value & 1));
+    }
+
     public static java.lang.String decodeString(ByteBuffer buffer) {
         return String.decode(buffer);
     }

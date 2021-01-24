@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-// TODO: current records format
 public class RecordsCodec implements Codec {
 
     private static final int RECORD_VERSION_OFFSET = 16;
@@ -30,6 +29,8 @@ public class RecordsCodec implements Codec {
         byte version = buffer.get(buffer.position() + RECORD_VERSION_OFFSET);
         if (version == 0 || version == 1) {
             return LegacyRecordsDecoder.decode(buffer, version, length);
+        } if (version == 2) {
+            return RecordsDecoder.decode(buffer, length);
         } else {
             throw versionNotSupportedException(version);
         }
@@ -41,6 +42,8 @@ public class RecordsCodec implements Codec {
         int version = context.version();
         if (version == 0 || version == 1) {
             LegacyRecordsEncoder.encode(records, buffer, version);
+        } else if (version == 2) {
+            RecordsEncoder.encode(records, buffer);
         } else {
             throw versionNotSupportedException(version);
         }

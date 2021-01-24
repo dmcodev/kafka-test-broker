@@ -6,7 +6,7 @@ import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
-import io.kotest.data.Row5
+import io.kotest.data.Row6
 import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -44,9 +44,9 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 subscribe(listOf(TEST_TOPIC_1, TEST_TOPIC_2))
                 poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
             }.verify(
-                row(TEST_TOPIC_1, 0, 0, "key1", "value1"),
-                row(TEST_TOPIC_1, 0, 1, "key2", "value2"),
-                row(TEST_TOPIC_2, 0, 0, "key3", "value3")
+                row(TEST_TOPIC_1, 0, 0, "key1", "value1", emptyList()),
+                row(TEST_TOPIC_1, 0, 1, "key2", "value2", emptyList()),
+                row(TEST_TOPIC_2, 0, 0, "key3", "value3", emptyList())
             )
         }
 
@@ -61,7 +61,42 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 subscribe(listOf(TEST_TOPIC_1))
                 poll(Duration.ofSeconds(1)).also { close() }
             }.verify(
-                row(TEST_TOPIC_1, 0, 0, null, "value")
+                row(TEST_TOPIC_1, 0, 0, null, "value", emptyList())
+            )
+        }
+
+        "Should produce and consume messages with null value" {
+            createBroker { TestKafkaBroker() }
+            val clientProperties = clientProperties()
+            KafkaProducer<String, String>(clientProperties).apply {
+                send(ProducerRecord(TEST_TOPIC_1, "key", null))
+                close()
+            }
+            KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC_1))
+                poll(Duration.ofSeconds(1)).also { close() }
+            }.verify(
+                row(TEST_TOPIC_1, 0, 0, "key", null, emptyList())
+            )
+        }
+
+        "Should produce and consume messages with headers".config(enabled = false) {
+            createBroker { TestKafkaBroker() }
+            val clientProperties = clientProperties()
+            KafkaProducer<String, String>(clientProperties).apply {
+                val record = ProducerRecord(TEST_TOPIC_1, "key", "value")
+                record.headers().apply {
+                    add("hk1", "hv1".toByteArray())
+                    add("hk2", "hv2".toByteArray())
+                }
+                send(record)
+                close()
+            }
+            KafkaConsumer<String, String>(clientProperties).run {
+                subscribe(listOf(TEST_TOPIC_1))
+                poll(Duration.ofSeconds(1)).also { close() }
+            }.verify(
+                row(TEST_TOPIC_1, 0, 0, "key", "value", listOf("hk1" to "hv1", "hk2" to "hv2"))
             )
         }
 
@@ -89,12 +124,12 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
             }
             preCommitRecords.verify(
-                row(TEST_TOPIC_1, 0, 0, "key1", "value1"),
-                row(TEST_TOPIC_2, 0, 0, "key2", "value2")
+                row(TEST_TOPIC_1, 0, 0, "key1", "value1", emptyList()),
+                row(TEST_TOPIC_2, 0, 0, "key2", "value2", emptyList())
             )
             afterCommitRecords.verify(
-                row(TEST_TOPIC_1, 0, 1, "key3", "value3"),
-                row(TEST_TOPIC_2, 0, 1, "key4", "value4")
+                row(TEST_TOPIC_1, 0, 1, "key3", "value3", emptyList()),
+                row(TEST_TOPIC_2, 0, 1, "key4", "value4", emptyList())
             )
         }
 
@@ -217,7 +252,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
                         close()
                     }
                 }.verify(
-                    row(TEST_TOPIC_1, 0, 0, "key1", "value1")
+                    row(TEST_TOPIC_1, 0, 0, "key1", "value1", emptyList())
                 )
                 broker.reset()
             }
@@ -235,7 +270,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 subscribe(listOf(TEST_TOPIC_1))
                 poll(Duration.ofSeconds(1)).also { close() }
             }.verify(
-                row(TEST_TOPIC_1, 0, 0, "key", "value")
+                row(TEST_TOPIC_1, 0, 0, "key", "value", emptyList())
             )
         }
     }
@@ -277,16 +312,23 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
     }
 
-    private fun ConsumerRecords<*, *>.verify(vararg records: Row5<String, Int, Int, String?, String>) {
+    private fun ConsumerRecords<*, *>.verify(vararg records: Row6<String, Int, Int, String?, String?, List<Pair<String, String>>>) {
         count() shouldBe records.size
-        records.forEach { expected ->
-            any {
-                it.topic() == expected.a
-                    && it.partition() == expected.b
-                    && it.offset() == expected.c.toLong()
-                    && it.key() == expected.d
-                    && it.value() == expected.e
-            } shouldBe true
+        records.forEach { expectedRecord ->
+            val record = asSequence()
+                .filter { it.topic() == expectedRecord.a }
+                .filter { it.partition() == expectedRecord.b }
+                .filter { it.offset() == expectedRecord.c.toLong() }
+                .firstOrNull()
+                ?: throw AssertionError("Could not found record ${expectedRecord.a}/${expectedRecord.b}/${expectedRecord.c}")
+            record.key() shouldBe expectedRecord.d
+            record.value() shouldBe expectedRecord.e
+            val headersMap = record.headers().associate { it.key() to it.value().toString() }
+            expectedRecord.f.forEach { expectedHeader ->
+                val header = headersMap[expectedHeader.first]
+                    ?: throw AssertionError("Could not found header ${expectedRecord.a}/${expectedRecord.b}/${expectedRecord.c}/${expectedHeader.first}")
+                header shouldBe expectedHeader.second
+            }
         }
     }
 

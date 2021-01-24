@@ -53,7 +53,24 @@ public class FetchResponse implements ResponseMessage {
 
         long headOffset;
 
+        @SinceVersion(4)
+        long lastStableOffset;
+
+        @SinceVersion(4)
+        Collection<AbortedTransaction> abortedTransactions;
+
         @VersionMapping(value = 0, sinceVersion = 0)
+        @VersionMapping(value = 2, sinceVersion = 4)
         Collection<Record> records;
+    }
+
+    @lombok.Value
+    @Builder
+    @AllArgsConstructor
+    public static class AbortedTransaction {
+
+        long producerId;
+
+        long firstOffset;
     }
 }

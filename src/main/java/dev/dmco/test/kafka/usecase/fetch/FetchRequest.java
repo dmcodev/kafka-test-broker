@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 
 import java.util.List;
 
-@Request(key = 1, maxVersion = 3)
+@Request(key = 1, maxVersion = 4)
 @lombok.Value
 @Accessors(fluent = true)
 public class FetchRequest implements RequestMessage {
@@ -27,6 +27,9 @@ public class FetchRequest implements RequestMessage {
 
     @SinceVersion(3)
     int maxBytes;
+
+    @SinceVersion(4)
+    byte isolationLevel;
 
     List<Topic> topics;
 
