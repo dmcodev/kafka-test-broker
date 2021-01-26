@@ -56,10 +56,8 @@ public class ResponseBuffer extends ByteArrayOutputStream {
         return putSlot(Integer.BYTES);
     }
 
-    public byte[] read(int from, int length) {
-        byte[] result = new byte[length];
-        System.arraycopy(buf, from, result, 0, length);
-        return result;
+    public ByteBuffer slice(int from, int length) {
+        return ByteBuffer.wrap(buf, from, length);
     }
 
     public int position() {

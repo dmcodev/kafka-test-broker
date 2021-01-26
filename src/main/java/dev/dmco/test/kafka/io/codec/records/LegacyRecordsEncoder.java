@@ -35,14 +35,14 @@ class LegacyRecordsEncoder {
         encodeNullableBytes(record.key(), buffer);
         encodeNullableBytes(record.value(), buffer);
         int recordEndOffset = buffer.position();
-        byte[] checksumInput = buffer.read(checksumInputStartOffset, recordEndOffset - checksumInputStartOffset);
+        ByteBuffer checksumInput = buffer.slice(checksumInputStartOffset, recordEndOffset - checksumInputStartOffset);
         int checksum = computeChecksum(checksumInput);
         checkSumSlot.putInt(checksum);
         int size = recordEndOffset - recordStartOffset;
         sizeSlot.putInt(size);
     }
 
-    private static int computeChecksum(byte[] bytes) {
+    private static int computeChecksum(ByteBuffer bytes) {
         CRC32 checksum = new CRC32();
         checksum.update(bytes);
         return (int) checksum.getValue();
