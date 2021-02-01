@@ -19,8 +19,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.AbstractInterruptibleChannel;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -29,7 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class EventLoop implements AutoCloseable {
@@ -52,8 +53,8 @@ public class EventLoop implements AutoCloseable {
     private final RequestDecoder decoder;
 
     @SneakyThrows
-    public EventLoop(BrokerState state) {
-        this.state = state;
+    public EventLoop(BrokerConfig config) {
+        state = new BrokerState(config);
         decoder = new RequestDecoder(state.requestHandlers());
         try {
             selector = Selector.open();
@@ -88,7 +89,7 @@ public class EventLoop implements AutoCloseable {
     }
 
     public void reset() {
-        execute(this::closeClientConnections);
+        execute(this::resetInternal);
     }
 
     private void eventLoop() {
@@ -216,11 +217,16 @@ public class EventLoop implements AutoCloseable {
     public void close() {
         if (closed.compareAndSet(false, true)) {
             awaitStop();
-            closeAllConnections();
+            closeSockets();
             closeSelector();
             closeActions();
             closeExecutorService();
         }
+    }
+
+    private void resetInternal() {
+        state.reset();
+        closeClientConnections();
     }
 
     @SneakyThrows
@@ -230,21 +236,18 @@ public class EventLoop implements AutoCloseable {
         }
     }
 
-    private void closeAllConnections() {
+    private void closeSockets() {
+        Optional.ofNullable(serverSelectionKey).ifPresent(SelectionKey::cancel);
         closeClientConnections();
-        if (serverChannel != null && serverChannel.isOpen()) {
-            closeChannel(serverChannel);
-        }
+        Optional.ofNullable(serverChannel)
+            .filter(AbstractInterruptibleChannel::isOpen)
+            .ifPresent(this::closeChannel);
     }
 
     private void closeClientConnections() {
-        closeConnections(key -> !key.equals(serverSelectionKey));
-    }
-
-    private void closeConnections(Predicate<SelectionKey> predicate) {
         try {
             selector.keys().stream()
-                .filter(predicate)
+                .filter(key -> !key.equals(serverSelectionKey))
                 .forEach(this::closeSelectionKey);
         } catch (ClosedSelectorException closedSelectorException) {
             LOG.debug("Could not close selection keys, selector already closed");

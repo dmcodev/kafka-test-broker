@@ -32,12 +32,14 @@ class KafkaProducerConsumerSpec : StringSpec() {
 
     init {
         "Should produce and consume messages" {
-            createBroker { TestKafkaBroker() }
+            createBroker { KafkaTestBroker() }
             val clientProperties = clientProperties()
             KafkaProducer<String, String>(clientProperties).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key1", "value1"))
                 send(ProducerRecord(TEST_TOPIC_1, "key2", "value2"))
                 send(ProducerRecord(TEST_TOPIC_2, "key3", "value3"))
+                send(ProducerRecord(TEST_TOPIC_2, null, "value4"))
+                send(ProducerRecord(TEST_TOPIC_2, "key4", null))
                 close()
             }
             KafkaConsumer<String, String>(clientProperties).run {
@@ -46,48 +48,21 @@ class KafkaProducerConsumerSpec : StringSpec() {
             }.verify(
                 row(TEST_TOPIC_1, 0, 0, "key1", "value1", emptyList()),
                 row(TEST_TOPIC_1, 0, 1, "key2", "value2", emptyList()),
-                row(TEST_TOPIC_2, 0, 0, "key3", "value3", emptyList())
+                row(TEST_TOPIC_2, 0, 0, "key3", "value3", emptyList()),
+                row(TEST_TOPIC_2, 0, 1, null, "value4", emptyList()),
+                row(TEST_TOPIC_2, 0, 2, "key4", null, emptyList())
             )
         }
 
-        "Should produce and consume messages with null key" {
-            createBroker { TestKafkaBroker() }
-            val clientProperties = clientProperties()
-            KafkaProducer<String, String>(clientProperties).apply {
-                send(ProducerRecord(TEST_TOPIC_1, null, "value"))
-                close()
-            }
-            KafkaConsumer<String, String>(clientProperties).run {
-                subscribe(listOf(TEST_TOPIC_1))
-                poll(Duration.ofSeconds(1)).also { close() }
-            }.verify(
-                row(TEST_TOPIC_1, 0, 0, null, "value", emptyList())
-            )
-        }
-
-        "Should produce and consume messages with null value" {
-            createBroker { TestKafkaBroker() }
-            val clientProperties = clientProperties()
-            KafkaProducer<String, String>(clientProperties).apply {
-                send(ProducerRecord(TEST_TOPIC_1, "key", null))
-                close()
-            }
-            KafkaConsumer<String, String>(clientProperties).run {
-                subscribe(listOf(TEST_TOPIC_1))
-                poll(Duration.ofSeconds(1)).also { close() }
-            }.verify(
-                row(TEST_TOPIC_1, 0, 0, "key", null, emptyList())
-            )
-        }
-
-        "Should produce and consume messages with headers".config(enabled = false) {
-            createBroker { TestKafkaBroker() }
+        "Should produce and consume messages with headers" {
+            createBroker { KafkaTestBroker() }
             val clientProperties = clientProperties()
             KafkaProducer<String, String>(clientProperties).apply {
                 val record = ProducerRecord(TEST_TOPIC_1, "key", "value")
                 record.headers().apply {
                     add("hk1", "hv1".toByteArray())
                     add("hk2", "hv2".toByteArray())
+                    add("hk3", null)
                 }
                 send(record)
                 close()
@@ -96,12 +71,12 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 subscribe(listOf(TEST_TOPIC_1))
                 poll(Duration.ofSeconds(1)).also { close() }
             }.verify(
-                row(TEST_TOPIC_1, 0, 0, "key", "value", listOf("hk1" to "hv1", "hk2" to "hv2"))
+                row(TEST_TOPIC_1, 0, 0, "key", "value", listOf("hk1" to "hv1", "hk2" to "hv2", "hk3" to null))
             )
         }
 
         "Should commit and resume consuming from last committed offset" {
-            createBroker { TestKafkaBroker() }
+            createBroker { KafkaTestBroker() }
             val clientProperties = clientProperties()
             val producer = KafkaProducer<String, String>(clientProperties).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key1", "value1")).get()
@@ -121,7 +96,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             }
             val afterCommitRecords = KafkaConsumer<String, String>(clientProperties).run {
                 subscribe(listOf(TEST_TOPIC_1, TEST_TOPIC_2))
-                poll(Duration.ofSeconds(1)).also { close(Duration.ZERO) }
+                poll(Duration.ofSeconds(3)).also { close() }
             }
             preCommitRecords.verify(
                 row(TEST_TOPIC_1, 0, 0, "key1", "value1", emptyList()),
@@ -144,7 +119,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val producerRecords = LinkedBlockingDeque(testMessages.map { ProducerRecord(TEST_TOPIC_1, it.first, it.second) })
             val startBarrier = CyclicBarrier(producersCount + consumersCount + 1)
-            createBroker { TestKafkaBroker(brokerConfig) }
+            createBroker { KafkaTestBroker(brokerConfig) }
             repeat(producersCount) {
                 launch(dispatcher) {
                     startBarrier.await()
@@ -193,7 +168,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
             clientProperties["max.partition.fetch.bytes"] = 1024
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val startBarrier = CyclicBarrier(consumersActors + 2)
-            createBroker { TestKafkaBroker(brokerConfig) }
+            createBroker { KafkaTestBroker(brokerConfig) }
             launch(dispatcher) {
                 startBarrier.await()
                 val producer = KafkaProducer<String, String>(clientProperties)
@@ -238,7 +213,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
 
         "Should reset broker state" {
-            val broker = createBroker { TestKafkaBroker() }
+            val broker = createBroker { KafkaTestBroker() }
             val clientProperties = clientProperties()
             repeat(5) {
                 KafkaProducer<String, String>(clientProperties).apply {
@@ -259,7 +234,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
 
         "Should produce and consume using GZIP compression" {
-            createBroker { TestKafkaBroker() }
+            createBroker { KafkaTestBroker() }
             val clientProperties = clientProperties()
             clientProperties["compression.type"] = "gzip"
             KafkaProducer<String, String>(clientProperties).apply {
@@ -275,7 +250,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
     }
 
-    private val createdBrokers = mutableListOf<TestKafkaBroker>()
+    private val createdBrokers = mutableListOf<KafkaTestBroker>()
 
     override fun afterEach(testCase: TestCase, result: TestResult) {
         createdBrokers.forEach { it.close() }
@@ -286,7 +261,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         dispatcher.close()
     }
 
-    private fun createBroker(supplier: () -> TestKafkaBroker): TestKafkaBroker =
+    private fun createBroker(supplier: () -> KafkaTestBroker): KafkaTestBroker =
         supplier().also { createdBrokers.add(it) }
 
     private fun clientProperties(
@@ -312,7 +287,7 @@ class KafkaProducerConsumerSpec : StringSpec() {
         }
     }
 
-    private fun ConsumerRecords<*, *>.verify(vararg records: Row6<String, Int, Int, String?, String?, List<Pair<String, String>>>) {
+    private fun ConsumerRecords<*, *>.verify(vararg records: Row6<String, Int, Int, String?, String?, List<Pair<String, String?>>>) {
         count() shouldBe records.size
         records.forEach { expectedRecord ->
             val record = asSequence()
@@ -323,10 +298,10 @@ class KafkaProducerConsumerSpec : StringSpec() {
                 ?: throw AssertionError("Could not found record ${expectedRecord.a}/${expectedRecord.b}/${expectedRecord.c}")
             record.key() shouldBe expectedRecord.d
             record.value() shouldBe expectedRecord.e
-            val headersMap = record.headers().associate { it.key() to it.value().toString() }
+            val headersMap = record.headers().associate { it.key() to it.value()?.let(::String) }
+            headersMap.size shouldBe expectedRecord.f.size
             expectedRecord.f.forEach { expectedHeader ->
                 val header = headersMap[expectedHeader.first]
-                    ?: throw AssertionError("Could not found header ${expectedRecord.a}/${expectedRecord.b}/${expectedRecord.c}/${expectedHeader.first}")
                 header shouldBe expectedHeader.second
             }
         }

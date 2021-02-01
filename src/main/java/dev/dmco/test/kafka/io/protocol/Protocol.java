@@ -8,16 +8,31 @@ import java.util.Optional;
 public class Protocol {
 
     public static int decodeVarUInt(ByteBuffer buffer) {
-        return VarUInt.decode(buffer);
+        return (int) VarULong.decode(buffer);
     }
 
     public static void encodeVarUInt(int value, ResponseBuffer buffer) {
-        VarUInt.encode(value, buffer);
+        VarULong.encode(value, buffer);
     }
 
     public static int decodeVarInt(ByteBuffer buffer) {
-        int value = decodeVarUInt(buffer);
-        return (value >>> 1) ^ (-(value & 1));
+        return (int) VarLong.decode(buffer);
+    }
+
+    public static void encodeVarInt(int value, ResponseBuffer buffer) {
+        VarLong.encode(value, buffer);
+    }
+
+    public static int sizeOfVarInt(int value) {
+        return VarLong.sizeOf(value);
+    }
+
+    public static void encodeVarLong(long value, ResponseBuffer buffer) {
+        VarLong.encode(value, buffer);
+    }
+
+    public static int sizeOfVarLong(long value) {
+        return VarLong.sizeOf(value);
     }
 
     public static java.lang.String decodeString(ByteBuffer buffer) {

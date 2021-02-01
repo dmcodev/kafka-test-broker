@@ -2,26 +2,22 @@ package dev.dmco.test.kafka;
 
 import dev.dmco.test.kafka.config.BrokerConfig;
 import dev.dmco.test.kafka.io.EventLoop;
-import dev.dmco.test.kafka.state.BrokerState;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class TestKafkaBroker implements AutoCloseable {
+public class KafkaTestBroker implements AutoCloseable {
 
-    private final BrokerState state;
     private final EventLoop eventLoop;
 
-    public TestKafkaBroker() {
+    public KafkaTestBroker() {
         this(BrokerConfig.createDefault());
     }
 
-    public TestKafkaBroker(BrokerConfig config) {
-        state = new BrokerState(config);
-        eventLoop = new EventLoop(state);
+    public KafkaTestBroker(BrokerConfig config) {
+        eventLoop = new EventLoop(config);
     }
 
     public void reset() {
-        eventLoop.execute(state::reset);
         eventLoop.reset();
     }
 

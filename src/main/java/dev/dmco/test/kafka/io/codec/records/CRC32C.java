@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 public class CRC32C {
 
     private static final int BYTE_MASK = 0xFF;
+    private static final long LONG_MASK = 0xFFFFFFFFL;
 
     private static final int[] CRC_TABLE = {
         0x00000000, 0xF26B8303, 0xE13B70F7, 0x1350F3F4,
@@ -81,6 +82,6 @@ public class CRC32C {
         while (buffer.hasRemaining()) {
             crc = crc >>> 8 ^ CRC_TABLE[(crc ^ buffer.get() & BYTE_MASK) & BYTE_MASK];
         }
-        return crc;
+        return (int) ((crc ^ LONG_MASK) & LONG_MASK);
     }
 }

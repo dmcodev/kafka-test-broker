@@ -43,8 +43,7 @@ public class RecordsCodec implements Codec {
         if (version == 0 || version == 1) {
             LegacyRecordsEncoder.encode(records, buffer, version);
         } else if (version == 2) {
-            LegacyRecordsEncoder.encode(records, buffer, 1);
-            //RecordsEncoder.encode(records, buffer);
+            RecordsEncoder.encode(records, buffer);
         } else {
             throw versionNotSupportedException(version);
         }

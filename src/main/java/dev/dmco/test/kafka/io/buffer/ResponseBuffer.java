@@ -15,6 +15,10 @@ public class ResponseBuffer extends ByteArrayOutputStream {
         super(128);
     }
 
+    public ResponseBuffer(int capacity) {
+        super(capacity);
+    }
+
     public ResponseBuffer putByte(byte value) {
         write(value);
         return this;
