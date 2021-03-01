@@ -24,7 +24,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
 
     private Collection<MetadataResponse.Topic> createResponseTopics(List<String> topicNames, BrokerState state) {
         return topicNames.stream()
-            .map(state::getTopic)
+            .map(state::topic)
             .map(topic ->
                 MetadataResponse.Topic.builder()
                     .name(topic.name())

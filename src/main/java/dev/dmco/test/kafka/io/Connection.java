@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @RequiredArgsConstructor
-class Connection {
+public class Connection {
 
     private static final int MESSAGE_SIZE_BYTES = 4;
 

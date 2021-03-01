@@ -9,7 +9,7 @@ public class LeaveGroupRequestHandler implements RequestHandler<LeaveGroupReques
 
     @Override
     public void handle(LeaveGroupRequest request, BrokerState state, ResponseScheduler<LeaveGroupResponse> scheduler) {
-        ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
+        ConsumerGroup consumerGroup = state.consumerGroup(request.groupId());
         consumerGroup.removeMember(request.memberId());
         scheduler.scheduleResponse(LeaveGroupResponse.builder().build());
     }

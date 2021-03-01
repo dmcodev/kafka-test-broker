@@ -16,7 +16,7 @@ public class OffsetFetchRequestHandler implements RequestHandler<OffsetFetchRequ
 
     @Override
     public void handle(OffsetFetchRequest request, BrokerState state, ResponseScheduler<OffsetFetchResponse> scheduler) {
-        ConsumerGroup consumerGroup = state.getConsumerGroup(request.groupId());
+        ConsumerGroup consumerGroup = state.consumerGroup(request.groupId());
         scheduler.scheduleResponse(
             OffsetFetchResponse.builder()
                 .topics(

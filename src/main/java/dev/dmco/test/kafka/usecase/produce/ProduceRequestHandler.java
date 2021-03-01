@@ -39,8 +39,8 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
         ProduceRequest.Partition targetPartition,
         BrokerState state
     ) {
-        AppendResult result = state.getTopic(targetTopic.name())
-            .getPartition(targetPartition.id())
+        AppendResult result = state.topic(targetTopic.name())
+            .partition(targetPartition.id())
             .append(targetPartition.records());
         return ProduceResponse.Partition.builder()
             .id(targetPartition.id())

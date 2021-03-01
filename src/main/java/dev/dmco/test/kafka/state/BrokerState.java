@@ -2,10 +2,9 @@ package dev.dmco.test.kafka.state;
 
 import dev.dmco.test.kafka.config.BrokerConfig;
 import dev.dmco.test.kafka.config.TopicConfig;
-import dev.dmco.test.kafka.io.EventLoop;
 import dev.dmco.test.kafka.logging.Logger;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.experimental.Accessors;
 
 import java.util.Collections;
@@ -13,28 +12,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Value
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 public class BrokerState {
 
     public static final int NODE_ID = 1;
 
-    private static final Logger LOG = Logger.create(EventLoop.class);
+    private static final Logger LOG = Logger.create(BrokerState.class);
 
-    @Getter
-    private final RequestHandlers requestHandlers = new RequestHandlers();
+    RequestHandlers requestHandlers = new RequestHandlers();
+    Map<String, Topic> topics = new HashMap<>();
+    Map<String, ConsumerGroup> consumerGroups = new HashMap<>();
 
-    private final Map<String, Topic> topics = new HashMap<>();
-    private final Map<String, ConsumerGroup> consumerGroups = new HashMap<>();
+    BrokerConfig config;
 
-    @Getter
-    private final BrokerConfig config;
-
-    public ConsumerGroup getConsumerGroup(String name) {
+    public ConsumerGroup consumerGroup(String name) {
         return consumerGroups.computeIfAbsent(name, ConsumerGroup::new);
     }
 
-    public Topic getTopic(String name) {
+    public Topic topic(String name) {
         return topics.computeIfAbsent(name, this::createTopic);
     }
 
