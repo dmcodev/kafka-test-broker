@@ -1,22 +1,22 @@
 package dev.dmco.test.kafka.state.view;
 
 import dev.dmco.test.kafka.messages.Record;
-import lombok.AccessLevel;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Value
 @Builder
-@Getter(AccessLevel.NONE)
+@Accessors(fluent = true)
 public class RecordView {
 
     @FunctionalInterface
@@ -25,44 +25,41 @@ public class RecordView {
     }
 
     int partitionIndex;
+    long offset;
     byte[] key;
     byte[] value;
     Map<String, byte[]> headers;
 
-    public int partitionIndex() {
-        return partitionIndex;
-    }
-
     public byte[] key() {
         return copy(key);
-    }
-
-    public String keyString() {
-        return keyString(StandardCharsets.UTF_8);
-    }
-
-    public String keyString(Charset charset) {
-        return new String(key(), charset);
     }
 
     public <T> T key(BytesDecoder<T> decoder) {
         return decode(key(), decoder);
     }
 
+    public String keyString() {
+        return decodeString(key, StandardCharsets.UTF_8);
+    }
+
+    public String keyString(Charset charset) {
+        return decodeString(key, charset);
+    }
+
     public byte[] value() {
         return copy(value);
     }
 
+    public <T> T value(BytesDecoder<T> decoder) {
+        return decode(value(), decoder);
+    }
+
     public String valueString() {
-        return valueString(StandardCharsets.UTF_8);
+        return decodeString(value, StandardCharsets.UTF_8);
     }
 
     public String valueString(Charset charset) {
-        return new String(value(), charset);
-    }
-
-    public <T> T value(BytesDecoder<T> decoder) {
-        return decode(value(), decoder);
+        return decodeString(value, charset);
     }
 
     public Map<String, byte[]> headers() {
@@ -80,30 +77,32 @@ public class RecordView {
     }
 
     public byte[] header(String name) {
-        return Optional.ofNullable(headers.get(name))
-            .map(RecordView::copy)
-            .orElseThrow(() -> new IllegalArgumentException("Header " + name + " does not exist"));
-    }
-
-    public String headerString(String name) {
-        return headerString(headerString(name), StandardCharsets.UTF_8);
-    }
-
-    public String headerString(String name, Charset charset) {
-        return new String(header(name), charset);
+        return copy(headers.get(name));
     }
 
     public <T> T header(String name, BytesDecoder<T> decoder) {
         return decode(header(name), decoder);
     }
 
+    public String headerString(String name) {
+        return decodeString(headers.get(name), StandardCharsets.UTF_8);
+    }
+
+    public String headerString(String name, Charset charset) {
+        return decodeString(headers.get(name), charset);
+    }
+
     private static byte[] copy(byte[] bytes) {
-        return Arrays.copyOf(bytes, bytes.length);
+        return Optional.ofNullable(bytes).map(it -> Arrays.copyOf(it, it.length)).orElse(null);
     }
 
     @SneakyThrows
     private static <T> T decode(byte[] bytes, BytesDecoder<T> decoder) {
-        return decoder.decode(bytes);
+        return Objects.nonNull(bytes) ? decoder.decode(bytes) : null;
+    }
+
+    private static String decodeString(byte[] bytes, Charset charset) {
+        return Optional.ofNullable(bytes).map(it -> new String(it, charset)).orElse(null);
     }
 
     public static RecordView from(Record record, int partitionIndex) {
