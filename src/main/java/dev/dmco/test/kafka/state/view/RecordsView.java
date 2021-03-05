@@ -5,12 +5,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Value
 @Builder
@@ -67,5 +69,16 @@ public class RecordsView {
 
     public Collection<RecordView> allByValue(String value) {
         return all(it -> Objects.equals(value, it.valueString()));
+    }
+
+    static RecordsView merge(RecordsView first, RecordsView second) {
+        Collection<RecordView> records = Stream.of(first.records, second.records)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+        return new RecordsView(records);
+    }
+
+    static RecordsView empty() {
+        return new RecordsView(new ArrayList<>());
     }
 }

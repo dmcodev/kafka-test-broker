@@ -6,7 +6,6 @@ import dev.dmco.test.kafka.state.Partition;
 import dev.dmco.test.kafka.usecase.RequestHandler;
 import dev.dmco.test.kafka.usecase.ResponseScheduler;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,15 +46,5 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
             .headOffset(partition.head())
             .records(records)
             .build();
-    }
-
-    private boolean hasNoRecords(FetchResponse response) {
-        return !response.topics().stream()
-            .map(FetchResponse.Topic::partitions)
-            .flatMap(Collection::stream)
-            .map(FetchResponse.Partition::records)
-            .flatMap(Collection::stream)
-            .findAny()
-            .isPresent();
     }
 }

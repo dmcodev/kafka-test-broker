@@ -37,6 +37,13 @@ public class TopicView {
             .orElseThrow(() -> new IllegalArgumentException("Partition with index " + index + " does not exist"));
     }
 
+    public RecordsView records() {
+        return partitions.values().stream()
+            .map(PartitionView::records)
+            .reduce(RecordsView::merge)
+            .orElseGet(RecordsView::empty);
+    }
+
     public static TopicView from(Topic state) {
         return TopicView.builder()
             .name(state.name())
