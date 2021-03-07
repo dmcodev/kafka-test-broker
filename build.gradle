@@ -5,7 +5,7 @@ plugins {
     id "io.freefair.lombok" version '5.3.0'
 }
 
-group 'dev.dmco'
+group 'dev.dmcode'
 version '0.1-SNAPSHOT'
 
 repositories {
