@@ -38,6 +38,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * Embedded Kafka broker implementation designed for integration testing.
+ */
 public class KafkaTestBroker implements AutoCloseable {
 
     private static final Logger LOG = Logger.create(KafkaTestBroker.class);
@@ -57,10 +60,17 @@ public class KafkaTestBroker implements AutoCloseable {
     private final BrokerState state;
     private final RequestDecoder decoder;
 
+    /**
+     * Creates a broker with default config.
+     */
     public KafkaTestBroker() {
         this(BrokerConfig.createDefault());
     }
 
+    /**
+     * Creates a broker with customized config.
+     * @param config Broker config to be used.
+     */
     @SneakyThrows
     public KafkaTestBroker(BrokerConfig config) {
         state = new BrokerState(config);
@@ -77,12 +87,34 @@ public class KafkaTestBroker implements AutoCloseable {
         }
     }
 
+    /**
+     * Returns current, immutable snapshot of broker's state. Useful for verification of sent records.
+     * @return Current snapshot of broker's state.
+     */
     public BrokerStateView state() {
         return execute(() -> BrokerStateView.from(state));
     }
 
+    /**
+     * Deletes all records and consumer groups from memory. Closes all client TCP connections.
+     */
     public void reset() {
         execute(this::resetInternal);
+    }
+
+    /**
+     * Closes the broker by releasing all IO resources.
+     */
+    @Override
+    @SneakyThrows
+    public void close() {
+        if (closed.compareAndSet(false, true)) {
+            awaitStop();
+            closeSockets();
+            closeSelector();
+            closeActions();
+            closeExecutorService();
+        }
     }
 
     private void eventLoop() {
@@ -223,18 +255,6 @@ public class KafkaTestBroker implements AutoCloseable {
             selector.wakeup();
         }
         return eventLoopAction.getResult();
-    }
-
-    @Override
-    @SneakyThrows
-    public void close() {
-        if (closed.compareAndSet(false, true)) {
-            awaitStop();
-            closeSockets();
-            closeSelector();
-            closeActions();
-            closeExecutorService();
-        }
     }
 
     private void resetInternal() {

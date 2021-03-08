@@ -105,7 +105,7 @@ public class RecordView {
         return Optional.ofNullable(bytes).map(it -> new String(it, charset)).orElse(null);
     }
 
-    public static RecordView from(Record record, int partitionIndex) {
+    static RecordView from(Record record, int partitionIndex) {
         return RecordView.builder()
             .partitionIndex(partitionIndex)
             .key(record.key().map(RecordView::copy).orElse(null))

@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.state.view;
 
+import dev.dmco.test.kafka.state.ConsumerGroup;
 import dev.dmco.test.kafka.state.Topic;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -44,12 +45,12 @@ public class TopicView {
             .orElseGet(RecordsView::empty);
     }
 
-    public static TopicView from(Topic state) {
+    static TopicView from(Topic state, Collection<ConsumerGroup> consumerGroups) {
         return TopicView.builder()
             .name(state.name())
             .partitions(
                 state.partitions().values().stream()
-                    .map(PartitionView::from)
+                    .map(partition -> PartitionView.from(partition, consumerGroups))
                     .collect(Collectors.toMap(PartitionView::index, Function.identity()))
             )
             .build();

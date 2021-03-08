@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Getter
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -26,19 +27,12 @@ public class ConsumerGroup {
     private final Map<String, Member> members = new HashMap<>();
     private final Map<Partition, Long> offsets = new HashMap<>();
 
-    @Getter
     @EqualsAndHashCode.Include
     private final String name;
 
-    @Getter
     private int generationId;
-
-    @Getter
     private String leaderId;
-
-    @Getter
     private String protocol;
-
     private int memberSequenceNumber;
 
     public String findMatchingProtocol(Set<String> protocols) {
