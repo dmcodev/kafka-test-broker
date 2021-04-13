@@ -26,7 +26,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
-class KafkaProducerConsumerSpec : StringSpec() {
+class ProducerConsumerSpec : StringSpec() {
 
     private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
 

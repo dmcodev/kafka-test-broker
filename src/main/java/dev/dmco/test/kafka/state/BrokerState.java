@@ -3,36 +3,52 @@ package dev.dmco.test.kafka.state;
 import dev.dmco.test.kafka.config.BrokerConfig;
 import dev.dmco.test.kafka.config.TopicConfig;
 import dev.dmco.test.kafka.logging.Logger;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.experimental.Accessors;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Value
-@RequiredArgsConstructor
-@Accessors(fluent = true)
 public class BrokerState {
 
     public static final int NODE_ID = 1;
 
     private static final Logger LOG = Logger.create(BrokerState.class);
 
-    RequestHandlers requestHandlers = new RequestHandlers();
-    Map<String, Topic> topics = new HashMap<>();
-    Map<String, ConsumerGroup> consumerGroups = new HashMap<>();
+    private final RequestHandlers requestHandlers = new RequestHandlers();
+    private final Map<String, Topic> topics = new HashMap<>();
+    private final Map<String, ConsumerGroup> consumerGroups = new HashMap<>();
 
-    BrokerConfig config;
+    private final BrokerConfig config;
 
-    public ConsumerGroup consumerGroup(String name) {
+    public BrokerState(BrokerConfig config) {
+        this.config = config;
+    }
+
+    public ConsumerGroup getOrCreateConsumerGroup(String name) {
         return consumerGroups.computeIfAbsent(name, ConsumerGroup::new);
     }
 
-    public Topic topic(String name) {
+    public Topic getOrCreateTopic(String name) {
         return topics.computeIfAbsent(name, this::createTopic);
+    }
+
+    public Optional<Topic> getTopic(String name) {
+        return Optional.ofNullable(topics.get(name));
+    }
+
+    public void reset() {
+        topics.clear();
+        consumerGroups.clear();
+        LOG.debug("Broker state cleared");
+    }
+
+    public RequestHandlers getRequestHandlers() {
+        return requestHandlers;
+    }
+
+    public BrokerConfig getConfig() {
+        return config;
     }
 
     private Topic createTopic(String name) {
@@ -41,11 +57,5 @@ public class BrokerState {
             .findFirst()
             .orElseGet(() -> TopicConfig.createDefault(name));
         return new Topic(name, topicConfig.partitionsNumber());
-    }
-
-    public void reset() {
-        topics.clear();
-        consumerGroups.clear();
-        LOG.debug("Broker state cleared");
     }
 }

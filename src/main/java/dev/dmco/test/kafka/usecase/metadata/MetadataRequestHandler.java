@@ -1,5 +1,6 @@
 package dev.dmco.test.kafka.usecase.metadata;
 
+import dev.dmco.test.kafka.config.BrokerConfig;
 import dev.dmco.test.kafka.state.BrokerState;
 import dev.dmco.test.kafka.state.Topic;
 import dev.dmco.test.kafka.usecase.RequestHandler;
@@ -24,7 +25,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
 
     private Collection<MetadataResponse.Topic> createResponseTopics(List<String> topicNames, BrokerState state) {
         return topicNames.stream()
-            .map(state::topic)
+            .map(state::getOrCreateTopic)
             .map(topic ->
                 MetadataResponse.Topic.builder()
                     .name(topic.name())
@@ -46,10 +47,11 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
     }
 
     private MetadataResponse.Broker createBrokerMetadata(BrokerState state) {
+        BrokerConfig config = state.getConfig();
         return MetadataResponse.Broker.builder()
             .nodeId(BrokerState.NODE_ID)
-            .host(state.config().host())
-            .port(state.config().port())
+            .host(config.host())
+            .port(config.port())
             .build();
     }
 }

@@ -9,7 +9,8 @@ import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.state.BrokerState;
-import dev.dmco.test.kafka.state.view.BrokerStateView;
+import dev.dmco.test.kafka.state.query.BrokerStateQuery;
+import dev.dmco.test.kafka.state.query.QueryExecutor;
 import dev.dmco.test.kafka.usecase.ResponseScheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -36,11 +37,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-/**
- * Embedded Kafka broker implementation designed for integration testing.
- */
 public class KafkaTestBroker implements AutoCloseable {
 
     private static final Logger LOG = Logger.create(KafkaTestBroker.class);
@@ -60,21 +59,14 @@ public class KafkaTestBroker implements AutoCloseable {
     private final BrokerState state;
     private final RequestDecoder decoder;
 
-    /**
-     * Creates a broker with default config.
-     */
     public KafkaTestBroker() {
         this(BrokerConfig.createDefault());
     }
 
-    /**
-     * Creates a broker with customized config.
-     * @param config Broker config to be used.
-     */
     @SneakyThrows
     public KafkaTestBroker(BrokerConfig config) {
         state = new BrokerState(config);
-        decoder = new RequestDecoder(state.requestHandlers());
+        decoder = new RequestDecoder(state.getRequestHandlers());
         try {
             selector = Selector.open();
             serverChannel = createServerChannel();
@@ -87,24 +79,19 @@ public class KafkaTestBroker implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns current, immutable snapshot of broker's state. Useful for verification of sent records.
-     * @return Current snapshot of broker's state.
-     */
-    public BrokerStateView state() {
-        return execute(() -> BrokerStateView.from(state));
+    public BrokerStateQuery query() {
+        return new BrokerStateQuery(() -> state, new QueryExecutor() {
+            @Override
+            public <T> T execute(Supplier<T> query) {
+                return KafkaTestBroker.this.execute(query::get);
+            }
+        });
     }
 
-    /**
-     * Deletes all records and consumer groups from memory. Closes all client TCP connections.
-     */
     public void reset() {
         execute(this::resetInternal);
     }
 
-    /**
-     * Closes the broker by releasing all IO resources.
-     */
     @Override
     @SneakyThrows
     public void close() {
@@ -200,7 +187,7 @@ public class KafkaTestBroker implements AutoCloseable {
         Connection connection = (Connection) selectionKey.attachment();
         connection.addRequestCorrelationId(request.header().correlationId());
         ResponseScheduler<ResponseMessage> responseScheduler = new EventLoopResponseScheduler(request, selectionKey);
-        state.requestHandlers()
+        state.getRequestHandlers()
             .select(request)
             .handle(request, state, responseScheduler);
     }
@@ -226,7 +213,7 @@ public class KafkaTestBroker implements AutoCloseable {
     }
 
     private void bindServerChannel() throws IOException {
-        BrokerConfig config = state.config();
+        BrokerConfig config = state.getConfig();
         InetSocketAddress bindAddress = new InetSocketAddress(config.host(), config.port());
         serverChannel.bind(bindAddress);
     }

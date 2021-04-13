@@ -22,7 +22,7 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
     @Override
     public void handle(JoinGroupRequest request, BrokerState state, ResponseScheduler<JoinGroupResponse> scheduler) {
         String groupId = request.groupId();
-        ConsumerGroup group = state.consumerGroup(groupId);
+        ConsumerGroup group = state.getOrCreateConsumerGroup(groupId);
         Set<String> memberProtocols = extractMembersProtocols(request);
         String selectedProtocol = group.findMatchingProtocol(memberProtocols);
         if (selectedProtocol == null) {

@@ -15,7 +15,7 @@ public class ApiVersionsRequestHandler implements RequestHandler<ApiVersionsRequ
         scheduler.scheduleResponse(
             ApiVersionsResponse.builder()
                 .apiKeys(
-                    state.requestHandlers().handledRequestTypes().stream()
+                    state.getRequestHandlers().handledRequestTypes().stream()
                         .map(type -> type.getAnnotation(Request.class))
                         .map(this::createApiKey)
                         .collect(Collectors.toList())

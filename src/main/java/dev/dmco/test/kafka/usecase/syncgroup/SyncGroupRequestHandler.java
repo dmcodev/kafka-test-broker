@@ -17,7 +17,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
 
     @Override
     public void handle(SyncGroupRequest request, BrokerState state, ResponseScheduler<SyncGroupResponse> scheduler) {
-        ConsumerGroup group = state.consumerGroup(request.groupId());
+        ConsumerGroup group = state.getOrCreateConsumerGroup(request.groupId());
         Map<String, List<Partition>> partitionAssignments = extractPartitionAssignments(request, state);
         if (!partitionAssignments.isEmpty() && !group.assignPartitions(partitionAssignments)) {
             SyncGroupResponse response = SyncGroupResponse.builder()
@@ -42,7 +42,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
                     member -> member.assignment().partitionAssignments().stream()
                         .flatMap(assignment ->
                             assignment.partitionIds().stream()
-                                .map(partitionId -> state.topic(assignment.topicName()).partition(partitionId))
+                                .map(partitionId -> state.getOrCreateTopic(assignment.topicName()).partition(partitionId))
                         )
                         .collect(Collectors.toList())
                 )

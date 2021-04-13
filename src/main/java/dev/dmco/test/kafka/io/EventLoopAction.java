@@ -38,7 +38,7 @@ public class EventLoopAction<T> {
     }
 
     public EventLoopAction<T> close() {
-        future.completeExceptionally(new IllegalStateException("Could not execute action, event loop has been closed"));
+        future.completeExceptionally(new IllegalStateException("Broker is closed"));
         return this;
     }
 }

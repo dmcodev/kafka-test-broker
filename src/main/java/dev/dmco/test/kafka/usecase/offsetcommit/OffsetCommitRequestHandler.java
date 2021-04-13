@@ -17,7 +17,7 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
 
     @Override
     public void handle(OffsetCommitRequest request, BrokerState state, ResponseScheduler<OffsetCommitResponse> scheduler) {
-        ConsumerGroup consumerGroup = state.consumerGroup(request.groupId());
+        ConsumerGroup consumerGroup = state.getOrCreateConsumerGroup(request.groupId());
         ErrorCode memberError = consumerGroup.validateMember(request.memberId());
         if (memberError != ErrorCode.NO_ERROR) {
             LOG.debug("{}-{} commit error: {}", request.groupId(), request.memberId(), memberError);
@@ -39,7 +39,7 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
         ConsumerGroup consumerGroup,
         ErrorCode memberError
     ) {
-        Topic topic = state.topic(requestTopic.name());
+        Topic topic = state.getOrCreateTopic(requestTopic.name());
         return OffsetCommitResponse.Topic.builder()
             .name(requestTopic.name())
             .partitions(
