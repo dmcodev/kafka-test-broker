@@ -3,7 +3,6 @@ package dev.dmco.test.kafka.state;
 import dev.dmco.test.kafka.messages.Record;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
@@ -16,9 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Getter
 @RequiredArgsConstructor
-@Accessors(fluent = true)
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Partition {
@@ -33,10 +30,10 @@ public class Partition {
     @EqualsAndHashCode.Include
     private final Topic topic;
 
-    private long head = 0;
+    private long headOffset = 0;
 
     public AppendResult append(Collection<Record> records) {
-        long baseOffset = head;
+        long baseOffset = headOffset;
         records.forEach(this::append);
         return AppendResult.builder()
             .baseOffset(baseOffset)
@@ -63,9 +60,25 @@ public class Partition {
         return result;
     }
 
+    public Collection<Record> getRecords() {
+        return records.values();
+    }
+
+    public long getHeadOffset() {
+        return headOffset;
+    }
+
+    public Topic getTopic() {
+        return topic;
+    }
+
+    public int getId() {
+        return id;
+    }
+
     private void append(Record record) {
-        records.put(head, record.withOffset(head));
-        head++;
+        records.put(headOffset, record.withOffset(headOffset));
+        headOffset++;
     }
 
     @Value

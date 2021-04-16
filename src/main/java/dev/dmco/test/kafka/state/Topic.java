@@ -3,6 +3,7 @@ package dev.dmco.test.kafka.state;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -25,6 +26,10 @@ public class Topic {
         createPartitions();
     }
 
+    public Collection<Partition> getPartitions() {
+        return partitions.values();
+    }
+
     public Partition getOrCreatePartition(int partitionId) {
         return partitions.computeIfAbsent(partitionId, this::createPartition);
     }
@@ -44,6 +49,6 @@ public class Topic {
     private void createPartitions() {
         IntStream.range(0, numberOfPartitions)
             .mapToObj(this::createPartition)
-            .forEach(partition -> partitions.put(partition.id(), partition));
+            .forEach(partition -> partitions.put(partition.getId(), partition));
     }
 }
