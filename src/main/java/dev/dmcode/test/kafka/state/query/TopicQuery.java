@@ -1,11 +1,14 @@
 package dev.dmcode.test.kafka.state.query;
 
+import dev.dmcode.test.kafka.messages.Record;
 import dev.dmcode.test.kafka.state.BrokerState;
 import dev.dmcode.test.kafka.state.Topic;
 import dev.dmcode.test.kafka.state.query.deserializer.RecordDeserializer;
 import dev.dmcode.test.kafka.state.query.view.RecordView;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -33,7 +36,7 @@ public class TopicQuery {
             .getPartitions()
             .stream()
             .flatMap(partition -> partition.getRecords().stream()
-                .map(record -> RecordView.create(partition.getId(), record, deserializer))
+                .map(record -> createRecordView(partition.getId(), record, deserializer))
             );
         return new RecordSetQuery<>(records, deserializer, executor);
     }
@@ -45,5 +48,20 @@ public class TopicQuery {
     private Topic getTopicOrThrow(String name) {
         return getTopic(name)
             .orElseThrow(() -> new IllegalArgumentException("Topic does not exist: " + name));
+    }
+
+    private static <K, V, HV> RecordView<K, V, HV> createRecordView(
+        int partitionId,
+        Record record,
+        RecordDeserializer<K, V, HV> deserializer
+    ) {
+        K key = record.key().map(deserializer::deserializeKey).orElse(null);
+        V value = record.value().map(deserializer::deserializeValue).orElse(null);
+        Map<String, HV> headers = new HashMap<>();
+        for (Record.Header header : record.headers()) {
+            HV headerValue = header.value().map(deserializer::deserializeHeaderValue).orElse(null);
+            headers.put(header.key(), headerValue);
+        }
+        return new RecordView<>(partitionId, record.offset(), key, value, headers);
     }
 }

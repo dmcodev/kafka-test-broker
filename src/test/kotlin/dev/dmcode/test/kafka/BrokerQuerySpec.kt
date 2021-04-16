@@ -99,6 +99,31 @@ class BrokerQuerySpec : StringSpec() {
                 .message shouldContain "No matching record found"
             records.filterByKey { it == "non_existing" }.collect().isEmpty() shouldBe true
         }
+
+        "Should filter records by value" {
+            val broker = createBroker()
+            KafkaProducer<String, String>(clientProperties()).apply {
+                send(ProducerRecord(TEST_TOPIC_1, "key1", "value1"))
+                send(ProducerRecord(TEST_TOPIC_1, "key2", null))
+                send(ProducerRecord(TEST_TOPIC_1, null, "value3"))
+                close()
+            }
+            val records = broker.query()
+                .selectTopic(TEST_TOPIC_1)
+                .selectRecords()
+                .useDeserializer(RecordDeserializer.string())
+            with(records.filterByValue { it?.endsWith("3") == true }.collectSingle()) {
+                offset shouldBe 2
+                key shouldBe null
+            }
+            with(records.filterByValue { it == null }.collectSingle()) {
+                offset shouldBe 1
+                key shouldBe "key2"
+            }
+            with(records.filterByValue { it?.startsWith("val") == true }.collect()) {
+                size shouldBe 2
+            }
+        }
     }
 
     private val createdBrokers = mutableListOf<KafkaTestBroker>()
