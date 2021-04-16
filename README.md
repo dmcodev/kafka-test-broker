@@ -60,9 +60,9 @@ broker.close();
 
 #### Complete example with producer and consumer
 ```Java
-import dev.dmco.test.kafka.KafkaTestBroker;
-import dev.dmco.test.kafka.config.BrokerConfig;
-import dev.dmco.test.kafka.config.TopicConfig;
+import KafkaTestBroker;
+import BrokerConfig;
+import TopicConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;

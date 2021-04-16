@@ -1,6 +1,6 @@
-import dev.dmco.test.kafka.KafkaTestBroker;
-import dev.dmco.test.kafka.config.BrokerConfig;
-import dev.dmco.test.kafka.config.TopicConfig;
+import dev.dmcode.test.kafka.KafkaTestBroker;
+import dev.dmcode.test.kafka.config.BrokerConfig;
+import dev.dmcode.test.kafka.config.TopicConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
