@@ -113,7 +113,7 @@ public class ConsumerGroup {
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
         return offsets.keySet().stream()
-            .filter(partition -> topicName.equals(partition.topic().name()))
+            .filter(partition -> topicName.equals(partition.topic().getName()))
             .collect(Collectors.toMap(Partition::id, this::committedOffset));
     }
 

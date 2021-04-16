@@ -39,7 +39,7 @@ public class FetchRequestHandler implements RequestHandler<FetchRequest, FetchRe
     }
 
     private FetchResponse.Partition fetchPartition(String topicName, FetchRequest.Partition requestPartition, BrokerState state) {
-        Partition partition = state.getOrCreateTopic(topicName).partition(requestPartition.partitionId());
+        Partition partition = state.getOrCreateTopic(topicName).getOrCreatePartition(requestPartition.partitionId());
         List<Record> records = partition.fetch(requestPartition.fetchOffset(), requestPartition.maxBytes());
         return FetchResponse.Partition.builder()
             .id(partition.id())

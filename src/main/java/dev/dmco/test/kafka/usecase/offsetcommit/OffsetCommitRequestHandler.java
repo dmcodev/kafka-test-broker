@@ -57,7 +57,7 @@ public class OffsetCommitRequestHandler implements RequestHandler<OffsetCommitRe
         ErrorCode memberError
     ) {
         if (memberError == ErrorCode.NO_ERROR) {
-            Partition partition = topic.partition(requestPartition.id());
+            Partition partition = topic.getOrCreatePartition(requestPartition.id());
             consumerGroup.commit(partition, requestPartition.committedOffset());
         }
         return OffsetCommitResponse.Partition.builder()

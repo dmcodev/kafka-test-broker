@@ -9,7 +9,7 @@ import dev.dmco.test.kafka.logging.Logger;
 import dev.dmco.test.kafka.messages.request.RequestMessage;
 import dev.dmco.test.kafka.messages.response.ResponseMessage;
 import dev.dmco.test.kafka.state.BrokerState;
-import dev.dmco.test.kafka.state.query.BrokerStateQuery;
+import dev.dmco.test.kafka.state.query.BrokerQuery;
 import dev.dmco.test.kafka.state.query.QueryExecutor;
 import dev.dmco.test.kafka.usecase.ResponseScheduler;
 import lombok.RequiredArgsConstructor;
@@ -79,8 +79,8 @@ public class KafkaTestBroker implements AutoCloseable {
         }
     }
 
-    public BrokerStateQuery query() {
-        return new BrokerStateQuery(() -> state, new QueryExecutor() {
+    public BrokerQuery query() {
+        return new BrokerQuery(() -> state, new QueryExecutor() {
             @Override
             public <T> T execute(Supplier<T> query) {
                 return KafkaTestBroker.this.execute(query::get);

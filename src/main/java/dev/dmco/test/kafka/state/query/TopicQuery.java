@@ -18,8 +18,13 @@ public class TopicQuery {
         return executor.execute(query);
     }
 
-    private Supplier<Topic> getTopic() {
-        return () -> input.get()
+    public int numberOfPartitions() {
+        Supplier<Integer> query = () -> getTopic().getNumberOfPartitions();
+        return executor.execute(query);
+    }
+
+    private Topic getTopic() {
+        return input.get()
             .orElseThrow(() -> new IllegalArgumentException("Topic does not exist: " + name));
     }
 }

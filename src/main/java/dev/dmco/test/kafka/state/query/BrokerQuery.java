@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 @RequiredArgsConstructor
-public class BrokerStateQuery {
+public class BrokerQuery {
 
     private final Supplier<BrokerState> input;
     private final QueryExecutor executor;

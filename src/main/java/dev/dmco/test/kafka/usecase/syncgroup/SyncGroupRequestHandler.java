@@ -42,7 +42,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
                     member -> member.assignment().partitionAssignments().stream()
                         .flatMap(assignment ->
                             assignment.partitionIds().stream()
-                                .map(partitionId -> state.getOrCreateTopic(assignment.topicName()).partition(partitionId))
+                                .map(partitionId -> state.getOrCreateTopic(assignment.topicName()).getOrCreatePartition(partitionId))
                         )
                         .collect(Collectors.toList())
                 )
@@ -51,7 +51,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
 
     private Assignment createResponseAssignment(Collection<Partition> memberAssignedPartitions) {
         Map<String, List<Partition>> partitionsGrouped = memberAssignedPartitions.stream()
-            .collect(Collectors.groupingBy(partition -> partition.topic().name()));
+            .collect(Collectors.groupingBy(partition -> partition.topic().getName()));
         return Assignment.builder()
             .partitionAssignments(
                 partitionsGrouped.entrySet().stream()

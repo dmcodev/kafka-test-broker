@@ -2,43 +2,47 @@ package dev.dmco.test.kafka.state;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.Value;
-import lombok.experimental.Accessors;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-@Value
-@Accessors(fluent = true)
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Topic {
 
-    Map<Integer, Partition> partitions = new HashMap<>();
+    private final Map<Integer, Partition> partitions = new HashMap<>();
 
     @ToString.Include
     @EqualsAndHashCode.Include
-    String name;
+    private final String name;
 
-    int partitionsNumber;
+    private final int numberOfPartitions;
 
-    public Topic(String name, int partitionsNumber) {
+    public Topic(String name, int numberOfPartitions) {
         this.name = name;
-        this.partitionsNumber = partitionsNumber;
-        initializePartitions();
+        this.numberOfPartitions = numberOfPartitions;
+        createPartitions();
     }
 
-    public Partition partition(int partitionId) {
+    public Partition getOrCreatePartition(int partitionId) {
         return partitions.computeIfAbsent(partitionId, this::createPartition);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getNumberOfPartitions() {
+        return numberOfPartitions;
     }
 
     private Partition createPartition(int partitionId) {
         return new Partition(partitionId, this);
     }
 
-    private void initializePartitions() {
-        IntStream.range(0, partitionsNumber)
+    private void createPartitions() {
+        IntStream.range(0, numberOfPartitions)
             .mapToObj(this::createPartition)
             .forEach(partition -> partitions.put(partition.id(), partition));
     }

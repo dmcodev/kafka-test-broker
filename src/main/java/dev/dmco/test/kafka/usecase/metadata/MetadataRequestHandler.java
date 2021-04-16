@@ -28,7 +28,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
             .map(state::getOrCreateTopic)
             .map(topic ->
                 MetadataResponse.Topic.builder()
-                    .name(topic.name())
+                    .name(topic.getName())
                     .partitions(createResponsePartitions(topic))
                     .build()
             )
@@ -36,7 +36,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
     }
 
     private Collection<MetadataResponse.Partition> createResponsePartitions(Topic topic) {
-        return IntStream.range(0, topic.partitionsNumber())
+        return IntStream.range(0, topic.getNumberOfPartitions())
             .mapToObj(partitionId ->
                 MetadataResponse.Partition.builder()
                     .id(partitionId)
