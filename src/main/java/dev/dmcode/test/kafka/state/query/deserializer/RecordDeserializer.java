@@ -2,23 +2,20 @@ package dev.dmcode.test.kafka.state.query.deserializer;
 
 import java.nio.charset.Charset;
 
-public interface RecordDeserializer<K, V, HV> {
+@FunctionalInterface
+public interface RecordDeserializer<V> {
 
-    K deserializeKey(byte[] key);
+    V deserialize(byte[] bytes);
 
-    V deserializeValue(byte[] value);
-
-    HV deserializeHeaderValue(byte[] headerValue);
-
-    static RecordDeserializer<byte[], byte[], byte[]> bytes() {
+    static RecordDeserializer<byte[]> bytes() {
         return new ByteArrayDeserializer();
     }
 
-    static RecordDeserializer<String, String, String> string() {
+    static RecordDeserializer<String> string() {
         return new StringDeserializer();
     }
 
-    static RecordDeserializer<String, String, String> string(Charset charset) {
+    static RecordDeserializer<String> string(Charset charset) {
         return new StringDeserializer(charset);
     }
 }

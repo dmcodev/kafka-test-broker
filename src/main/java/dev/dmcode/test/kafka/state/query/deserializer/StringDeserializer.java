@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 @RequiredArgsConstructor
-public class StringDeserializer implements RecordDeserializer<String, String, String> {
+public class StringDeserializer implements RecordDeserializer<String> {
 
     private final Charset charset;
 
@@ -16,21 +16,7 @@ public class StringDeserializer implements RecordDeserializer<String, String, St
     }
 
     @Override
-    public String deserializeKey(byte[] key) {
-        return deserialize(key);
-    }
-
-    @Override
-    public String deserializeValue(byte[] value) {
-        return deserialize(value);
-    }
-
-    @Override
-    public String deserializeHeaderValue(byte[] headerValue) {
-        return deserialize(headerValue);
-    }
-
-    private String deserialize(byte[] bytes) {
+    public String deserialize(byte[] bytes) {
         return Objects.nonNull(bytes) ? new String(bytes, charset) : null;
     }
 }

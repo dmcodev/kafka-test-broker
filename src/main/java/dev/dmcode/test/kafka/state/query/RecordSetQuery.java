@@ -19,28 +19,42 @@ import java.util.stream.Stream;
 public class RecordSetQuery<K, V, HV> {
 
     private final Supplier<Stream<RecordView<byte[], byte[], byte[]>>> records;
-    private final RecordDeserializer<K, V, HV> deserializer;
+    private final RecordDeserializer<K> keyDeserializer;
+    private final RecordDeserializer<V> valueDeserializer;
+    private final RecordDeserializer<HV> headerValueDeserializer;
     private final QueryExecutor executor;
 
-    public <NK, NV, NHV> RecordSetQuery<NK, NV, NHV> useDeserializer(RecordDeserializer<NK, NV, NHV> newDeserializer) {
-        return new RecordSetQuery<>(records, memoized(newDeserializer), executor);
+    public <NK> RecordSetQuery<NK, V, HV> useKeyDeserializer(RecordDeserializer<NK> deserializer) {
+        return new RecordSetQuery<>(records, memoized(deserializer), valueDeserializer, headerValueDeserializer, executor);
+    }
+
+    public <NV> RecordSetQuery<K, NV, HV> useValueDeserializer(RecordDeserializer<NV> deserializer) {
+        return new RecordSetQuery<>(records, keyDeserializer, memoized(deserializer), headerValueDeserializer, executor);
+    }
+
+    public <KV> RecordSetQuery<KV, KV, HV> useKeyValueDeserializer(RecordDeserializer<KV> deserializer) {
+        return new RecordSetQuery<>(records, memoized(deserializer), memoized(deserializer), headerValueDeserializer, executor);
+    }
+
+    public <NHV> RecordSetQuery<K, V, NHV> useHeaderValueDeserializer(RecordDeserializer<NHV> deserializer) {
+        return new RecordSetQuery<>(records, keyDeserializer, valueDeserializer, memoized(deserializer), executor);
     }
 
     public RecordSetQuery<K, V, HV> filterByKey(Predicate<K> filter) {
         Supplier<Stream<RecordView<byte[], byte[], byte[]>>> filteredRecords = () -> records.get()
-            .filter(record -> filter.test(deserializer.deserializeKey(record.getKey())));
-        return new RecordSetQuery<>(filteredRecords, deserializer, executor);
+            .filter(record -> filter.test(keyDeserializer.deserialize(record.getKey())));
+        return withFilteredRecords(filteredRecords);
     }
 
     public RecordSetQuery<K, V, HV> filterByValue(Predicate<V> filter) {
         Supplier<Stream<RecordView<byte[], byte[], byte[]>>> filteredRecords = () -> records.get()
-            .filter(record -> filter.test(deserializer.deserializeValue(record.getValue())));
-        return new RecordSetQuery<>(filteredRecords, deserializer, executor);
+            .filter(record -> filter.test(valueDeserializer.deserialize(record.getValue())));
+        return withFilteredRecords(filteredRecords);
     }
 
     public List<RecordView<K, V, HV>> collect() {
         return records.get()
-            .map(record -> mapRecordView(record, deserializer))
+            .map(record -> mapRecordView(record, keyDeserializer, valueDeserializer, headerValueDeserializer))
             .collect(Collectors.toList());
     }
 
@@ -53,7 +67,11 @@ public class RecordSetQuery<K, V, HV> {
             .orElseThrow(() -> new IllegalStateException("No matching record found"));
     }
 
-    private static  <K, V, HV> RecordDeserializer<K, V, HV> memoized(RecordDeserializer<K, V, HV> deserializer) {
+    private RecordSetQuery<K, V, HV> withFilteredRecords(Supplier<Stream<RecordView<byte[], byte[], byte[]>>> filteredRecords) {
+        return new RecordSetQuery<>(filteredRecords, keyDeserializer, valueDeserializer, headerValueDeserializer, executor);
+    }
+
+    private static <V> RecordDeserializer<V> memoized(RecordDeserializer<V> deserializer) {
         if (!(deserializer instanceof MemoizedRecordDeserializer)) {
             return new MemoizedRecordDeserializer<>(deserializer);
         }
@@ -62,16 +80,18 @@ public class RecordSetQuery<K, V, HV> {
 
     private static <K, V, HV> RecordView<K, V, HV> mapRecordView(
         RecordView<byte[], byte[], byte[]> record,
-        RecordDeserializer<K, V, HV> deserializer
+        RecordDeserializer<K> keyDeserializer,
+        RecordDeserializer<V> valueDeserializer,
+        RecordDeserializer<HV> headerValueDeserializer
     ) {
         K key = Optional.ofNullable(record.getKey())
-            .map(deserializer::deserializeKey).orElse(null);
+            .map(keyDeserializer::deserialize).orElse(null);
         V value = Optional.ofNullable(record.getValue())
-            .map(deserializer::deserializeValue).orElse(null);
+            .map(valueDeserializer::deserialize).orElse(null);
         Map<String, HV> headers = new HashMap<>();
         for (Map.Entry<String, byte[]> header : record.getHeaders().entrySet()) {
             HV headerValue = Optional.ofNullable(header.getValue())
-                .map(deserializer::deserializeHeaderValue).orElse(null);
+                .map(headerValueDeserializer::deserialize).orElse(null);
             headers.put(header.getKey(), headerValue);
         }
         return new RecordView<>(record.getPartitionId(), record.getOffset(), key, value, headers);

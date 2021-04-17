@@ -31,14 +31,14 @@ public class TopicQuery {
     }
 
     public RecordSetQuery<byte[], byte[], byte[]> selectRecords() {
-        RecordDeserializer<byte[], byte[], byte[]> deserializer = RecordDeserializer.bytes();
+        RecordDeserializer<byte[]> deserializer = RecordDeserializer.bytes();
         Supplier<Stream<RecordView<byte[], byte[], byte[]>>> records = () -> getTopicOrThrow(name)
             .getPartitions()
             .stream()
             .flatMap(partition -> partition.getRecords().stream()
                 .map(record -> createRecordView(partition.getId(), record, deserializer))
             );
-        return new RecordSetQuery<>(records, deserializer, executor);
+        return new RecordSetQuery<>(records, deserializer, deserializer, deserializer, executor);
     }
 
     private Optional<Topic> getTopic(String name) {
@@ -50,16 +50,16 @@ public class TopicQuery {
             .orElseThrow(() -> new IllegalArgumentException("Topic does not exist: " + name));
     }
 
-    private static <K, V, HV> RecordView<K, V, HV> createRecordView(
+    private static RecordView<byte[], byte[], byte[]> createRecordView(
         int partitionId,
         Record record,
-        RecordDeserializer<K, V, HV> deserializer
+        RecordDeserializer<byte[]> deserializer
     ) {
-        K key = record.key().map(deserializer::deserializeKey).orElse(null);
-        V value = record.value().map(deserializer::deserializeValue).orElse(null);
-        Map<String, HV> headers = new HashMap<>();
+        byte[] key = record.key().map(deserializer::deserialize).orElse(null);
+        byte[] value = record.value().map(deserializer::deserialize).orElse(null);
+        Map<String, byte[]> headers = new HashMap<>();
         for (Record.Header header : record.headers()) {
-            HV headerValue = header.value().map(deserializer::deserializeHeaderValue).orElse(null);
+            byte[] headerValue = header.value().map(deserializer::deserialize).orElse(null);
             headers.put(header.key(), headerValue);
         }
         return new RecordView<>(partitionId, record.offset(), key, value, headers);

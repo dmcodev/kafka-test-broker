@@ -77,21 +77,21 @@ class BrokerQuerySpec : StringSpec() {
             val records = broker.query()
                 .selectTopic(TEST_TOPIC_1)
                 .selectRecords()
-                .useDeserializer(RecordDeserializer.string())
+                .useKeyDeserializer(RecordDeserializer.string())
             with(records.filterByKey { it?.endsWith("y") == true }.collectSingle()) {
                 partitionId shouldBe 0
                 offset shouldBe 0
-                value shouldBe "value1"
+                String(value) shouldBe "value1"
             }
             with(records.filterByKey { it?.endsWith("2") == true }.collectSingle()) {
                 partitionId shouldBe 0
                 offset shouldBe 1
-                value shouldBe "value2"
+                String(value) shouldBe "value2"
             }
             with(records.filterByKey { it == null }.collectSingle()) {
                 partitionId shouldBe 0
                 offset shouldBe 2
-                value shouldBe "value3"
+                String(value) shouldBe "value3"
             }
             shouldThrow<IllegalStateException> { records.filterByKey { it?.startsWith("key") == true }.collectSingle() }
                 .message shouldContain "Multiple matching records found"
@@ -111,14 +111,14 @@ class BrokerQuerySpec : StringSpec() {
             val records = broker.query()
                 .selectTopic(TEST_TOPIC_1)
                 .selectRecords()
-                .useDeserializer(RecordDeserializer.string())
+                .useValueDeserializer(RecordDeserializer.string())
             with(records.filterByValue { it?.endsWith("3") == true }.collectSingle()) {
                 offset shouldBe 2
                 key shouldBe null
             }
             with(records.filterByValue { it == null }.collectSingle()) {
                 offset shouldBe 1
-                key shouldBe "key2"
+                String(key) shouldBe "key2"
             }
             with(records.filterByValue { it?.startsWith("val") == true }.collect()) {
                 size shouldBe 2
