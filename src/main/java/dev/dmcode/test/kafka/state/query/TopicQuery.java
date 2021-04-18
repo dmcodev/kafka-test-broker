@@ -25,12 +25,12 @@ public class TopicQuery {
         return executor.execute(query);
     }
 
-    public int getNumberOfPartitions() {
+    public int numberOfPartitions() {
         Supplier<Integer> query = () -> getTopicOrThrow(name).getNumberOfPartitions();
         return executor.execute(query);
     }
 
-    public RecordSetQuery<byte[], byte[], byte[]> selectRecords() {
+    public RecordSetQuery<byte[], byte[], byte[]> records() {
         RecordDeserializer<byte[]> deserializer = RecordDeserializer.bytes();
         Supplier<Stream<RecordView<byte[], byte[], byte[]>>> records = () -> getTopicOrThrow(name)
             .getPartitions()

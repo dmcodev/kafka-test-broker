@@ -24,7 +24,7 @@ class BrokerQuerySpec : StringSpec() {
                 send(ProducerRecord(TEST_TOPIC_1, "key", "value"))
                 close()
             }
-            val query = broker.query().selectTopic(TEST_TOPIC_1)
+            val query = broker.query().topic(TEST_TOPIC_1)
             broker.close()
             val error = shouldThrow<ExecutionException> { query.exists() }
             error.cause.shouldBeInstanceOf<IllegalStateException>()
@@ -33,7 +33,7 @@ class BrokerQuerySpec : StringSpec() {
 
         "Should reuse query" {
             val broker = createBroker()
-            val topic = broker.query().selectTopic(TEST_TOPIC_1)
+            val topic = broker.query().topic(TEST_TOPIC_1)
             topic.exists() shouldBe false
             KafkaProducer<String, String>(clientProperties()).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key", "value"))
@@ -48,8 +48,8 @@ class BrokerQuerySpec : StringSpec() {
                 send(ProducerRecord(TEST_TOPIC_1, "key", "value"))
                 close()
             }
-            broker.query().selectTopic(TEST_TOPIC_1).exists() shouldBe true
-            broker.query().selectTopic(TEST_TOPIC_2).exists() shouldBe false
+            broker.query().topic(TEST_TOPIC_1).exists() shouldBe true
+            broker.query().topic(TEST_TOPIC_2).exists() shouldBe false
         }
 
         "Should query number of partitions" {
@@ -62,8 +62,8 @@ class BrokerQuerySpec : StringSpec() {
                 send(ProducerRecord(TEST_TOPIC_2, "key", "value"))
                 close()
             }
-            broker.query().selectTopic(TEST_TOPIC_1).getNumberOfPartitions() shouldBe 3
-            broker.query().selectTopic(TEST_TOPIC_2).getNumberOfPartitions() shouldBe 1
+            broker.query().topic(TEST_TOPIC_1).numberOfPartitions() shouldBe 3
+            broker.query().topic(TEST_TOPIC_2).numberOfPartitions() shouldBe 1
         }
 
         "Should filter records by key" {
@@ -75,29 +75,29 @@ class BrokerQuerySpec : StringSpec() {
                 close()
             }
             val records = broker.query()
-                .selectTopic(TEST_TOPIC_1)
-                .selectRecords()
-                .useKeyDeserializer(RecordDeserializer.string())
-            with(records.filterByKey { it?.endsWith("y") == true }.collectSingle()) {
-                partitionId shouldBe 0
-                offset shouldBe 0
-                String(value) shouldBe "value1"
+                .topic(TEST_TOPIC_1)
+                .records()
+                .keyDeserializer(RecordDeserializer.string())
+            with(records.keyMatching { it?.endsWith("y") == true }.single()) {
+                partitionId() shouldBe 0
+                offset() shouldBe 0
+                String(value()) shouldBe "value1"
             }
-            with(records.filterByKey { it?.endsWith("2") == true }.collectSingle()) {
-                partitionId shouldBe 0
-                offset shouldBe 1
-                String(value) shouldBe "value2"
+            with(records.keyMatching { it?.endsWith("2") == true }.single()) {
+                partitionId() shouldBe 0
+                offset() shouldBe 1
+                String(value()) shouldBe "value2"
             }
-            with(records.filterByKey { it == null }.collectSingle()) {
-                partitionId shouldBe 0
-                offset shouldBe 2
-                String(value) shouldBe "value3"
+            with(records.keyMatching { it == null }.single()) {
+                partitionId() shouldBe 0
+                offset() shouldBe 2
+                String(value()) shouldBe "value3"
             }
-            shouldThrow<IllegalStateException> { records.filterByKey { it?.startsWith("key") == true }.collectSingle() }
+            shouldThrow<IllegalStateException> { records.keyMatching { it?.startsWith("key") == true }.single() }
                 .message shouldContain "Multiple matching records found"
-            shouldThrow<IllegalStateException> { records.filterByKey { it == "non_existing" }.collectSingle() }
+            shouldThrow<IllegalStateException> { records.keyMatching { it == "non_existing" }.single() }
                 .message shouldContain "No matching record found"
-            records.filterByKey { it == "non_existing" }.collect().isEmpty() shouldBe true
+            records.keyMatching { it == "non_existing" }.all().isEmpty() shouldBe true
         }
 
         "Should filter records by value" {
@@ -109,20 +109,50 @@ class BrokerQuerySpec : StringSpec() {
                 close()
             }
             val records = broker.query()
-                .selectTopic(TEST_TOPIC_1)
-                .selectRecords()
-                .useValueDeserializer(RecordDeserializer.string())
-            with(records.filterByValue { it?.endsWith("3") == true }.collectSingle()) {
-                offset shouldBe 2
-                key shouldBe null
+                .topic(TEST_TOPIC_1)
+                .records()
+                .valueDeserializer(RecordDeserializer.string())
+            with(records.valueMatching { it?.endsWith("3") == true }.single()) {
+                offset() shouldBe 2
+                key() shouldBe null
             }
-            with(records.filterByValue { it == null }.collectSingle()) {
-                offset shouldBe 1
-                String(key) shouldBe "key2"
+            with(records.valueMatching { it == null }.single()) {
+                offset() shouldBe 1
+                String(key()) shouldBe "key2"
             }
-            with(records.filterByValue { it?.startsWith("val") == true }.collect()) {
+            with(records.valueMatching { it?.startsWith("val") == true }.all()) {
                 size shouldBe 2
             }
+        }
+
+        "Should filter records by header key" {
+            val broker = createBroker()
+            KafkaProducer<String, String>(clientProperties()).apply {
+                send(
+                    ProducerRecord(TEST_TOPIC_1, "key_1", "value_1").apply {
+                        headers().apply {
+                            add("hk", "hv".toByteArray())
+                            add("hk1", "hv1".toByteArray())
+                        }
+                    }
+                )
+                send(
+                    ProducerRecord(TEST_TOPIC_1, "key_2", "value_2").apply {
+                        headers().apply {
+                            add("hk", "hv".toByteArray())
+                            add("hk2", "hv2".toByteArray())
+                        }
+                    }
+                )
+                close()
+            }
+            val records = broker.query()
+                .topic(TEST_TOPIC_1)
+                .records()
+                .valueDeserializer(RecordDeserializer.string())
+            records.anyHeaderKeyMatching { it == "hk1" }.single().value() shouldBe "value_1"
+            records.anyHeaderKeyMatching { it == "hk2" }.single().value() shouldBe "value_2"
+            records.anyHeaderKeyMatching { it == "hk" }.all().map { it.value() } shouldBe listOf("value_1", "value_2")
         }
     }
 

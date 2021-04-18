@@ -11,7 +11,7 @@ public class BrokerQuery {
     private final Supplier<BrokerState> state;
     private final QueryExecutor executor;
 
-    public TopicQuery selectTopic(String name) {
+    public TopicQuery topic(String name) {
         return new TopicQuery(name, state, executor);
     }
 }

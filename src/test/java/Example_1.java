@@ -60,12 +60,12 @@ public class Example_1 {
 
     private static void verifyReceivedMessages(KafkaTestBroker broker) {
         RecordSetQuery<String, String, byte[]> query = broker.query()
-            .selectTopic(TOPIC_NAME)
-            .selectRecords()
-            .useKeyValueDeserializer(RecordDeserializer.string());
-        assert query.filterByKey("key_1"::equals).collectSingle().getValue().equals("value_1");
-        assert query.filterByKey(key -> key.startsWith("key")).collect().size() == 2;
-        assert query.filterByValue(value -> value.startsWith("value")).collect().size() == 2;
+            .topic(TOPIC_NAME)
+            .records()
+            .keyValueDeserializer(RecordDeserializer.string());
+        assert query.keyMatching("key_1"::equals).single().value().equals("value_1");
+        assert query.keyMatching(key -> key.startsWith("key")).all().size() == 2;
+        assert query.valueMatching(value -> value.startsWith("value")).all().size() == 2;
     }
 
     private static BrokerConfig createBrokerConfig() {
