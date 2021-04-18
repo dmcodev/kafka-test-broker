@@ -2,23 +2,21 @@ package dev.dmcode.test.kafka.state;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-@Getter
 @Accessors(fluent = true)
-@ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Topic {
 
     private final Map<Integer, Partition> partitions = new HashMap<>();
 
-    @ToString.Include @EqualsAndHashCode.Include private final String name;
-    private final int numberOfPartitions;
+    @Getter @EqualsAndHashCode.Include private final String name;
+    @Getter private final int numberOfPartitions;
 
     public Topic(String name, int numberOfPartitions) {
         this.name = name;
@@ -28,6 +26,10 @@ public class Topic {
 
     public Partition getOrCreatePartition(int partitionId) {
         return partitions.computeIfAbsent(partitionId, this::createPartition);
+    }
+
+    public Collection<Partition> partitions() {
+        return partitions.values();
     }
 
     private Partition createPartition(int partitionId) {

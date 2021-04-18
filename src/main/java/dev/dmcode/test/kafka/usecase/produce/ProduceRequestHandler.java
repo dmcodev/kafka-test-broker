@@ -2,7 +2,6 @@ package dev.dmcode.test.kafka.usecase.produce;
 
 import dev.dmcode.test.kafka.messages.ErrorCode;
 import dev.dmcode.test.kafka.state.BrokerState;
-import dev.dmcode.test.kafka.state.Partition;
 import dev.dmcode.test.kafka.usecase.RequestHandler;
 import dev.dmcode.test.kafka.usecase.ResponseScheduler;
 
@@ -39,13 +38,13 @@ public class ProduceRequestHandler implements RequestHandler<ProduceRequest, Pro
         ProduceRequest.Partition targetPartition,
         BrokerState state
     ) {
-        Partition.AppendResult result = state.getOrCreateTopic(targetTopic.name())
+        long baseOffset = state.getOrCreateTopic(targetTopic.name())
             .getOrCreatePartition(targetPartition.id())
             .append(targetPartition.records());
         return ProduceResponse.Partition.builder()
             .id(targetPartition.id())
             .errorCode(ErrorCode.NO_ERROR)
-            .baseOffset(result.baseOffset())
+            .baseOffset(baseOffset)
             .build();
     }
 }

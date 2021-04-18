@@ -61,7 +61,7 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
 
     private List<JoinGroupResponse.Member> buildMembersInfo(Subscription subscription, ConsumerGroup group) {
         short protocolVersion = subscription.version();
-        return group.getMembers().stream()
+        return group.members().stream()
             .map(member -> buildMemberInfo(member, protocolVersion))
             .collect(Collectors.toList());
     }

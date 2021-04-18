@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -76,9 +75,6 @@ public class ConsumerGroup {
         if (member != null) {
             if (member.isLeader()) {
                 leaderId = null;
-                LOG.debug("{} leader left consumer group", member);
-            } else {
-                LOG.debug("{} member left consumer group", member);
             }
             generationId++;
         }
@@ -95,35 +91,26 @@ public class ConsumerGroup {
         return ErrorCode.NO_ERROR;
     }
 
-    public boolean assignPartitions(Map<String, List<Partition>> assignments) {
-        if (!containsAllMembers(assignments.keySet())) {
-            LOG.debug("{} Cannot assign partitions, some members already left the group", this);
-            return false;
-        }
+    public void assignPartitions(Map<String, List<Partition>> assignments) {
         members.values().forEach(Member::revokePartitions);
         assignments.forEach((memberId, partitions) -> members.get(memberId).assignPartitions(partitions));
-        return true;
     }
 
-    public List<Member> getMembers() {
-        return new ArrayList<>(members.values());
+    public Collection<Member> members() {
+        return members.values();
     }
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
         return offsets.keySet().stream()
             .filter(partition -> topicName.equals(partition.topic().name()))
-            .collect(Collectors.toMap(Partition::id, this::committedOffset));
+            .collect(Collectors.toMap(Partition::id, this::getCommittedOffset));
     }
 
     public void commit(Partition partition, long offset) {
         offsets.put(partition, offset);
     }
 
-    private boolean containsAllMembers(Collection<String> memberIds) {
-        return memberIds.stream().allMatch(members::containsKey);
-    }
-
-    private long committedOffset(Partition partition) {
+    private long getCommittedOffset(Partition partition) {
         return offsets.computeIfAbsent(partition, it -> 0L);
     }
 

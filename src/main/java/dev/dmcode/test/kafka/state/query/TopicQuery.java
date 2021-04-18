@@ -33,8 +33,8 @@ public class TopicQuery {
     public RecordSetQuery<byte[], byte[], byte[]> records() {
         RecordDeserializer<byte[]> deserializer = RecordDeserializer.bytes();
         Supplier<Stream<RecordView<byte[], byte[], byte[]>>> records = () -> getTopicOrThrow(name)
-            .partitions().values().stream()
-            .flatMap(partition -> partition.records().values().stream()
+            .partitions().stream()
+            .flatMap(partition -> partition.records().stream()
                 .map(record -> createRecordView(partition.id(), record, deserializer))
             );
         return new RecordSetQuery<>(records, deserializer, deserializer, deserializer, executor);

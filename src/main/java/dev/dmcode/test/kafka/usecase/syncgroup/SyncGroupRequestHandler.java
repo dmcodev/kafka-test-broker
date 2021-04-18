@@ -19,12 +19,16 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
     public void handle(SyncGroupRequest request, BrokerState state, ResponseScheduler<SyncGroupResponse> scheduler) {
         ConsumerGroup group = state.getOrCreateConsumerGroup(request.groupId());
         Map<String, List<Partition>> partitionAssignments = extractPartitionAssignments(request, state);
-        if (!partitionAssignments.isEmpty() && !group.assignPartitions(partitionAssignments)) {
-            SyncGroupResponse response = SyncGroupResponse.builder()
-                .errorCode(ErrorCode.REBALANCE_IN_PROGRESS)
-                .build();
-            scheduler.scheduleResponse(response);
-            return;
+        if (!partitionAssignments.isEmpty()) {
+            if (request.generationId() == group.generationId()) {
+                group.assignPartitions(partitionAssignments);
+            } else {
+                SyncGroupResponse response = SyncGroupResponse.builder()
+                    .errorCode(ErrorCode.REBALANCE_IN_PROGRESS)
+                    .build();
+                scheduler.scheduleResponse(response);
+                return;
+            }
         }
         Collection<Partition> memberPartitions = group.getMember(request.memberId())
             .synchronize();

@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Getter
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -21,16 +20,16 @@ public class Member {
 
     static final String NAME_PREFIX = "member";
 
-    private final Set<String> subscribedTopics = new HashSet<>();
-    private final Set<String> supportedProtocols = new HashSet<>();
+    @Getter private final Set<String> subscribedTopics = new HashSet<>();
+    @Getter private final Set<String> supportedProtocols = new HashSet<>();
     private final Set<Partition> assignedPartitions = new HashSet<>();
 
     @EqualsAndHashCode.Include private final ConsumerGroup group;
-    @EqualsAndHashCode.Include private final String id;
+    @Getter @EqualsAndHashCode.Include private final String id;
 
-    private boolean partitionsSynchronized;
-    private boolean isLeader;
-    private int joinGenerationId;
+    @Getter private boolean partitionsSynchronized;
+    @Getter private boolean isLeader;
+    @Getter private int joinGenerationId;
 
     Member(ConsumerGroup consumerGroup, int sequenceNumber) {
         group = consumerGroup;
@@ -70,10 +69,5 @@ public class Member {
 
     void setJoinGenerationId(int generationId) {
         joinGenerationId = generationId;
-    }
-
-    @Override
-    public String toString() {
-        return group.name() + ":" + id;
     }
 }

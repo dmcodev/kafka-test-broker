@@ -1,12 +1,9 @@
 package dev.dmcode.test.kafka.state;
 
 import dev.dmcode.test.kafka.messages.Record;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.Value;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
@@ -16,26 +13,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Getter
 @RequiredArgsConstructor
 @Accessors(fluent = true)
-@ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Partition {
 
     private final Map<Long, Record> records = new HashMap<>();
 
-    @ToString.Include @EqualsAndHashCode.Include private final int id;
-    @ToString.Include @EqualsAndHashCode.Include private final Topic topic;
+    @Getter @EqualsAndHashCode.Include private final int id;
+    @Getter @EqualsAndHashCode.Include private final Topic topic;
 
-    private long headOffset = 0;
+    @Getter private long headOffset = 0;
 
-    public AppendResult append(Collection<Record> records) {
+    public long append(Collection<Record> records) {
         long baseOffset = headOffset;
         records.forEach(this::append);
-        return AppendResult.builder()
-            .baseOffset(baseOffset)
-            .build();
+        return baseOffset;
     }
 
     public List<Record> fetch(long startOffset, int maxFetchSizeInBytes) {
@@ -58,15 +51,12 @@ public class Partition {
         return result;
     }
 
+    public Collection<Record> records() {
+        return records.values();
+    }
+
     private void append(Record record) {
         records.put(headOffset, record.withOffset(headOffset));
         headOffset++;
-    }
-
-    @Value
-    @Builder
-    @Accessors(fluent = true)
-    public static class AppendResult {
-        long baseOffset;
     }
 }
