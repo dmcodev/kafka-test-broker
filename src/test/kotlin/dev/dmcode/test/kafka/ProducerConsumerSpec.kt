@@ -32,7 +32,7 @@ class ProducerConsumerSpec : StringSpec() {
 
     init {
         "Should produce and consume messages" {
-            createBroker { KafkaTestBroker() }
+            createBroker()
             val clientProperties = clientProperties()
             KafkaProducer<String, String>(clientProperties).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key1", "value1"))
@@ -55,7 +55,7 @@ class ProducerConsumerSpec : StringSpec() {
         }
 
         "Should produce and consume messages with headers" {
-            createBroker { KafkaTestBroker() }
+            createBroker()
             val clientProperties = clientProperties()
             KafkaProducer<String, String>(clientProperties).apply {
                 val record = ProducerRecord(TEST_TOPIC_1, "key", "value")
@@ -76,7 +76,7 @@ class ProducerConsumerSpec : StringSpec() {
         }
 
         "Should commit and resume consuming from last committed offset" {
-            createBroker { KafkaTestBroker() }
+            createBroker()
             val clientProperties = clientProperties()
             val producer = KafkaProducer<String, String>(clientProperties).apply {
                 send(ProducerRecord(TEST_TOPIC_1, "key1", "value1")).get()
@@ -119,7 +119,7 @@ class ProducerConsumerSpec : StringSpec() {
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val producerRecords = LinkedBlockingDeque(testMessages.map { ProducerRecord(TEST_TOPIC_1, it.first, it.second) })
             val startBarrier = CyclicBarrier(producersCount + consumersCount + 1)
-            createBroker { KafkaTestBroker(brokerConfig) }
+            createBroker(brokerConfig)
             repeat(producersCount) {
                 launch(dispatcher) {
                     startBarrier.await()
@@ -168,7 +168,7 @@ class ProducerConsumerSpec : StringSpec() {
             clientProperties["max.partition.fetch.bytes"] = 1024
             val testMessages = (1 .. messagesCount).asSequence().map { "key$it" to "value$it" }.toList()
             val startBarrier = CyclicBarrier(consumersActors + 2)
-            createBroker { KafkaTestBroker(brokerConfig) }
+            createBroker(brokerConfig)
             launch(dispatcher) {
                 startBarrier.await()
                 val producer = KafkaProducer<String, String>(clientProperties)
@@ -213,7 +213,8 @@ class ProducerConsumerSpec : StringSpec() {
         }
 
         "Should reset broker state" {
-            val broker = createBroker { KafkaTestBroker() }
+            val broker = createBroker()
+            val topicQuery = broker.query().topic(TEST_TOPIC_1)
             val clientProperties = clientProperties()
             repeat(5) {
                 KafkaProducer<String, String>(clientProperties).apply {
@@ -229,12 +230,14 @@ class ProducerConsumerSpec : StringSpec() {
                 }.verify(
                     row(TEST_TOPIC_1, 0, 0, "key1", "value1", emptyList())
                 )
+                topicQuery.records().all().size shouldBe 1
                 broker.reset()
+                topicQuery.exists() shouldBe false
             }
         }
 
         "Should produce and consume using GZIP compression" {
-            createBroker { KafkaTestBroker() }
+            createBroker()
             val clientProperties = clientProperties()
             clientProperties["compression.type"] = "gzip"
             KafkaProducer<String, String>(clientProperties).apply {
@@ -261,8 +264,8 @@ class ProducerConsumerSpec : StringSpec() {
         dispatcher.close()
     }
 
-    private fun createBroker(supplier: () -> KafkaTestBroker): KafkaTestBroker =
-        supplier().also { createdBrokers.add(it) }
+    private fun createBroker(config: BrokerConfig = BrokerConfig.createDefault()): KafkaTestBroker =
+        KafkaTestBroker(config).also { createdBrokers.add(it) }
 
     private fun clientProperties(
         config: BrokerConfig = BrokerConfig.createDefault()
