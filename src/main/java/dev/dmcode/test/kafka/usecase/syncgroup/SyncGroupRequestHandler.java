@@ -51,7 +51,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
 
     private Assignment createResponseAssignment(Collection<Partition> memberAssignedPartitions) {
         Map<String, List<Partition>> partitionsGrouped = memberAssignedPartitions.stream()
-            .collect(Collectors.groupingBy(partition -> partition.getTopic().getName()));
+            .collect(Collectors.groupingBy(partition -> partition.topic().name()));
         return Assignment.builder()
             .partitionAssignments(
                 partitionsGrouped.entrySet().stream()
@@ -60,7 +60,7 @@ public class SyncGroupRequestHandler implements RequestHandler<SyncGroupRequest,
                             .topicName(entry.getKey())
                             .partitionIds(
                                 entry.getValue().stream()
-                                    .map(Partition::getId)
+                                    .map(Partition::id)
                                     .sorted()
                                     .collect(Collectors.toList())
                             )

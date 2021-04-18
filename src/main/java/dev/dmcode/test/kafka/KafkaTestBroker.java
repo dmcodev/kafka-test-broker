@@ -66,7 +66,7 @@ public class KafkaTestBroker implements AutoCloseable {
     @SneakyThrows
     public KafkaTestBroker(BrokerConfig config) {
         state = new BrokerState(config);
-        decoder = new RequestDecoder(state.getRequestHandlers());
+        decoder = new RequestDecoder(state.requestHandlers());
         try {
             selector = Selector.open();
             serverChannel = createServerChannel();
@@ -187,7 +187,7 @@ public class KafkaTestBroker implements AutoCloseable {
         Connection connection = (Connection) selectionKey.attachment();
         connection.addRequestCorrelationId(request.header().correlationId());
         ResponseScheduler<ResponseMessage> responseScheduler = new EventLoopResponseScheduler(request, selectionKey);
-        state.getRequestHandlers()
+        state.requestHandlers()
             .select(request)
             .handle(request, state, responseScheduler);
     }
@@ -213,7 +213,7 @@ public class KafkaTestBroker implements AutoCloseable {
     }
 
     private void bindServerChannel() throws IOException {
-        BrokerConfig config = state.getConfig();
+        BrokerConfig config = state.config();
         InetSocketAddress bindAddress = new InetSocketAddress(config.host(), config.port());
         serverChannel.bind(bindAddress);
     }

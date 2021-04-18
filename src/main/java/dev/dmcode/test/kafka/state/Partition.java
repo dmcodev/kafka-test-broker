@@ -3,6 +3,7 @@ package dev.dmcode.test.kafka.state;
 import dev.dmcode.test.kafka.messages.Record;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
@@ -15,20 +16,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
 @RequiredArgsConstructor
+@Accessors(fluent = true)
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Partition {
 
     private final Map<Long, Record> records = new HashMap<>();
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
-    private final int id;
-
-    @ToString.Include
-    @EqualsAndHashCode.Include
-    private final Topic topic;
+    @ToString.Include @EqualsAndHashCode.Include private final int id;
+    @ToString.Include @EqualsAndHashCode.Include private final Topic topic;
 
     private long headOffset = 0;
 
@@ -58,22 +56,6 @@ public class Partition {
             resultSize += recordSize;
         } while (records.containsKey(offset));
         return result;
-    }
-
-    public Collection<Record> getRecords() {
-        return records.values();
-    }
-
-    public long getHeadOffset() {
-        return headOffset;
-    }
-
-    public Topic getTopic() {
-        return topic;
-    }
-
-    public int getId() {
-        return id;
     }
 
     private void append(Record record) {

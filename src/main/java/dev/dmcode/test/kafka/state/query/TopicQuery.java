@@ -26,17 +26,16 @@ public class TopicQuery {
     }
 
     public int numberOfPartitions() {
-        Supplier<Integer> query = () -> getTopicOrThrow(name).getNumberOfPartitions();
+        Supplier<Integer> query = () -> getTopicOrThrow(name).numberOfPartitions();
         return executor.execute(query);
     }
 
     public RecordSetQuery<byte[], byte[], byte[]> records() {
         RecordDeserializer<byte[]> deserializer = RecordDeserializer.bytes();
         Supplier<Stream<RecordView<byte[], byte[], byte[]>>> records = () -> getTopicOrThrow(name)
-            .getPartitions()
-            .stream()
-            .flatMap(partition -> partition.getRecords().stream()
-                .map(record -> createRecordView(partition.getId(), record, deserializer))
+            .partitions().values().stream()
+            .flatMap(partition -> partition.records().values().stream()
+                .map(record -> createRecordView(partition.id(), record, deserializer))
             );
         return new RecordSetQuery<>(records, deserializer, deserializer, deserializer, executor);
     }

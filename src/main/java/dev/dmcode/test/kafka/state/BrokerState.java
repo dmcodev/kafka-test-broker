@@ -3,23 +3,26 @@ package dev.dmcode.test.kafka.state;
 import dev.dmcode.test.kafka.config.BrokerConfig;
 import dev.dmcode.test.kafka.config.TopicConfig;
 import dev.dmcode.test.kafka.logging.Logger;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Accessors(fluent = true)
 public class BrokerState {
 
     public static final int NODE_ID = 1;
 
     private static final Logger LOG = Logger.create(BrokerState.class);
 
-    private final RequestHandlers requestHandlers = new RequestHandlers();
+    @Getter private final RequestHandlers requestHandlers = new RequestHandlers();
     private final Map<String, Topic> topics = new HashMap<>();
     private final Map<String, ConsumerGroup> consumerGroups = new HashMap<>();
 
-    private final BrokerConfig config;
+    @Getter private final BrokerConfig config;
 
     public BrokerState(BrokerConfig config) {
         this.config = config;
@@ -41,14 +44,6 @@ public class BrokerState {
         topics.clear();
         consumerGroups.clear();
         LOG.debug("Broker state cleared");
-    }
-
-    public RequestHandlers getRequestHandlers() {
-        return requestHandlers;
-    }
-
-    public BrokerConfig getConfig() {
-        return config;
     }
 
     private Topic createTopic(String name) {

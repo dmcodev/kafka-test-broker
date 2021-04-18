@@ -7,8 +7,8 @@ import dev.dmcode.test.kafka.state.ConsumerGroup;
 import dev.dmcode.test.kafka.state.Member;
 import dev.dmcode.test.kafka.usecase.RequestHandler;
 import dev.dmcode.test.kafka.usecase.ResponseScheduler;
-import dev.dmcode.test.kafka.usecase.joingroup.JoinGroupResponse.JoinGroupResponseBuilder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,26 +21,17 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
 
     @Override
     public void handle(JoinGroupRequest request, BrokerState state, ResponseScheduler<JoinGroupResponse> scheduler) {
-        String groupId = request.groupId();
-        ConsumerGroup group = state.getOrCreateConsumerGroup(groupId);
+        ConsumerGroup group = state.getOrCreateConsumerGroup(request.groupId());
         Set<String> memberProtocols = extractMembersProtocols(request);
         String selectedProtocol = group.findMatchingProtocol(memberProtocols);
         if (selectedProtocol == null) {
             scheduler.scheduleResponse(PROTOCOL_MISMATCH_RESPONSE);
             return;
         }
-        Member member;
-        if (group.containsMember(request.memberId())) {
-            member = group.rejoinMember(request.memberId());
-        } else {
-            member = group.addMember();
-        }
         group.setProtocol(selectedProtocol);
-        member.assignProtocols(memberProtocols);
-        member.setJoinGenerationId(group.generationId());
         Subscription subscription = extractSubscription(request, selectedProtocol);
-        member.subscribe(subscription.topics());
-        JoinGroupResponse response = buildGroupInfo(member, group, subscription);
+        Member member = group.joinMember(request.memberId(), memberProtocols, subscription.topics());
+        JoinGroupResponse response = buildResponse(member, group, subscription);
         scheduler.scheduleResponse(response);
     }
 
@@ -58,16 +49,14 @@ public class JoinGroupRequestHandler implements RequestHandler<JoinGroupRequest,
             .orElseThrow(() -> new IllegalArgumentException("Could not find matching subscription"));
     }
 
-    private JoinGroupResponse buildGroupInfo(Member member, ConsumerGroup group, Subscription subscription) {
-        JoinGroupResponseBuilder responseBuilder = JoinGroupResponse.builder()
+    private JoinGroupResponse buildResponse(Member member, ConsumerGroup group, Subscription subscription) {
+        return JoinGroupResponse.builder()
             .generationId(group.generationId())
             .protocolName(group.protocol())
             .leader(group.leaderId())
-            .memberId(member.id());
-        if (member.isLeader()) {
-            responseBuilder.members(buildMembersInfo(subscription, group));
-        }
-        return responseBuilder.build();
+            .memberId(member.id())
+            .members(member.isLeader() ? buildMembersInfo(subscription, group) : Collections.emptyList())
+            .build();
     }
 
     private List<JoinGroupResponse.Member> buildMembersInfo(Subscription subscription, ConsumerGroup group) {

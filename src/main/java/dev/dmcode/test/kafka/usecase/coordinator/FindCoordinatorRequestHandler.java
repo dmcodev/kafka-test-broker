@@ -9,7 +9,7 @@ public class FindCoordinatorRequestHandler implements RequestHandler<FindCoordin
 
     @Override
     public void handle(FindCoordinatorRequest request, BrokerState state, ResponseScheduler<FindCoordinatorResponse> scheduler) {
-        BrokerConfig config = state.getConfig();
+        BrokerConfig config = state.config();
         FindCoordinatorResponse response = FindCoordinatorResponse.builder()
             .host(config.host())
             .nodeId(BrokerState.NODE_ID)

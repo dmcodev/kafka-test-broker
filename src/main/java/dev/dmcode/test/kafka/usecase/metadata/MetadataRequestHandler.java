@@ -28,7 +28,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
             .map(state::getOrCreateTopic)
             .map(topic ->
                 MetadataResponse.Topic.builder()
-                    .name(topic.getName())
+                    .name(topic.name())
                     .partitions(createResponsePartitions(topic))
                     .build()
             )
@@ -36,7 +36,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
     }
 
     private Collection<MetadataResponse.Partition> createResponsePartitions(Topic topic) {
-        return IntStream.range(0, topic.getNumberOfPartitions())
+        return IntStream.range(0, topic.numberOfPartitions())
             .mapToObj(partitionId ->
                 MetadataResponse.Partition.builder()
                     .id(partitionId)
@@ -47,7 +47,7 @@ public class MetadataRequestHandler implements RequestHandler<MetadataRequest, M
     }
 
     private MetadataResponse.Broker createBrokerMetadata(BrokerState state) {
-        BrokerConfig config = state.getConfig();
+        BrokerConfig config = state.config();
         return MetadataResponse.Broker.builder()
             .nodeId(BrokerState.NODE_ID)
             .host(config.host())

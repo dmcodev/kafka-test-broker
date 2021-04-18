@@ -16,7 +16,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Getter
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -27,12 +26,11 @@ public class ConsumerGroup {
     private final Map<String, Member> members = new HashMap<>();
     private final Map<Partition, Long> offsets = new HashMap<>();
 
-    @EqualsAndHashCode.Include
-    private final String name;
+    @Getter @EqualsAndHashCode.Include private final String name;
 
-    private int generationId;
-    private String leaderId;
-    private String protocol;
+    @Getter private int generationId;
+    @Getter private String leaderId;
+    @Getter private String protocol;
     private int memberSequenceNumber;
 
     public String findMatchingProtocol(Set<String> protocols) {
@@ -57,19 +55,19 @@ public class ConsumerGroup {
         return members.get(memberId);
     }
 
-    public Member addMember() {
-        Member member = new Member(this, memberSequenceNumber++);
-        members.put(member.id(), member);
-        LOG.debug("{} joined consumer group", member);
-        ensureLeaderSelected(member);
-        generationId++;
-        return member;
-    }
-
-    public Member rejoinMember(String memberId) {
-        Member member = getMember(memberId);
-        LOG.debug("{} rejoined consumer group", member);
-        ensureLeaderSelected(member);
+    public Member joinMember(String requestMemberId, Set<String> memberProtocols, Collection<String> subscriptionTopics) {
+        Member member;
+        if (!members.containsKey(requestMemberId)) {
+            member = new Member(this, memberSequenceNumber++);
+            members.put(member.id(), member);
+            generationId++;
+        } else {
+            member = getMember(requestMemberId);
+        }
+        selectLeader(member);
+        member.assignProtocols(memberProtocols);
+        member.subscribe(subscriptionTopics);
+        member.setJoinGenerationId(generationId);
         return member;
     }
 
@@ -113,8 +111,8 @@ public class ConsumerGroup {
 
     public Map<Integer, Long> getPartitionOffsets(String topicName) {
         return offsets.keySet().stream()
-            .filter(partition -> topicName.equals(partition.getTopic().getName()))
-            .collect(Collectors.toMap(Partition::getId, this::committedOffset));
+            .filter(partition -> topicName.equals(partition.topic().name()))
+            .collect(Collectors.toMap(Partition::id, this::committedOffset));
     }
 
     public void commit(Partition partition, long offset) {
@@ -129,7 +127,7 @@ public class ConsumerGroup {
         return offsets.computeIfAbsent(partition, it -> 0L);
     }
 
-    private void ensureLeaderSelected(Member member) {
+    private void selectLeader(Member member) {
         if (Objects.isNull(leaderId)) {
             leaderId = member.id();
             member.setAsLeader();
@@ -140,7 +138,7 @@ public class ConsumerGroup {
     private boolean shouldRejoin(Member member) {
         return Objects.isNull(leaderId)
             || (member.isLeader() && member.joinGenerationId() != generationId)
-            || !member.partitionsSynced();
+            || !member.partitionsSynchronized();
     }
 
     @Override
