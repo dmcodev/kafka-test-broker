@@ -1,12 +1,14 @@
 plugins {
     id 'java'
     id 'maven'
+    id 'signing'
     id 'org.jetbrains.kotlin.jvm' version '1.4.10'
     id "io.freefair.lombok" version '5.3.0'
 }
 
 group 'dev.dmcode'
 version '0.1-SNAPSHOT'
+archivesBaseName = 'kafka-test-broker'
 
 repositories {
     mavenCentral()
@@ -52,4 +54,66 @@ test {
 
 install.repositories.mavenInstaller.pom*.whenConfigured { pom ->
     pom.dependencies = Collections.emptyList()
+}
+
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'Kafka Test Broker'
+                packaging 'jar'
+                url 'https://github.com/dmcodev/kafka-test-broker'
+
+                scm {
+                    connection 'scm:git@github.com:dmcodev/kafka-test-broker.git'
+                    developerConnection 'scm:git@github.com:dmcodev/kafka-test-broker.git'
+                    url 'git@github.com:dmcodev/kafka-test-broker.git'
+                }
+
+                licenses {
+                    license {
+                        name 'MIT License'
+                        url 'https://github.com/dmcodev/kafka-test-broker/blob/master/LICENSE.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'dmcodev'
+                        name 'Damian Malczyk'
+                        email 'damian.malczyk.dev@gmail.com'
+                    }
+                }
+            }
+        }
+    }
 }
