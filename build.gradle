@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'dev.dmcode'
-version '0.1-SNAPSHOT'
+version '0.1'
 archivesBaseName = 'kafka-test-broker'
 
 repositories {
