@@ -310,7 +310,8 @@ public class KafkaTestBroker implements AutoCloseable {
 
     public static Thread createEventLoopThread(Runnable runnable) {
         Thread thread = new Thread(runnable);
-        thread.setName("KafkaTestBroker-" + THREAD_ID_SEQUENCE.incrementAndGet());
+        thread.setDaemon(true);
+        thread.setName("kafka-test-broker-" + THREAD_ID_SEQUENCE.incrementAndGet());
         return thread;
     }
 
