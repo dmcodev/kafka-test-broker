@@ -16,7 +16,7 @@ class RecordsEncoder {
         long baseOffset = records.stream()
             .mapToLong(Record::offset)
             .min()
-            .orElse(0L);
+            .orElse(-1L);
         buffer.putLong(baseOffset); // base offset
         ByteBuffer batchLengthSlot = buffer.putIntSlot();
         int batchStartOffset = buffer.position();
@@ -99,7 +99,7 @@ class RecordsEncoder {
         return (int) (records.stream()
             .mapToLong(Record::offset)
             .max()
-            .orElse(0L) - baseOffset);
+            .orElse(-1) - baseOffset);
     }
 
     private static int computeHeadersSize(Collection<Record.Header> headers) {

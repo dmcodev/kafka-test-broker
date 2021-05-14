@@ -156,6 +156,30 @@ class ProducerConsumerSpec : StringSpec() {
             consumedData.toSet() shouldBe testMessages.toSet()
         }
 
+        "Should consume record produced after delay" {
+            createBroker()
+            val clientProperties = clientProperties()
+            launch(dispatcher) {
+                delay(1000)
+                val producer = KafkaProducer<String, String>(clientProperties)
+                producer.send(ProducerRecord(TEST_TOPIC_1, "key", "value"))
+                producer.close()
+            }
+            val consumedRecords = LinkedBlockingDeque<ConsumerRecord<String, String>>()
+            launch(dispatcher) {
+                val consumer = KafkaConsumer<String, String>(clientProperties)
+                consumer.subscribe(listOf(TEST_TOPIC_1))
+                while (consumedRecords.size != 1) {
+                    val records = consumer.poll(Duration.ofMillis(250))
+                    consumer.commitSync()
+                    records.forEach(consumedRecords::addLast)
+                }
+                consumer.close()
+            }
+            await { consumedRecords.size == 1 }
+            consumedRecords.size shouldBe 1
+        }
+
         "Should handle consumer randomly joining, leaving, subscribing and unsubscribing" {
             val consumersActors = 10
             val messagesCount = 5000
